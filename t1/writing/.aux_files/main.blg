@@ -1,0 +1,65 @@
+This is BibTeX, Version 0.99e (TeX Live 2026/Arch Linux)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: abntex2-alf.bst
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated wiz_functions (elt_size=8) to 6000 items from 3000.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated wiz_functions (elt_size=8) to 9000 items from 6000.
+Database file #1: abntex2-options.bib
+Database file #2: referencias.bib
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=8) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=8) to 20 items from 10.
++---------------------------------------------------------+
+| Estilo bibliográfico abntex2-alf.bst versão v-1.9.7           |
+| Em caso de dúvidas ou problemas com este estilo procure |
+| http://www.abntex.net.br/                               |
++---------------------------------------------------------+
+You've used 4 entries,
+            6714 wiz_defined-function locations,
+            1214 strings with 9990 characters,
+and the built_in function-call counts, 5776 in all, are:
+= -- 791
+> -- 71
+< -- 149
++ -- 220
+- -- 22
+* -- 332
+:= -- 775
+add.period$ -- 13
+call.type$ -- 4
+change.case$ -- 29
+chr.to.int$ -- 4
+cite$ -- 3
+duplicate$ -- 538
+empty$ -- 206
+format.name$ -- 107
+if$ -- 1143
+int.to.chr$ -- 0
+int.to.str$ -- 0
+missing$ -- 58
+newline$ -- 23
+num.names$ -- 15
+pop$ -- 84
+preamble$ -- 1
+purify$ -- 14
+quote$ -- 0
+skip$ -- 628
+stack$ -- 1
+substring$ -- 274
+swap$ -- 189
+text.length$ -- 3
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 25
+width$ -- 0
+write$ -- 54
