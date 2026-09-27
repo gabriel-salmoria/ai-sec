@@ -1,0 +1,80 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,booktabs,enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\setlist{itemsep=1pt,topsep=2pt,leftmargin=*}
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{0pt}
+\titleformat{\section}{\bfseries\normalsize}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{6pt}{1pt}
+
+% AJUSTAR: autor, matrícula, hardware disponível (seção Frameworks), data final do semestre (Cronograma)
+\title{\vspace{-2.5em}Proposta de Projeto: OCR-06\\\large OCR Adaptativo com Memória e Aprendizagem Assistida}
+\author{Gabriel Salmoria \quad -- \quad 23100466 \\ \small INE5448 -- Inteligência Artificial e Segurança}
+\date{\vspace{-0.5em}\small 7 de setembro de 2026\vspace{-1.5em}}
+
+\begin{document}
+\maketitle
+
+\section{O problema}
+Sistemas de OCR baseados em IA erram bastante em nome próprio, sobrenome e nome de cidade em documento manuscrito, palavras raras que o modelo tende a "corrigir" a leitura pra algo mais comum, mesmo quando errado. Dado que esses erros não são corrigidos/anotados, então o mesmo erro volta a acontecer depois. A ideia do projeto é fazer fine tuning num modelo aberto usando o BRESSAY (que já tem transcrição real) junto com um dataset sintético de nome e cidade, visando a melhora na asserção de nomes próprios.
+
+\section{Objetivos específicos}
+\begin{itemize}
+\item Gerar um dataset sintético de nome, sobrenome e cidade em português, com amostragem que não deixe os nomes comuns dominarem o treino.
+\item Fazer fine tuning de um VLM aberto usando esse dataset sintético junto com o BRESSAY, medindo o ganho num teste com nome que não apareceu no treino.
+\item Comparar o ganho do fine tuning, pra ver quando cada abordagem compensa mais.
+\end{itemize}
+
+\section{Frameworks e tecnologias}
+A ideia é usar um VLM aberto como base, Qwen3.5-9B ou Qwen3-VL-8B dependendo do suporte de treino disponível na época, fazendo fine tuning com LoRA (via transformers/PEFT ou Unsloth). O dataset sintético de nome e cidade é gerado com fonte cursiva mais ruído, degradado com Augraphy pra imitar documento escaneado; possivelmente, um gerador de estilo tipo One-DM ou DiffusionPen ajustado no BRESSAY deixa a caligrafia mais parecida com a escolar brasileira (que é comum em ambientes de assinatura). A memória de correção ainda vai ser definida ao longo do projeto, mas a ideia é algo simples, como guardar o valor corrigido e o contexto pra poder reordenar respostas depois.
+
+\section{Segurança e IA}
+O risco de segurança mais importante do contexto é a memória de correção guardar dado sensível sem ninguém perceber. Ela guarda pedaço de imagem e o valor corrigido, e parte desse dado vem de documento real (BRESSAY e, talvez, o dataset do Registro Civil), então é possivel vazar informação pessoal se não tiver algum controle de quem acessa isso e por quanto tempo fica guardado, além do possivel vazamento devido ao treinamento da LLM. A ideia é manter um controle de acesso básico, não guardar mais do que precisa, e sempre comparar uma versão nova do modelo com a antiga antes de trocar, pra não piorar sem perceber. Também tem o risco de a amostragem do dataset sintético reforçar demais os nomes mais comuns e prejudicar nome raro ou estrangeiro; isso dá pra acompanhar separando o erro desses dois grupos na hora de avaliar.
+
+\section{Métricas de avaliação}
+\begin{itemize}
+\item CER e WER, geral e separado pra nome próprio e cidade.
+\item CER separado entre nome comum e nome raro, pra ver se o dataset sintético não tá enviesando o modelo.
+\item Ganho do fine tuning comparado com só usar a memória de correção, sem re-treinar.
+\item Comparação de desempenho entre a versão nova e a antiga do modelo antes de trocar.
+\end{itemize}
+
+\section{De onde vêm os dados}
+Nome e frequência vêm da API do IBGE (Censo 2010, cerca de 130 mil prenomes, com frequência por década e UF). Sobrenome e a combinação nome+sobrenome vêm de dado aberto de sócio de empresa (Receita Federal) e do TSE, já que o IBGE não publica sobrenome. Cidade vem da lista de município do IBGE, ponderada pela população do censo.
+
+Pra não deixar os nomes comuns dominarem o dataset sintético, a amostragem usa uma temperatura sobre a frequência:
+\[
+q_i = \frac{p_i^{\alpha}}{\sum_j p_j^{\alpha}},
+\]
+onde $p_i$ é a frequência real do nome $i$ e $\alpha \in (0,1)$ controla se a distribuição final fica mais parecida com a real ($\alpha=1$) ou mais uniforme ($\alpha=0$). Um $\alpha$ em torno de $0{,}5$ é o ponto de partida, e uma fatia de nome raro (inclusive nome inventado, mas plausível) entra de propósito pra não deixar o modelo só decorar nome comum.
+
+O fine tuning combina esse dataset sintético com o BRESSAY, o único corpus de manuscrito em página inteira em português brasileiro com transcrição real. Pra testar, a ideia é usar o dataset interno do Registro Civil se a disciplina disponibilizar; sem ele, o teste fica numa parte do BRESSAY separada do treino. De um jeito ou de outro, o teste é sempre com nome que não apareceu no treino, pra não confundir memorização com leitura de verdade.
+
+\section{Cronograma}
+\begin{center}\footnotesize
+\begin{tabular}{@{}cp{11.8cm}@{}}
+\toprule
+Semana & O que fazer \\
+\midrule
+1 (08--14/09) & Ambiente, baseline no BRESSAY, definição das partições de teste \\
+2 (15--21/09) & Coleta IBGE/RFB/TSE, amostrador com temperatura, renderização + Augraphy \\
+3 (22--28/09) & Filtragem com reconhecedor, mistura do sintético com BRESSAY, primeiro fine tuning \\
+4 (29/09--05/10) & Memória de correções, reordenação de respostas, interface de correção \\
+5 (06--12/10) & Comparar memória + fine tuning juntos, ajuste de $\alpha$ e da fatia de nome raro \\
+6 (13--19/10) & Comparar versão nova do modelo com a antiga antes de trocar \\
+7 (20--26/10) & Dar uma olhada no controle de acesso da memória e no viés entre nome comum e raro \\
+8 (27/10--02/11) & Fechar resultados, relatório e demonstração \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Limitações}
+O dataset interno do Registro Civil pode não ser acessado ou organizado com teste de maneira extensiva, dado o tamanho do projeto. Se isso acontecer, a avaliação fica só no BRESSAY e no dataset sintético, e qualquer ganho medido precisa ser confirmado depois com dado real antes de uso em produção.
+
+\end{document}

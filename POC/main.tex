@@ -1,0 +1,606 @@
+% ===============================
+% Template de Relatório de PoC (INE5448)
+% IA & Segurança — LabREC/UFSC
+% Versão 2.1
+% ===============================
+% INSTRUÇÕES GERAIS:
+%   1. Substitua todos os campos marcados com [PREENCHER] pelas suas informações.
+%   2. Mantenha a estrutura de seções — adicione subseções conforme necessário.
+%   3. As seções marcadas com (*) são obrigatórias.
+%   4. Remova os comentários de instrução antes de submeter.
+% ===============================
+
+\documentclass[12pt,a4paper]{article}
+
+% ---- Codificação, idioma e fontes ----
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow}}
+\DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+\DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{times}
+
+% ---- Matemática, figuras e links ----
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em}
+\setlist[enumerate]{leftmargin=1.5em}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{multirow}
+
+% ---- Configuração de hyperlinks ----
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={Relatório de PoC - INE5448},
+    pdfpagemode=FullScreen,
+}
+
+% ---- Configuração de listagens de código ----
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    tabsize=2,
+    commentstyle=\color{gray},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    literate=
+        {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+        {À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+        {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+        {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+        {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+        {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+        {ã}{{\~a}}1 {õ}{{\~o}}1 {Ã}{{\~A}}1 {Õ}{{\~O}}1
+        {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+        {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{blue}\bfseries,
+  basicstyle=\ttfamily\small,
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\color{green}]{:},
+  morestring=[b]',
+  morestring=[b]",
+  literate=
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+    {ã}{{\~a}}1 {õ}{{\~o}}1 {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+}
+
+\usepackage[table]{xcolor}
+
+% ---- Bibliografia numérica (biber) ----
+\usepackage[backend=biber,style=numeric,sorting=nyt,maxbibnames=99]{biblatex}
+\addbibresource{ref.bib} 
+
+% ---- Informações do documento ----
+\title{\textbf{OCR-06: OCR Adaptativo com Aprendizagem Assistida}}
+\author{Gabriel Salmoria \and Tutor: Lucas Mayr}
+
+\date{\small \today}
+
+% ==== Início do Documento ====
+\begin{document}
+
+\maketitle
+
+% ---------------------------------------------------------------
+% RESUMO (*)
+% ---------------------------------------------------------------
+\begin{abstract}
+Sistemas de OCR baseados em Modelos de Linguagem Visual (VLMs) ainda enfrentam dificuldades na leitura de nomes próprios raros ou antigos. Frequentemente, o modelo tenta adivinhar uma palavra mais comum que ele encontrou durante o treinamento. Isso representa um problema sério em acervos e cartórios, onde os operadores precisam corrigir o texto manualmente. Além disso, o modelo genérico não retém essa correção para aprendizado futuro. O objetivo principal deste trabalho é desenvolver uma Prova de Conceito (PoC) focada na realização de fine-tuning em um VLM de código aberto utilizando LoRA. Para isso, o modelo é treinado de forma direcionada com recortes de linhas manuscritas do dataset BRESSAY e dados sintéticos cursivos de nomes atípicos (gerados a partir de bases do IBGE e TSE). Como complemento secundário a essa especialização do modelo, a PoC também explora a criação de um módulo de memória (via RAG e FAISS) para armazenar correções do usuário e mitigar falhas residuais. Este relatório descreve a definição inicial do problema, objetivos, escopo e o planejamento das próximas etapas, destacando as implicações de privacidade envolvidas no treinamento.
+\end{abstract}
+
+\textbf{Palavras-chave:} OCR, Modelos de Linguagem Visual, Fine-Tuning, LoRA, Privacidade, LGPD.
+
+\tableofcontents
+
+% ==============================================================
+% SEÇÃO 1 — INTRODUÇÃO (*)
+% ==============================================================
+\section{Introdução}
+\label{sec:introducao}
+
+A digitalização de acervos históricos e registros públicos esbarra frequentemente nas limitações dos sistemas de OCR (Reconhecimento Ótico de Caracteres). Os modelos mais modernos conseguem processar bem o texto geral em português, mas apresentam alto índice de erro ao tratar de nomes próprios que fogem da distribuição padrão (a cauda longa). Como o modelo teve pouco ou nenhum contato com esses nomes durante o treinamento, ele tende a forçar uma "correção" para uma palavra mais comum do seu vocabulário \cite{cer_wer_ocr}. O resultado prático é a troca indevida de prenomes e sobrenomes, o que invalida a utilidade da transcrição no contexto de um Registro Civil e exige um longo esforço de revisão manual.
+
+% --------------------------------------------------------------
+\subsection{Motivação}
+
+A principal motivação é que hoje o trabalho humano de correção é desperdiçado. O cartório paga alguém para consertar o texto gerado pelo OCR, mas o modelo não aprende nada com isso e continua cometendo o mesmo erro em documentos semelhantes. Historicamente, treinar um modelo gigante do zero exigiria infraestrutura proibitiva para instituições menores. No entanto, o uso de técnicas eficientes (como o LoRA) permite especializar o modelo diretamente no hardware disponível.
+
+A proposta central deste trabalho é focar na melhoria direta do modelo por meio desse fine-tuning específico. Ao realizar um treinamento supervisionado (linha a linha) utilizando o dataset BRESSAY e dados cursivos artificiais baseados no IBGE e TSE, o objetivo é especializar a IA para a leitura correta do contexto manuscrito e de identidades da cauda longa. Apenas de forma complementar e secundária, o trabalho propõe acoplar uma "memória" baseada em busca semântica (RAG), servindo como auxílio extra na etapa de inferência para os casos de exceção que o modelo ajustado ainda não consiga acertar.
+
+% --------------------------------------------------------------
+\subsection{Objetivos}
+
+O objetivo deste estudo é reduzir a taxa de erro de caracteres e palavras (CER e WER) na leitura de nomes atípicos em documentos manuscritos, buscando preservar a qualidade do OCR sobre o texto geral. Para alcançar essa meta, foram definidos os seguintes objetivos específicos:
+
+\begin{itemize}
+    \item Desenvolver e executar o fine-tuning de um VLM (via LoRA), utilizando anotações em nível de linha do dataset BRESSAY e um corpus sintético de nomes (baseado no IBGE e TSE), visando aumentar substancialmente a precisão do modelo em si.
+    \item Implementar, de forma acessória, um banco vetorial (memória RAG) que utilize o histórico de correções do usuário como suporte secundário à predição.
+    \item Analisar os ganhos de acurácia (CER e WER) proporcionados pelo fine-tuning e avaliar qual o benefício prático adicional obtido ao combinar essa estratégia principal com a memória episódica.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Descrição do Problema}
+
+O problema central abordado neste projeto reside na incapacidade dos sistemas genéricos de OCR em reconhecer corretamente identidades atípicas (cauda longa) em documentos históricos e registros civis manuscritos. Como os modelos de linguagem visual (VLMs) tendem a ser enviesados pela distribuição do vocabulário comum, eles frequentemente distorcem prenomes e sobrenomes raros em tentativas de forçar uma coerência semântica. 
+
+Como consequência, os operadores de acervos e cartórios são obrigados a realizar a correção manual das transcrições. Ao propormos uma solução baseada em fine-tuning com documentos reais para acabar com esse ciclo, esbarramos em um segundo problema de ordem ética e legal: o uso de registros civis autênticos para treinar modelos de inteligência artificial envolve o processamento de dados pessoais sensíveis (nomes reais e caligrafias autênticas), o que impõe desafios críticos de privacidade e conformidade estrita com a LGPD.
+
+% ==============================================================
+% SEÇÃO 2 — FUNDAMENTAÇÃO TEÓRICA (*)
+% ==============================================================
+\section{Fundamentação Teórica e Estado da Arte}
+\label{sec:fundamentacao}
+
+Atualmente, o processamento de OCR baseia-se fortemente em Modelos de Linguagem Visual (VLMs). Diferente dos métodos que operam estritamente no nível de caractere, essas arquiteturas processam a imagem em sua totalidade, extraindo a informação de maneira mais contextualizada.
+
+% --------------------------------------------------------------
+\subsection{Técnicas Relevantes para o Problema}
+
+\subsubsection{Abordagens Clássicas}
+Sistemas legados frequentemente utilizam o Tesseract ou arquiteturas compostas por redes LSTM. A principal limitação dessas abordagens mais tradicionais é a falta de compreensão de contexto de longo alcance. Consequentemente, elas tendem a falhar ao lidar com textos manuscritos contínuos, onde a sobreposição dos traços aumenta a ambiguidade.
+
+\subsubsection{Abordagens Baseadas em ML/DL}
+O estado da arte recente tem se concentrado no uso de Transformers, exemplificados pelo TrOCR \cite{cer_wer_ocr} e por modelos generativos robustos como a família Qwen-VL \cite{qwen2vl}. Para contornar os altos custos computacionais de treinar esses grandes modelos a partir do zero, o uso de técnicas de Parameter-Efficient Fine-Tuning (PEFT), como o LoRA \cite{lora2022}, permite adaptar os pesos utilizando hardwares comerciais mais acessíveis. Adicionalmente, pacotes como o Augraphy \cite{augraphy2022} têm sido empregados para gerar dados sintéticos que mimetizam manchas, ruídos e o envelhecimento natural do papel encontrado nos registros reais.
+
+% --------------------------------------------------------------
+\subsection{Explicabilidade em Modelos de IA}
+[PREENCHER NA ENTREGA 2: Abordagem das técnicas de interpretabilidade e como os mapas de saliência das predições interagem com a interface de correção do usuário.]
+
+% --------------------------------------------------------------
+\subsection{Segurança e Privacidade em Sistemas de IA}
+
+A adaptação de um VLM através de fine-tuning utilizando documentos que contêm dados reais expõe o sistema a riscos específicos de segurança e privacidade inerentes ao treinamento de modelos de linguagem.
+
+\subsubsection{Extração de Dados e Memorização}
+[PREENCHER NA ENTREGA 2: Detalhamento sobre como a IA pode acabar decorando nomes reais do conjunto de treinamento (overfitting) e o risco de vazamento dessas informações privadas durante a inferência.]
+
+\subsubsection{Conformidade com a LGPD}
+Por operar com fine-tuning sobre registros civis, o processo de treinamento precisa estar alinhado às exigências da LGPD. O uso do dataset BRESSAY e a geração de dados artificiais devem garantir que o modelo aprenda os traços da caligrafia e a estrutura de nomes atípicos, mas sem fixar vínculos com indivíduos reais. A estratégia central envolve a injeção forte de dados sintéticos (nomes cruzados aleatoriamente do IBGE e TSE) para diluir a presença de pessoas reais no treino, alinhando a ferramenta ao princípio de minimização e anonimização de dados. Adicionalmente, caso o módulo secundário de memória RAG seja ativado, ele armazenará estritamente "embeddings" irreversíveis, sem reter a imagem crua do documento.
+
+% --------------------------------------------------------------
+\subsection{Gaps e Oportunidades}
+
+\begin{enumerate}
+    \item \textbf{Falta de variabilidade nos datasets} — A base disponível de textos manuscritos carece de nomes próprios raros. Este projeto resolve essa limitação estruturando um pipeline de treinamento (fine-tuning) que incorpora um corpus sintético com dados do IBGE/TSE ao lado do dataset BRESSAY.
+    \item \textbf{Baixa generalização para manuscritos complexos} — Modelos pré-treinados falham na leitura de caligrafias antigas. O foco no fine-tuning direcionado (linha a linha) ataca diretamente essa deficiência.
+    \item \textbf{Custo de atualização (Gap Secundário)} — Como forma de suporte extra ao modelo especializado, a adição da memória baseada em RAG permite que correções pontuais feitas pelo usuário retroalimentem a inferência localmente, mitigando a necessidade técnica de re-treinamentos constantes para casos atípicos residuais.
+\end{enumerate}
+
+% ==============================================================
+% SEÇÃO 3 — OBJETIVOS E MÉTRICAS DE SUCESSO (*)
+% ==============================================================
+\section{Objetivos e Métricas de Sucesso}
+\label{sec:objetivos}
+
+O sucesso deste trabalho depende de conseguir demonstrar que o modelo aprimorado melhora efetivamente o suporte humano, aprendendo a recuperar os termos difíceis de forma prática sem simplesmente memorizar o treinamento.
+
+% --------------------------------------------------------------
+\subsection{Objetivos do Estudo}
+
+\begin{itemize}
+    \item Estruturar um script gerador de imagens para criar um dataset robusto de texto cursivo sintético focado em nomes raros do IBGE e TSE, degradados artificialmente.
+    \item Executar o fine-tuning intensivo de um VLM (via LoRA) utilizando a união de trechos alinhados do dataset BRESSAY e das imagens sintéticas geradas.
+    \item Como suporte terciário, desenvolver e acoplar a arquitetura do banco vetorial FAISS como uma memória de correção e mensurar seu impacto prático nas predições do modelo ajustado.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Métricas de Sucesso}
+
+\begin{enumerate}
+    \item \textbf{CER (Character Error Rate) segmentado} 
+    A métrica tradicional será avaliada de forma independente para nomes atípicos, nomes comuns e texto em geral, assegurando que o fine-tuning traga ganhos em domínios específicos sem prejudicar o desempenho geral.
+
+    \item \textbf{Hit Rate da Memória} 
+    Proporção de vezes em que o uso acessório do histórico do usuário permitiu ao modelo reverter uma predição isoladamente incorreta.
+
+    \item \textbf{[PREENCHER: Métrica 3]} 
+    [PREENCHER NA ENTREGA 2]
+\end{enumerate}
+
+% ==============================================================
+% SEÇÃO 4 — ESCOPO DA SOLUÇÃO E REQUISITOS (*)
+% ==============================================================
+\section{Escopo da Solução e Requisitos}
+\label{sec:escopo}
+
+A solução proposta será entregue em formato de backend, estruturado para expor serviços de processamento de OCR refinados pelo novo treinamento.
+
+% --------------------------------------------------------------
+\subsection{Escopo da Solução}
+
+O escopo do projeto inclui:
+\begin{itemize}
+    \item O pré-processamento de imagens do dataset BRESSAY e os scripts responsáveis por gerar/corromper o dataset sintético de nomes (baseado em IBGE/TSE).
+    \item A configuração e execução primária do fine-tuning no VLM escolhido, assim como seu fluxo de inferência.
+    \item A integração de um banco vetorial (como o FAISS) para atuar de forma auxiliar como memória do histórico de correções.
+\end{itemize}
+
+Estão fora do escopo inicial:
+\begin{itemize}
+    \item O desenvolvimento de interfaces gráficas completas para o usuário final.
+    \item A integração e implantação da ferramenta em um sistema legado real de cartório.
+    \item O processamento voltado para idiomas estrangeiros ou para textos inteiramente tipográficos.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Requisitos Funcionais}
+
+\begin{enumerate}
+    \item O sistema deve receber um recorte de imagem manuscrita e retornar a transcrição textual baseada no modelo especializado.
+    \item O ambiente de fine-tuning deve permitir a parametrização do LoRA e a experimentação iterativa rápida.
+    \item Deve existir um fluxo (API) para que as correções do usuário sejam encaminhadas ao sistema.
+    \item Durante a inferência, a rotina de predição pode opcionalmente consultar o banco de memória antes de determinar a resposta final.
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Requisitos Não-Funcionais}
+
+\begin{itemize}
+    \item \textbf{Desempenho:} O treinamento do modelo (fine-tuning) precisa ser comportado por uma GPU comercial de até 24 GB de VRAM, eliminando a dependência de clusters de altíssimo custo.
+    \item \textbf{Reprodutibilidade:} O particionamento dos dados, as seeds de pseudo-aleatoriedade e as configurações de hiperparâmetros devem estar rigorosamente documentadas no repositório.
+    \item \textbf{Segurança e Privacidade:} O pipeline de fine-tuning deve garantir que a predominância dos dados atípicos seja sintética (IBGE/TSE) para mitigar a memorização de dados de cidadãos reais presentes nas amostras do BRESSAY.
+\end{itemize}
+
+% ==============================================================
+% SEÇÃO 5 — AMEAÇAS, RISCOS E CONTROLES (*)
+% ==============================================================
+\section{Ameaças, Riscos e Controles}
+\label{sec:threat-model}
+
+O treinamento (fine-tuning) de modelos de inteligência artificial com dados baseados em registros públicos cria potenciais superfícies de ataque relacionadas à privacidade dos dados de treino.
+
+% --------------------------------------------------------------
+\subsection{Principais Ameaças Identificadas}
+
+\begin{itemize}
+    \item \textbf{Ataques de Extração de Dados (Data Extraction):} Cenário onde um atacante conseguiria usar prompts específicos para forçar o modelo a "cuspir" nomes reais e combinações de dados sensíveis que a rede memorizou durante o fine-tuning.
+    \item \textbf{Ataques de Inversão de Modelo:} A tentativa de inferir se um determinado documento ou nome de cidadão específico fez parte do dataset de treinamento do modelo (Membership Inference).
+    \item \textbf{Poisoning (Envenenamento de Dados):} Inserções acidentais ou maliciosas de anotações incorretas no dataset de treino (ou no módulo de memória secundário), fazendo o modelo reproduzir erros sistêmicos em produção.
+    \item \textbf{[PREENCHER: ameaça 4]:} [PREENCHER NA ENTREGA 2]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Riscos Associados ao Projeto}
+
+\begin{enumerate}
+    \item \textbf{Restrição de Hardware:} O risco de o limite de VRAM de 24 GB impedir um fine-tuning de qualidade adequada, obrigando a aplicação de métodos de quantização agressiva que prejudiquem a performance final.
+    \item \textbf{Viés de Representatividade:} O risco de os dados sintéticos gerados (via IBGE/TSE) não representarem uniformemente as origens demográficas, ocasionando viés preditivo em caligrafias ou regiões específicas.
+    \item \textbf{[PREENCHER: risco 3]:} [PREENCHER NA ENTREGA 2]
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Controles e Medidas de Mitigação}
+
+\begin{itemize}
+    \item Injeção de volume majoritário de dados sintéticos aleatórios (IBGE/TSE) no fine-tuning para evitar que o modelo sofra overfitting nos poucos dados reais do BRESSAY, reduzindo substancialmente o risco de memorização e extração.
+    \item Instituir uma separação rigorosa entre os conjuntos de dados de treinamento, validação e teste para evitar o vazamento de informações ("data leakage") e garantir a avaliação íntegra da capacidade de generalização.
+    \item Para o módulo auxiliar (RAG), armazenar de forma persistente apenas os "embeddings" não-reversíveis extraídos pelo modelo, descartando qualquer imagem original do documento.
+\end{itemize}
+
+% ==============================================================
+% SEÇÃO 6 — METODOLOGIA DE DESENVOLVIMENTO DA PoC (*)
+% ==============================================================
+\section{Metodologia de Desenvolvimento da PoC}
+\label{sec:metodologia}
+
+Os experimentos farão uso conjunto de recortes provenientes do corpus BRESSAY e de amostras manuscritas inteiramente sintéticas geradas pelo projeto. O conjunto sintético baseia-se em cruzamentos das listas de prenomes do Censo IBGE de 2010 com sobrenomes extraídos de registros públicos da Receita Federal e do Tribunal Superior Eleitoral. Por meio da combinação dessas bases, foi estruturado um pipeline capaz de montar nomes completos de alta atipicidade e convertê-los em imagens de caligrafias simuladas para fortalecer o fine-tuning.
+
+% --------------------------------------------------------------
+\subsection{Fases de Implementação}
+
+\begin{enumerate}
+    \item \textbf{Fase 1: Preparação dos Dados} — Filtragem das bases do IBGE/Receita, estruturação do gerador de caligrafia sintética e aplicação da biblioteca Augraphy para adicionar artefatos visuais ao papel.
+    \item \textbf{Fase 2: Fine-Tuning do VLM} — Configuração de um modelo de linguagem visual (como o Qwen-VL) integrado à biblioteca Unsloth, visando a aceleração e otimização do treinamento (via LoRA) sobre a base consolidada de recortes manuscritos.
+    \item \textbf{Fase 3: Construção da Memória} — Parametrização do banco FAISS como suporte de inferência para o gerenciamento secundário de vetores de correções.
+    \item \textbf{Fase 4: Validação} — Apuração final e comparativa das métricas de CER e WER focando nas predições do modelo ajustado isoladamente, e posteriormente com o auxílio do RAG.
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Pipelines / Módulos Desenvolvidos}
+
+\begin{itemize}
+    \item \textbf{Módulo de Síntese:} Responsável por ler os dados estruturados de nomes, definir tipografias variadas e construir a massa de dados (imagens emparelhadas aos textos) que servirá de treinamento principal ao lado do BRESSAY.
+    \item \textbf{Módulo de Inferência e RAG:} O código backend final, responsável por unir os pesos-base do modelo com o pacote LoRA recém-treinado e, opcionalmente, fazer a orquestração do acesso ao banco FAISS.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Ferramentas e Tecnologias Utilizadas}
+
+\begin{itemize}
+    \item \textbf{Python e PyTorch:} O ambiente fundamental de desenvolvimento para orquestração e treino dos modelos.
+    \item \textbf{Unsloth e ecossistema HuggingFace:} A adoção da biblioteca Unsloth auxilia substancialmente na redução do consumo de VRAM, acelerando a fase de fine-tuning e viabilizando o projeto em hardware pessoal.
+    \item \textbf{FAISS:} Ferramenta otimizada desenvolvida para viabilizar buscas semânticas rápidas, formando o mecanismo de memória auxiliar do sistema.
+    \item \textbf{Git e DVC:} Utilizados para estruturar o versionamento seguro tanto da base de código (Github) quanto dos datasets primários (Data Version Control).
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Critérios de Aceitação da PoC}
+
+\begin{enumerate}
+    \item Geração comprovada de partições consistentes entre os datasets de treino e validação, garantindo a avaliação justa de nomes inéditos na fase final.
+    \item A conclusão rotineira dos scripts de fine-tuning sem apresentar esgotamento de memória (Out-Of-Memory) no ambiente laboratorial disponibilizado.
+    \item Demonstração de queda métrica na proporção de erros (CER/WER) nos nomes da cauda longa apenas com o uso do modelo fine-tunado, comprovando sua eficácia intrínseca.
+    \item Validação de que o modelo não sofreu overfitting prejudicial, de modo que dados sensíveis autênticos não possam ser extraídos através da inferência.
+\end{enumerate}
+
+\subsection{Planejamento Inicial}
+
+O cronograma segue o balizamento das semanas letivas restantes. Nas primeiras duas semanas o foco concentra-se puramente na geração refinada dos datasets sintéticos e integração do Augraphy. Após esta primeira entrega, as tarefas voltam-se primariamente para a codificação da rotina de fine-tuning do modelo e verificação exaustiva de sua convergência. O planejamento direciona o meio de outubro para a avaliação do modelo isolado e a implementação do suporte do FAISS. Novembro está reservado para a avaliação metódica dos resultados completos, finalizando os relatórios experimentais.
+
+% ==============================================================
+% SEÇÃO 7 — AVALIAÇÃO EXPERIMENTAL (*)
+% ==============================================================
+\section{Avaliação Experimental}
+\label{sec:avaliacao}
+
+[PREENCHER NA ENTREGA 2: parágrafo introdutório apresentando os cenários experimentais]
+
+% --------------------------------------------------------------
+\subsection{Experimento 1 — [PREENCHER: nome/descrição]}
+
+[PREENCHER NA ENTREGA 2: descrição do setup experimental]
+
+\begin{itemize}
+    \item{} [PREENCHER: o que foi medido/coletado 1]
+    \item{} [PREENCHER: o que foi medido/coletado 2]
+\end{itemize}
+
+[PREENCHER NA ENTREGA 2: análise dos resultados do experimento 1]
+
+% --------------------------------------------------------------
+\subsection{Experimento 2 — [PREENCHER: nome/descrição]}
+
+[PREENCHER NA ENTREGA 3/4: descrição do setup experimental]
+
+\begin{itemize}
+    \item{} [PREENCHER: o que foi medido/coletado 1]
+    \item{} [PREENCHER: o que foi medido/coletado 2]
+\end{itemize}
+
+[PREENCHER NA ENTREGA 3/4: análise dos resultados do experimento 2]
+
+% ==============================================================
+% SEÇÃO 8 — DISCUSSÃO (*)
+% ==============================================================
+\section{Discussão}
+\label{sec:discussao}
+
+[PREENCHER NA ENTREGA 4: parágrafo introdutório da discussão]
+
+% --------------------------------------------------------------
+\subsection{Alcance dos Objetivos}
+[PREENCHER NA ENTREGA 4]
+
+% --------------------------------------------------------------
+\subsection{Limitações Identificadas}
+
+\subsubsection{Limitações Técnicas}
+[PREENCHER NA ENTREGA 4]
+
+\subsubsection{Limitações de Segurança}
+[PREENCHER NA ENTREGA 4]
+
+% --------------------------------------------------------------
+\subsection{Comparação com o Estado da Arte}
+[PREENCHER NA ENTREGA 4]
+
+% --------------------------------------------------------------
+\subsection{Trade-offs Segurança vs. Usabilidade}
+[PREENCHER NA ENTREGA 4]
+
+% --------------------------------------------------------------
+\subsection{Implicações Práticas}
+
+\subsubsection{Para Usuários e Stakeholders}
+[PREENCHER NA ENTREGA 4]
+
+\subsubsection{Para Políticas Públicas}
+[PREENCHER NA ENTREGA 4]
+
+% ==============================================================
+% SEÇÃO 9 — CONCLUSÕES E PRÓXIMOS PASSOS (*)
+% ==============================================================
+\section{Conclusões e Próximos Passos}
+\label{sec:conclusoes}
+
+[PREENCHER NA ENTREGA 4: parágrafo de abertura das conclusões]
+
+% --------------------------------------------------------------
+\subsection{Síntese das Evidências}
+
+\begin{itemize}
+    \item{} [PREENCHER: achado principal 1]
+    \item{} [PREENCHER: achado principal 2]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Contribuições}
+
+\begin{enumerate}
+    \item{} [PREENCHER: contribuição 1]
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Trabalhos Futuros}
+
+\subsubsection{Curto Prazo (3–6 meses)}
+\begin{itemize}
+    \item{} [PREENCHER]
+\end{itemize}
+
+\subsubsection{Médio Prazo (6–12 meses)}
+\begin{itemize}
+    \item{} [PREENCHER]
+\end{itemize}
+
+\subsubsection{Longo Prazo (1–2 anos)}
+\begin{itemize}
+    \item{} [PREENCHER]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Recomendações}
+[PREENCHER NA ENTREGA 4]
+
+% ==============================================================
+% SEÇÃO 10 — CHECKLIST DE CONFORMIDADE (*)
+% ==============================================================
+\section{Checklist de Conformidade (LGPD / Ética / Segurança)}
+\label{sec:checklist}
+
+[PREENCHER NA ENTREGA 2/3: parágrafo introdutório da seção]
+
+% --------------------------------------------------------------
+\subsection{Lei Geral de Proteção de Dados (LGPD)}
+
+\begin{itemize}
+    \item \textbf{Minimização de dados (Art. 6º, III)} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Finalidade específica (Art. 6º, I)} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Transparência (Art. 6º, VI)} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Segurança (Art. 46)} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Não discriminação (Art. 6º, IX)} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Segurança da Informação}
+
+\begin{itemize}
+    \item \textbf{Acesso e Controle} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Integridade e Reprodutibilidade} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Proteções Técnicas} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Ética e IA Responsável}
+
+\begin{itemize}
+    \item \textbf{Transparência Experimental} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Responsabilidade} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+
+    \item \textbf{Impacto Social} \\
+    Atendimento: [PREENCHER NA ENTREGA 2/3] \\
+    Lacuna: [PREENCHER NA ENTREGA 2/3]
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Ações Necessárias para Maturidade em Produção}
+
+\begin{itemize}
+    \item{} [PREENCHER NA ENTREGA 2/3: ação prioritária 1]
+    \item{} [PREENCHER NA ENTREGA 2/3: ação prioritária 2]
+\end{itemize}
+
+% ==============================================================
+% AGRADECIMENTOS (opcional)
+% ==============================================================
+% \section*{Agradecimentos}
+% [PREENCHER — ou remova esta seção se não aplicável]
+
+% ==============================================================
+% BIBLIOGRAFIA (*)
+% ==============================================================
+\nocite{*}
+\printbibliography
+
+% ==============================================================
+% APÊNDICES (opcionais)
+% ==============================================================
+\appendix
+
+% --------------------------------------------------------------
+\section{Detalhes de Implementação}
+\label{app:implementacao}
+
+[PREENCHER NA ENTREGA 2/3: descrição da arquitetura de implementação]
+
+\subsection{Estrutura de Diretórios}
+
+\begin{verbatim}
+[PREENCHER NA ENTREGA 2/3: cole a saída de `tree` ou descreva manualmente]
+\end{verbatim}
+
+\subsection{Comandos para Reprodução}
+
+\subsubsection*{1) Instalação de Dependências}
+\begin{verbatim}
+[PREENCHER NA ENTREGA 2/3: comandos de instalação]
+\end{verbatim}
+
+\subsubsection*{2) Execução do Experimento Principal}
+\begin{verbatim}
+[PREENCHER NA ENTREGA 2/3: comando de execução]
+\end{verbatim}
+
+% --------------------------------------------------------------
+\section{Exemplos Adicionais de Resultados}
+\label{app:exemplos}
+
+[PREENCHER NA ENTREGA 3/4: descrição dos exemplos apresentados neste apêndice]
+
+% --------------------------------------------------------------
+\section{Código-fonte}
+\label{app:codigo}
+
+\url{https://github.com/gabriel-salmoria/ai-sec}
+
+\end{document}

@@ -1,0 +1,213 @@
+% Compilação: `make` dentro de writing/, ou manualmente:
+%   latexmk -pdf -shell-escape -interaction=nonstopmode -synctex=1 \
+%           -auxdir=.aux_files -bibtex main.tex
+%
+% Classe: abntex2 (cópia local em setup/, não empacotada no TeX Live desta
+% máquina — kpsewhich abntex2.cls falhou; verificado em 2026-09-08).
+% Citações: biblatex + estilo abnt (pacote biblatex-abnt, backend biber),
+% já presente no TeX Live do sistema. abntex2cite NÃO está instalado e não
+% foi usado.
+%
+% Orçamento de página do relatório inteiro (4-7 páginas incl. referências,
+% ver enunciado Seção 11): ver comentários de orçamento em cada seção.
+
+\documentclass[article,11pt,oneside,a4paper,brazil,section=TITLE]{setup/abntex2}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[backend=biber,style=abnt]{biblatex}
+\usepackage{csquotes}
+\addbibresource{referencias.bib}
+\nocite{wollschlager2025geometry}
+
+\graphicspath{{pictures/}}
+\hypersetup{hidelinks}
+\usepackage{xurl}
+
+% Margens levemente reduzidas (ABNT recomenda 3-2-2-3) para caber o
+% conteúdo em 4-7 páginas incl. referências, exigido pelo enunciado.
+\setlrmarginsandblock{2cm}{2cm}{*}
+\setulmarginsandblock{2cm}{2cm}{*}
+\checkandfixthelayout
+\setlength{\bibitemsep}{0.3\baselineskip}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\titulo{Análise Crítica: A Geometria da Recusa em Modelos de Linguagem de Grande Escala}
+\autor{Gabriel Salmoria}
+
+\begin{document}
+\textual
+
+\begin{center}
+  {\small
+    UNIVERSIDADE FEDERAL DE SANTA CATARINA\\
+    Departamento de Informática e Estatística\\
+    INE5448 --- Inteligência Artificial e Segurança da Informação\par}
+  \vspace{1.2em}
+  {\bfseries\large Análise Crítica de Artigo Científico:\\
+   A Geometria da Recusa em Modelos de Linguagem de Grande Escala\par}
+  \vspace{0.8em}
+  {Gabriel Salmoria \quad --- \quad \today\par}
+\end{center}
+\vspace{1em}
+
+% =====================================================================
+% Orçamento: seção curta (poucas linhas).
+\section{Identificação do artigo}
+\label{sec:identificacao}
+
+\begin{description}
+  \item[Autores] Tom Wollschläger, Jannes Elstner, Simon Geisler, Vincent
+    Cohen-Addad, Stephan Günnemann, Johannes Gasteiger.
+  \item[Título] The Geometry of Refusal in Large Language Models: Concept
+    Cones and Representational Independence.
+  \item[Veículo] \textsc{Proceedings of the 42nd International Conference
+    on Machine Learning} (ICML 2025), Vancouver, Canadá.
+    \textsc{Proceedings of Machine Learning Research}, v.~267,
+    p.~66945--66970. Disponível em:
+    \url{https://proceedings.mlr.press/v267/wollschlager25a.html}.
+  \item[Ano] 2025.
+  \item[DOI] Nenhum. A PMLR não atribui DOI aos artigos publicados em suas
+    atas (landing page conferida em 2026-09-08).
+  \item[Classificação do veículo] ICML tem classificação CORE A* (\url{https://portal.core.edu.au/conf-ranks/1121/}, ranking ICORE2026, conferido em 2026-09-08). Qualis (CAPES/Sucupira): NÃO VERIFICADO, não consultei a Plataforma Sucupira diretamente.
+\end{description}
+
+Existe também uma versão no arXiv (2502.17420v2), posterior ao camera-ready; uma comparação entre os dois PDFs não achou apêndices extras nela, só uma diferença pontual, já que a v2 rotula como \emph{Theorem 4.1} algo que na PMLR é \emph{Definition 4.1} (as propriedades de recusa do RCO, Seção~\ref{sec:proposta}).
+
+% =====================================================================
+% Orçamento: seção curta.
+\section{Justificativa da escolha}
+
+O tema deste artigo, mecanismos de recusa e jailbreaking em LLMs, atende aos critérios de seleção da atividade e se conecta bem ao eixo de IA e segurança da disciplina. O veículo tem classificação A* (Seção~\ref{sec:identificacao}) e é um artigo de 2025, o que faz ele se mostrar atual e bem colocado na discussão de explicabilidade de modelos de LLM. O tema discutido sendo recusa de modelos, tecnicas de jailbreaking e sandboxing tem se tornado cada vez mais proeminentes na discussão academica, uma vez que modelos de IA, como o GPT-5.6 da openAI tomou atitudes como a invasão de servidores e ambientes da HuggingFace durante testes de benchmark, ainda nesse ano.
+
+% =====================================================================
+% Orçamento (c-g juntas): ~2,5 páginas no total.
+\section{Contextualização e fundamentação}
+
+A ideia de que coceitos abstratos, como sentimento, gênero, tamanho, e, nesse contexto, recusa, correspondem a direções lineares no espaço de ativação de uma LLM vem de uma linha de pesquisa apoiada na hipótese da representação linear \parencite{park2023linear} e sistematizada como ferramenta de análise por Representation Engineering \parencite{zou2023representation}, de onde o artigo herda as operações de ablation e adição de ativação (Seção~\ref{sec:proposta}). O antecedente mais direto é \textcite{arditi2024refusal}, que usa esse tipo de direção para defender que a recusa é mediada por uma única direção linear, resultado influente citado inclusive por trabalhos que tomam essa direção como alvo de ataques adversariais \parencite{yu2024robust}. É também o que este artigo contesta.
+
+Um outro trabalho, \textcite{pan2025hidden} (ICML 2025, não preprint), chega a uma conclusão parecida por um caminho diferente, analisando como a representação de segurança muda durante o ajuste fino de alinhamento. Os próprios autores citam esse trabalho como evidência independente a favor da sua tese (retomado na Seção~\ref{sec:comparacao}).
+
+% =====================================================================
+\section{Problema de pesquisa}
+
+O artigo pergunta, em três formas diferents, se um método baseado em gradiente encontra direções de recusa melhores que a diferença de médias usada até então, se essa recusa vem mesmo de uma única direção linear ou de algo mais complexo/elaborado no espaço semântico da rede neural em si, e se existem direções independentes entre si, acionáveis diretamente pelo texto de entrada, sem mexer nas ativações internas.
+
+A premissa em si desafiada é a de \textcite{arditi2024refusal}, de que uma única direção linear é responsável pela recusa, e o escopo fica restrito a modelos abertos, com acesso \emph{white-box} às ativações e porte moderado, até 14 bilhões de parâmetros (Seção~\ref{sec:metodologia}). É claro, ficam de fora os modelos fechados e proprietarios, nos quais esse tipo de analise não é possível.
+
+% =====================================================================
+\section{Proposta dos autores}
+\label{sec:proposta}
+
+Métodos anteriores e mais comuns na área, como o de \textcite{arditi2024refusal}, calculam a direção de recusa pela diferença entre a ativação média do modelo em prompts nocivos e inofensivos, a direção \emph{difference-in-means} (DIM), sem nenhuma otimização voltada ao efeito que deve produzir na prática.
+
+O RDO (\emph{Refusal Direction Optimization}) ajusta essa direção $r$ por gradiente em vez de estimá-la, até que, removida das ativações, o modelo volte a responder pedidos antes recusados e, somada a prompts inofensivos, passe a recusá-los, com um terceiro objetivo preservando o resto do comportamento; os três entram no treino como termos de perda otimizados ao mesmo tempo.
+
+Em vez de assumir que existe uma única direção de recusa, o passo seguinte, RCO, treina um conjunto de vetores ortogonais que juntos formam uma região do espaço de ativação, um cone poliédrico onde qualquer direção satisfaz as mesmas propriedades do RDO.
+
+Mesmo treinando uma direção RDO ortogonal à DIM, os autores notam que remover uma do modelo ainda afeta o quanto a outra aparece nas camadas seguintes, a observação inesperada por trás da independência representacional (RepInd). Como ortogonalidade não garante independência de causalidade nos modelos, o critério que propõem é em si mais rigoroso, sendo duas direções que só contam como independentes se remover uma não mudar o quanto a outra permanece presente nas ativações, camada a camada.
+
+% =====================================================================
+\section{Metodologia experimental}
+\label{sec:metodologia}
+% Orçamento total de c-g: ~2,5 páginas -- ajustar tamanho de e+f se
+% c, d, g (acima/abaixo) crescerem além do esperado quando preenchidas.
+
+A avaliação usa sete modelos de chat de até 14 bilhões de parâmetros, das famílias Qwen2.5, Gemma 2 e Llama 3, todos com acesso \emph{white-box} às ativações, e os dados vêm de bancos padrão de prompts nocivos e inofensivos (SALAD-Bench e Alpaca). Um detalhe que chama atenção no protocolo é que os alvos usados pra treinar o RDO vêm da própria direção DIM, não de um modelo externo independente.
+
+A Tabela~\ref{tab:hparams} resume os principais hiperparâmetros do treino.
+
+\begin{table}[htb]
+  \centering\small
+  \caption{Hiperparâmetros principais reportados no artigo.}
+  \label{tab:hparams}
+  \begin{tabularx}{\textwidth}{@{}lY@{}}
+    \toprule
+    \textbf{Parâmetro} & \textbf{Valor} \\
+    \midrule
+    Otimizador & AdamW, weight decay 0 \\
+    Taxa de aprendizado base & 0,01; reduzida em plateau a cada 5 batches (÷10, até 2x) \\
+    Batch size total / grad. accumulation & 16 / 16 passos \\
+    $\lambda_{\text{abl}}$, $\lambda_{\text{add}}$, $\lambda_{\text{ret}}$ (RDO) & 1,0 / 0,2 / 1,0 \\
+    Amostras Monte Carlo (RCO) & 16 por passo de acumulação (256 efetivas/batch) \\
+    $\lambda_{\text{ind}}$, corte de camadas (RepInd) & 200; primeiros 90\% das camadas \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+O sucesso de jailbreak é medido pela taxa de ataques bem-sucedidos (ASR) em vários benchmarks padrão da área, com um juiz automático, e efeitos colaterais são medidos em benchmarks gerais de capacidade do modelo, como TruthfulQA. Código e hiperparâmetros estão publicados, mas nenhuma seção reporta custo computacional, o que é uma pena porque impede comparar o custo de treinar uma direção por RDO com o de calcular um DIM, que é praticamente de graça.
+
+% =====================================================================
+% Orçamento: ~0,75 página.
+\section{Resultados e discussão}
+\label{sec:resultados}
+
+Na prática, sob o tipo de intervenção mais direto, que remove a direção das ativações, RDO e DIM acabam tendo desempenho parecido nos benchmarks de jailbreak; a vantagem do RDO aparece mais em efeitos colaterais menores sobre capacidades gerais do modelo, com uma redução considerável do erro induzido em benchmarks como o TruthfulQA, do que na taxa de sucesso de ataque em si. A extensão para múltiplas direções (RCO) funciona até certo ponto: cones de mais dimensões existem em todos os modelos testados, mas modelos maiores sustentam cones maiores, relação que os próprios autores tratam como hipótese plausível, não como algo derivado formalmente.
+
+Os experimentos voltados à independência representacional (RepInd) apontam na mesma direção geral, incluindo evidência de que essas direções são acessíveis a partir de manipulações no próprio texto de entrada, não só via intervenção direta nas ativações. Nem todos esses testes, porém, foram repetidos no conjunto inteiro de sete modelos, e nenhuma das tabelas de resultado traz intervalo de confiança ou múltiplas execuções, apesar de os próprios autores relatarem variância alta ao treinar essas direções (Seção~\ref{sec:metodologia}).
+
+% =====================================================================
+% Orçamento: ~0,75 página.
+\section{Comparação com a literatura}
+\label{sec:comparacao}
+
+O contraste mais direto é mesmo com \textcite{arditi2024refusal} (NeurIPS 2024), já que a conclusão central deles, de que uma única direção linear medeia toda a recusa, é exatamente o que esse artigo revisita. A diferença entre os dois é mais conceitual do que numérica (Seção~\ref{sec:resultados}), mas é o que permite estender o método pra múltiplas direções (RCO) e testar se elas são independentes (RepInd), coisa que Arditi et al. não têm.
+
+\textcite{pan2025hidden} (ICML 2025) chega a uma conclusão parecida, múltiplas direções em vez de uma só, mas por um caminho diferente, analisando como a representação de segurança muda durante o ajuste fino, em vez de propor um método de descoberta para qualquer modelo já treinado. O repertório de intervenções em si vem de \textcite{zou2023representation} e é usado sem alteração por DIM, RDO, RCO e RepInd; a contribuição deste artigo está em como a direção é obtida e validada, não nas intervenções.
+
+Fora das referências do próprio artigo, \textcite{yang2026beyond} (ainda preprint) testa a mesma pergunta em modelos de raciocínio com chain-of-thought, e encontra que a ativação sozinha reverte a recusa em só 39\% dos casos quando a cadeia de raciocínio é mantida, contra 70\% quando é removida, sugerindo um limite para toda essa linha, incluindo RDO/RCO/RepInd: em modelos com raciocínio explícito, a recusa também pode não estar só no espaço de ativação residual.
+
+% =====================================================================
+% Orçamento: curta.
+\section{Pontos fortes}
+
+O que mais impressiona é a cobertura experimental, com sete modelos de três famílias, três benchmarks de jailbreak e quatro de capacidade geral, reduzindo bastante a chance de o resultado depender de um único modelo ou métrica -- essa é a base concreta por trás do principal mérito do artigo, que é desafiar, com um método sistemático, uma conclusão citada com frequência na literatura de interpretabilidade e segurança de LLMs. Hiperparâmetros completos, código público e uma quantidade grande de figuras e tabelas nos apêndices tornam boa parte das afirmações verificável direto no artigo.
+
+% =====================================================================
+% Orçamento: ~1,5 página.
+\section{Limitações e críticas}
+
+O método dos autores usa a própria direção de base (DIM) para gerar os alvos que treinam o RDO (Seção~\ref{sec:metodologia}), o que é diferente da limitação que eles já admitem (Seção 7 do artigo) sobre os alvos serem iguais entre os métodos que propõem. O problema aqui é que a DIM, usada como referência na comparação, também ajuda a supervisionar o treino do RDO, e por isso o empate entre os dois na prática (Seção~\ref{sec:resultados}) pode não significar que acharam uma direção melhor -- só que o RDO aprendeu a imitar a DIM, já que os autores não testam alvos gerados de outra forma para descartar essa possibilidade.
+
+As tabelas de resultado trazem só um número por combinação de modelo e método, sem intervalo de confiança nem repetição com sementes diferentes, e isso pesa mais porque os próprios autores relatam variância alta ao treinar as direções mais restritivas, as RepInd (Seção~\ref{sec:metodologia}); se uma única direção já varia tanto, as diferenças de um ou dois pontos entre os dois métodos na Tabela 5 podem ser só ruído de uma execução. O teto de escala também incomoda, já que o artigo vai até 14 bilhões de parâmetros, contra os 13 modelos de até 72 bilhões que Arditi et al. (2024) testaram.
+
+Exigir que uma medida geométrica, o ângulo entre a direção e a ativação, não mude quando a outra é removida não deixa claro se isso basta para garantir independência de verdade, no sentido de causa e efeito -- e essa é justamente a forma como os autores definem independência (Seção~\ref{sec:proposta}). O experimento mais próximo de testar isso roda só no Gemma~2~2B e não compara com um controle óbvio, como direções aleatórias quaisquer, de modo que o ganho observado pode vir simplesmente de remover mais coisa do modelo, não da independência em si.
+
+Na prática, a remoção sempre atua sobre uma única direção por vez, mesmo quando ela vem de um cone com várias dimensões possíveis -- um detalhe técnico do cone de direções (Seção~\ref{sec:proposta}) que os autores nunca testam contornar removendo o espaço todo de uma vez só. Fica a dúvida se ter várias dimensões muda alguma coisa de fato, ou se só dá mais opções de direção única pra escolher.
+
+O procedimento mais caro do artigo, o de treinar as direções RepInd, exige 25 candidatos por direção, e nenhuma seção reporta quanto isso custa em termos computacionais (Seção~\ref{sec:metodologia}); sem esse número não dá pra comparar com o custo de calcular a DIM, que é praticamente de graça.
+
+Por fim, o Impact Statement do artigo, que diz que o foco em acesso \emph{white-box} torna os achados ``principalmente aplicáveis à defesa'', entra em tensão com a própria Seção 6.2, que usa esse mesmo acesso para treinar sufixos de texto que jailbreakam o modelo em 36\% das tentativas. Um sufixo, uma vez encontrado, não precisa mais desse acesso pra ser usado, só pra ser descoberto, e o artigo não testa se ele funciona em outros modelos.
+
+% =====================================================================
+% Orçamento: ~0,5 página.
+\section{Trabalhos futuros}
+
+Duas extensões dão pra testar pontos da seção anterior. Uma ataca a circularidade dos alvos: se o empate entre RDO e DIM vem de os alvos serem gerados pela própria direção DIM, treinar o RDO com alvos independentes (respostas humanas, ou geradas por outro modelo) deve abrir uma diferença maior de ASR -- o experimento mínimo é repetir o treino em um ou dois modelos trocando só a fonte dos alvos, mantendo o resto do protocolo (Seção~\ref{sec:metodologia}).
+
+A outra testa se o cone do RCO faz algo além de ampliar o menu de direções de posto~1: remover o subespaço inteiro gerado pela base $B$ deveria produzir ASR diferente do observado ao remover a melhor direção única do cone, o que dá para comparar nos mesmos modelos e benchmark usados na Figura~3 do artigo.
+
+% =====================================================================
+% Orçamento: curta.
+\section{Uso de ferramentas de Inteligência Artificial}
+
+Usamos o Claude para montar o esqueleto LaTeX do relatório, e redigir um primeiro rascunho de todas as seções. Claro, esse rascunho foi apenas uma base, e passou por revisão minha antes da entrega, com uma reescrita geral do texto. (Uso assim, apenas pra ter uma base pra construir o texto, quais ideias expor e etc, uso de IA pra fazer um "esqueleto" mais bem montado)
+
+% =====================================================================
+% Orçamento: curta.
+\section{Conclusão}
+
+Esse trabalho me deixou bem mais desconfiado de alegações de que um comportamento complexo de um LLM é controlado por uma única direção no espaço de ativação, e reforçou a importância de separar resultado reportado de explicação post-hoc dos autores. A parte mais relevante para minha formação em IA e Segurança foi perceber como decisões de protocolo aparentemente neutras, como reaproveitar a direção DIM para gerar os próprios alvos de treino do método que compete com ela, podem comprometer a força de uma conclusão.
+
+% =====================================================================
+\printbibliography[title=Referências]
+
+\end{document}
