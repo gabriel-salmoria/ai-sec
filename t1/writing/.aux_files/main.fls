@@ -1,5 +1,0 @@
-PWD /home/gabs/Documents/university/projects/ai-sec/t1/writing
-INPUT /usr/share/texmf-dist/web2c/texmf.cnf
-INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT main.tex
-OUTPUT .aux_files/main.log
