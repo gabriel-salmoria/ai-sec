@@ -13,14 +13,28 @@
 \documentclass[12pt,a4paper]{article}
 
 % ---- Codificação, idioma e fontes ----
-\usepackage[utf8]{inputenc}
-\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
-\DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow}}
-\DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
-\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
-\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
-\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
-\DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+% inputenc/\DeclareUnicodeCharacter só existem no pdfLaTeX; no LuaLaTeX (vimtex)
+% o mesmo mapeamento é feito com newunicodechar.
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+  \DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow}}
+  \DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
+  \DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+  \DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+  \DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+  \DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\else
+  \usepackage{newunicodechar}
+  \newunicodechar{→}{\ensuremath{\rightarrow}}
+  \newunicodechar{←}{\ensuremath{\leftarrow}}
+  \newunicodechar{↔}{\ensuremath{\leftrightarrow}}
+  \newunicodechar{×}{\ensuremath{\times}}
+  \newunicodechar{≥}{\ensuremath{\geq}}
+  \newunicodechar{≤}{\ensuremath{\leq}}
+  \newunicodechar{±}{\ensuremath{\pm}}
+\fi
 \usepackage[T1]{fontenc}
 \usepackage[brazil]{babel}
 \usepackage[a4paper,margin=2.5cm]{geometry}
