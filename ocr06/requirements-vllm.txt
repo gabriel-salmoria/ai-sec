@@ -1,0 +1,7 @@
+# Ambiente .venv-vllm: inferência (baseline e avaliação). O cartão do Chandra FP8
+# pede vLLM >= 0.17.
+vllm>=0.17
+pillow
+pyyaml
+requests
+tqdm

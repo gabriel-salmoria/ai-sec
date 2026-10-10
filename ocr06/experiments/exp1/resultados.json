@@ -1,0 +1,453 @@
+{
+  "config": {
+    "seed": 42,
+    "vocab": {
+      "coverage": "auto",
+      "min_expected": 2,
+      "heldout_val": 0.05,
+      "heldout_test": 0.1
+    },
+    "sampling": {
+      "alpha": 0.5,
+      "alpha_cidade": 0.5,
+      "p_invented": 0.0,
+      "p_upper": 0.3,
+      "templates": [
+        {
+          "id": "nome",
+          "weight": 0.35,
+          "pattern": "{nome}"
+        },
+        {
+          "id": "rotulo_nome",
+          "weight": 0.1,
+          "pattern": "Nome: {nome}"
+        },
+        {
+          "id": "cidade_uf",
+          "weight": 0.1,
+          "pattern": "{cidade} - {uf}"
+        },
+        {
+          "id": "cidade_barra",
+          "weight": 0.05,
+          "pattern": "{cidade}/{uf}"
+        },
+        {
+          "id": "naturalidade",
+          "weight": 0.1,
+          "pattern": "natural de {cidade} - {uf}"
+        },
+        {
+          "id": "nome_natural",
+          "weight": 0.1,
+          "pattern": "{nome}, natural de {cidade}"
+        },
+        {
+          "id": "filho",
+          "weight": 0.1,
+          "pattern": "filho de {nome_m} e de {nome_f}"
+        },
+        {
+          "id": "filha",
+          "weight": 0.1,
+          "pattern": "filha de {nome_m} e de {nome_f}"
+        }
+      ]
+    },
+    "experiment1": {
+      "alphas": [
+        0.3,
+        0.5,
+        1.0
+      ],
+      "budgets": [
+        10000,
+        40000,
+        100000
+      ],
+      "n_draws": 200000,
+      "n_images": 1000,
+      "contact_sheet": 40
+    }
+  },
+  "vocabulario": [
+    {
+      "imagens_treino": 10000,
+      "tipo": "prenome",
+      "K": 2871,
+      "total_no_lexico": 100511,
+      "cobertura_populacao": 0.8732434915187074,
+      "freq_minima": 4669.0,
+      "min_esperado_treino": 2.0000044134808146,
+      "reservados_val": 68,
+      "reservados_teste": 138
+    },
+    {
+      "imagens_treino": 10000,
+      "tipo": "sobrenome",
+      "K": 4571,
+      "total_no_lexico": 60627,
+      "cobertura_populacao": 0.8792987276780616,
+      "freq_minima": 84.0,
+      "min_esperado_treino": 2.005500681417961,
+      "reservados_val": 185,
+      "reservados_teste": 336
+    },
+    {
+      "imagens_treino": 10000,
+      "tipo": "cidade",
+      "K": 982,
+      "total_no_lexico": 5570,
+      "cobertura_populacao": 0.7496145375783415,
+      "freq_minima": 33594.0,
+      "min_esperado_treino": 2.0008274340658234,
+      "reservados_val": 0,
+      "reservados_teste": 0
+    },
+    {
+      "imagens_treino": 40000,
+      "tipo": "prenome",
+      "K": 10004,
+      "total_no_lexico": 100511,
+      "cobertura_populacao": 0.942819811936411,
+      "freq_minima": 751.0,
+      "min_esperado_treino": 2.000821402239956,
+      "reservados_val": 394,
+      "reservados_teste": 817
+    },
+    {
+      "imagens_treino": 40000,
+      "tipo": "sobrenome",
+      "K": 19336,
+      "total_no_lexico": 60627,
+      "cobertura_populacao": 0.95120645631808,
+      "freq_minima": 19.0,
+      "min_esperado_treino": 2.014178948597427,
+      "reservados_val": 881,
+      "reservados_teste": 1828
+    },
+    {
+      "imagens_treino": 40000,
+      "tipo": "cidade",
+      "K": 3814,
+      "total_no_lexico": 5570,
+      "cobertura_populacao": 0.9659599208897962,
+      "freq_minima": 6397.0,
+      "min_esperado_treino": 2.0002083559123993,
+      "reservados_val": 124,
+      "reservados_teste": 264
+    },
+    {
+      "imagens_treino": 100000,
+      "tipo": "prenome",
+      "K": 23550,
+      "total_no_lexico": 100511,
+      "cobertura_populacao": 0.9722985922895157,
+      "freq_minima": 217.0,
+      "min_esperado_treino": 2.002445074501891,
+      "reservados_val": 1002,
+      "reservados_teste": 2228
+    },
+    {
+      "imagens_treino": 100000,
+      "tipo": "sobrenome",
+      "K": 46086,
+      "total_no_lexico": 60627,
+      "cobertura_populacao": 0.9895134230416,
+      "freq_minima": 7.0,
+      "min_esperado_treino": 2.0819717277030456,
+      "reservados_val": 2163,
+      "reservados_teste": 4544
+    },
+    {
+      "imagens_treino": 100000,
+      "tipo": "cidade",
+      "K": 5550,
+      "total_no_lexico": 5570,
+      "cobertura_populacao": 0.9998816923844818,
+      "freq_minima": 1405.0,
+      "min_esperado_treino": 2.0071617454139985,
+      "reservados_val": 203,
+      "reservados_teste": 436
+    }
+  ],
+  "amostragem": [
+    {
+      "alpha": 0.3,
+      "tipo": "prenome",
+      "K": 16303,
+      "cobertura_populacao": 0.9609983417297048,
+      "frac_comum_alvo": 0.2095515435252832,
+      "frac_comum_empirica": 0.20897,
+      "frac_raro_empirica": 0.79103,
+      "massa_top10": 0.0054132550420620176,
+      "tipos_efetivos": 12557.403788749785,
+      "erro_abs_frac_comum": 0.0005815435252832235
+    },
+    {
+      "alpha": 0.3,
+      "tipo": "sobrenome",
+      "K": 28891,
+      "cobertura_populacao": 0.9697202729598788,
+      "frac_comum_alvo": 0.11108349065073338,
+      "frac_comum_empirica": 0.11132,
+      "frac_raro_empirica": 0.88868,
+      "massa_top10": 0.004071453429059099,
+      "tipos_efetivos": 22714.230060341204,
+      "erro_abs_frac_comum": 0.00023650934926662537
+    },
+    {
+      "alpha": 0.3,
+      "tipo": "cidade",
+      "K": 4901,
+      "cobertura_populacao": 0.9916689890597019,
+      "frac_comum_alvo": 0.4053663096232223,
+      "frac_comum_empirica": 0.40588,
+      "frac_raro_empirica": 0.59412,
+      "massa_top10": 0.009169121760382811,
+      "tipos_efetivos": 4146.303463782847,
+      "erro_abs_frac_comum": 0.0005136903767777312
+    },
+    {
+      "alpha": 0.5,
+      "tipo": "prenome",
+      "K": 10004,
+      "cobertura_populacao": 0.942819811936411,
+      "frac_comum_alvo": 0.43786250610471555,
+      "frac_comum_empirica": 0.43842,
+      "frac_raro_empirica": 0.56158,
+      "massa_top10": 0.022579931314486244,
+      "tipos_efetivos": 5935.426957688224,
+      "erro_abs_frac_comum": 0.0005574938952844222
+    },
+    {
+      "alpha": 0.5,
+      "tipo": "sobrenome",
+      "K": 19336,
+      "cobertura_populacao": 0.95120645631808,
+      "frac_comum_alvo": 0.28587491917230157,
+      "frac_comum_empirica": 0.28586,
+      "frac_raro_empirica": 0.71414,
+      "massa_top10": 0.022209692061614935,
+      "tipos_efetivos": 11091.292956778734,
+      "erro_abs_frac_comum": 1.4919172301564032e-05
+    },
+    {
+      "alpha": 0.5,
+      "tipo": "cidade",
+      "K": 3814,
+      "cobertura_populacao": 0.9659599208897962,
+      "frac_comum_alvo": 0.5727635432227637,
+      "frac_comum_empirica": 0.574395,
+      "frac_raro_empirica": 0.425605,
+      "massa_top10": 0.026159420812833137,
+      "tipos_efetivos": 2904.3676484418856,
+      "erro_abs_frac_comum": 0.0016314567772363064
+    },
+    {
+      "alpha": 1.0,
+      "tipo": "prenome",
+      "K": 2651,
+      "cobertura_populacao": 0.8672390232322547,
+      "frac_comum_alvo": 0.9225383248680823,
+      "frac_comum_empirica": 0.922265,
+      "frac_raro_empirica": 0.077735,
+      "massa_top10": 0.2113540081085699,
+      "tipos_efetivos": 584.6014310815852,
+      "erro_abs_frac_comum": 0.00027332486808229195
+    },
+    {
+      "alpha": 1.0,
+      "tipo": "sobrenome",
+      "K": 2517,
+      "cobertura_populacao": 0.8492851189910237,
+      "frac_comum_alvo": 0.9420235514565805,
+      "frac_comum_empirica": 0.94281,
+      "frac_raro_empirica": 0.057190000000000005,
+      "massa_top10": 0.284858888898618,
+      "tipos_efetivos": 278.93914627016915,
+      "erro_abs_frac_comum": 0.0007864485434195823
+    },
+    {
+      "alpha": 1.0,
+      "tipo": "cidade",
+      "K": 1692,
+      "cobertura_populacao": 0.8406502879081266,
+      "frac_comum_alvo": 0.9517782567065294,
+      "frac_comum_empirica": 0.9519399999999999,
+      "frac_raro_empirica": 0.048060000000000005,
+      "massa_top10": 0.20153621696208157,
+      "tipos_efetivos": 571.9671005261705,
+      "erro_abs_frac_comum": 0.00016174329347051764
+    }
+  ],
+  "linhas": {
+    "train": {
+      "linhas": 20000,
+      "templates": {
+        "nome_natural": 2000,
+        "filho": 1978,
+        "cidade_barra": 1007,
+        "rotulo_nome": 2039,
+        "cidade_uf": 1994,
+        "nome": 6984,
+        "filha": 2018,
+        "naturalidade": 1980
+      },
+      "comprimento_medio": 34.2581,
+      "comprimento_max": 106,
+      "tokens_por_tipo_e_bucket": {
+        "cidade/comum": 3973,
+        "cidade/raro": 3008,
+        "prenome/comum": 11356,
+        "prenome/raro": 14791,
+        "sobrenome/comum": 10385,
+        "sobrenome/raro": 26049
+      },
+      "exemplos": [
+        "VALDIVIA TRINDADE CORTINA, NATURAL DE SOLÂNEA",
+        "FILHO DE UELINTON JACINTO LUNGUINHO HUSSEIN E DE MAYARA DO AMPARO CASTANHO",
+        "Giberto Lucci, natural de Rolante",
+        "EUSÉBIO/CE",
+        "NOME: BRASILIA SILMARA CATALAN GOMES",
+        "Cabo Frio - RJ",
+        "NOME: CLESIA KESSY MANTEY DE ATHAYDE",
+        "SADRAQUE DUMAS ROCHA",
+        "Araguaína/TO",
+        "Cosmópolis/SP",
+        "Claudenilson Perotti Arpini",
+        "Nilsom Sá Pardal",
+        "filha de Inaldo Varanda e de Eloana Silviane Herculano",
+        "Jucelaine Ketrin Porfirio",
+        "NATURAL DE CASTRO ALVES - BA"
+      ]
+    },
+    "test": {
+      "linhas": 20000,
+      "templates": {
+        "naturalidade": 1963,
+        "filho": 2104,
+        "rotulo_nome": 1954,
+        "nome": 7008,
+        "cidade_uf": 1972,
+        "nome_natural": 2019,
+        "filha": 2022,
+        "cidade_barra": 958
+      },
+      "comprimento_medio": 34.5668,
+      "comprimento_max": 105,
+      "tokens_por_tipo_e_bucket": {
+        "cidade/comum": 3966,
+        "cidade/raro": 2946,
+        "prenome/comum": 11664,
+        "prenome/raro": 14748,
+        "sobrenome/comum": 10647,
+        "sobrenome/raro": 26302
+      },
+      "exemplos": [
+        "NATURAL DE DUQUE DE CAXIAS - RJ",
+        "filho de Otávio Andersom Stella Mondoni Collor e de Mônica Rosineide Foscarini",
+        "Nome: Josieli Lavado",
+        "NATURAL DE PALHOÇA - SC",
+        "filho de Enéias Sarmento Mattes Ferraz e de Raqueli Romanelli Moterle",
+        "Daivid Wellison Sandrini Froz",
+        "PALMEIRA DOS ÍNDIOS - AL",
+        "Iracemápolis - SP",
+        "Plínio Takemura Iwamoto, natural de Caracaraí",
+        "Ana Thaisa Shida",
+        "Jonas Zamprogna Trivilin",
+        "Adilson Merlo Neto",
+        "natural de Casimiro de Abreu - RJ",
+        "Nome: Marina Edileuza Cereda Machado Rutz",
+        "natural de Valparaíso - SP"
+      ]
+    },
+    "reservados_teste": 2909,
+    "reservados_sorteaveis_no_treino": 0,
+    "reservados_sorteados_no_teste": 2909,
+    "reservados_sorteados_no_treino": 0
+  },
+  "geracao": {
+    "n": 1000,
+    "segundos": 28.0,
+    "imagens_por_segundo": 35.69,
+    "rejeicoes_contraste": 2,
+    "bytes": 18864852,
+    "templates": {
+      "naturalidade": 109,
+      "nome": 355,
+      "nome_natural": 78,
+      "cidade_uf": 90,
+      "rotulo_nome": 102,
+      "filho": 113,
+      "filha": 112,
+      "cidade_barra": 41
+    },
+    "niveis_degradacao": {
+      "leve": 359,
+      "medio": 446,
+      "forte": 195
+    },
+    "tokens_por_bucket": {
+      "comum": 1330,
+      "raro": 2216
+    },
+    "bytes_por_imagem": 18864.852,
+    "imagens_por_segundo_por_worker": 2.230625,
+    "altura_media": 79.392,
+    "largura_media": 772.118
+  },
+  "bressay": {
+    "linhas_mantidas": 26135,
+    "descartadas": {
+      "riscado": 2292,
+      "ilegivel": 1663
+    },
+    "por_split": {
+      "train": {
+        "paginas": 647,
+        "linhas": 16915,
+        "linhas_com_nome": 1341,
+        "entidades": {
+          "prenome/comum": 435,
+          "sobrenome/comum": 368,
+          "sobrenome/raro": 641,
+          "cidade/comum": 32,
+          "prenome/raro": 505,
+          "cidade/raro": 17
+        }
+      },
+      "val": {
+        "paginas": 154,
+        "linhas": 4074,
+        "linhas_com_nome": 320,
+        "entidades": {
+          "sobrenome/raro": 157,
+          "prenome/comum": 111,
+          "sobrenome/comum": 72,
+          "prenome/raro": 107,
+          "cidade/raro": 4,
+          "cidade/comum": 6
+        }
+      },
+      "test": {
+        "paginas": 199,
+        "linhas": 5146,
+        "linhas_com_nome": 377,
+        "entidades": {
+          "prenome/raro": 135,
+          "prenome/comum": 112,
+          "sobrenome/raro": 182,
+          "sobrenome/comum": 104,
+          "cidade/comum": 13,
+          "cidade/raro": 2
+        }
+      }
+    },
+    "altura_media": 21.883830919302394,
+    "largura_media": 530.8532663316583,
+    "sintetico_altura_media": 79.392,
+    "sintetico_largura_media": 772.118
+  }
+}

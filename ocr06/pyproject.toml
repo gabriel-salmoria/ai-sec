@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ocr06"
+version = "0.1.0"
+description = "OCR-06: coleta de estatísticas de nomes (IBGE/TSE/RFB) e geração de dataset sintético manuscrito"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pillow",
+    "opencv-python",
+    "augraphy",
+    "pyyaml",
+    "fonttools",
+    "requests",
+    "tqdm",
+    "matplotlib",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

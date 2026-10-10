@@ -1,5 +1,4 @@
-% Compilação (mesma configuração do vimtex):
-%   latexmk -pdf -lualatex -shell-escape -interaction=nonstopmode \
+% Compilação (mesma configuração do vimtex): latexmk -pdf -lualatex -shell-escape -interaction=nonstopmode \
 %           -synctex=1 -auxdir=.aux_files -bibtex main.tex
 
 \documentclass[article,11pt,oneside,a4paper,brazil,section=TITLE]{abntex2}
@@ -176,6 +175,7 @@ A primeira foi na defesa contra o \emph{prompt injection}. A versão inicial ins
 A segunda foi na exportação. O JSON exportado não tinha chaves de API, que é o critério explícito da atividade, mas tinha dados pessoais reais no campo \texttt{pinData}, resto de um teste feito com dados próprios. Chave de API não é a única coisa que vaza em um \emph{export}, qualquer estado embutido no fluxo vai junto com o arquivo, sendo dados internos de execução como pinned data.
 
 O fluxo ainda tem limitações que valem registro (Principalmente abertas para uso de análise do trabalho). A verificação de idade acontece depois do LLM, então dados de menores são processados antes de serem separados; não há tratamento de erro para indisponibilidade do Groq, e as regras de detecção são heurísticas, com falsos positivos. As duas primeiras são simples de corrigir e ficam como um imaginário trabalho seguinte.
+
 
 \bibliography{referencias}
 

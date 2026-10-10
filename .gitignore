@@ -1,2 +1,10 @@
 .aux_files/
 *.synctex.*
+.venv/
+__pycache__/
+*.egg-info/
+data/
+augraphy_cache/
+logs/
+.venv*/
+ocr06/models/

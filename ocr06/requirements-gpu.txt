@@ -1,0 +1,13 @@
+# Ambiente .venv-gpu: treino LoRA + fusão + quantização FP8.
+# Sem versões fixas de propósito: o setup instala as mais novas e registra as
+# versões efetivas em logs/versoes-gpu.txt. Qwen3.5 (base do Chandra 2) exige
+# um transformers recente; o setup confere isso carregando a config do modelo.
+torch
+transformers
+accelerate
+peft
+llmcompressor
+pillow
+pyyaml
+requests
+tqdm

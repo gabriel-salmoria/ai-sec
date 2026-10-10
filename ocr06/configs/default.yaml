@@ -1,0 +1,203 @@
+# Configuração do pipeline OCR-06:
+#   léxico (IBGE/TSE/RFB) -> fontes -> BRESSAY -> dataset sintético -> mistura final.
+# Caminhos relativos à pasta ocr06/.
+
+seed: 42
+
+paths:
+  raw: data/raw            # downloads brutos (TSE/RFB são apagados após o processamento)
+  lexicon: data/lexicon    # tabelas agregadas (sem nomes completos de pessoas)
+  fonts: data/fonts
+  synthetic: data/synthetic
+  bressay: data/bressay    # linhas do BRESSAY já limpas (labels.jsonl por split)
+  final: data/final        # treino/val/teste no formato de conversa do VLM
+  experiments: experiments
+
+sources:
+  # Prenomes do Censo 2010 (IBGE). A API do IBGE só devolve o top-20 por consulta,
+  # então a lista completa vem do espelho do Brasil.IO; o top-20 da API é usado para validar.
+  prenomes_url: https://data.brasil.io/dataset/genero-nomes/nomes.csv.gz
+  ibge_ranking_url: https://servicodados.ibge.gov.br/api/v2/censos/nomes/ranking
+  municipios_url: https://servicodados.ibge.gov.br/api/v1/localidades/municipios
+  # Censo 2022, tabela 4709, variável 93 (população residente) por município.
+  populacao_url: https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/-1/variaveis/93?localidades=N6[all]
+  tse:
+    url: https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_{year}.zip
+    years: [2024, 2020]
+  rfb:
+    webdav_url: https://arquivos.receitafederal.gov.br/public.php/webdav/
+    share_token: YggdBLfdninEJX9
+    month: latest          # ou "AAAA-MM"
+    shards: [2, 3]         # Socios{N}.zip; 2..9 têm ~50 MB cada, 0 e 1 ~300 MB
+  keep_raw: false          # true mantém os .zip de TSE/RFB em disco
+
+lexicon:
+  prenome_min_freq: 20             # o IBGE já suprime nomes com < 20 ocorrências
+  prenome_typo_ratio: 1.0e-4       # descarta variante a 1 edição do nome-grupo e com freq/grupo abaixo disso
+  sobrenome_min_count: 5           # sobrenomes mais raros que isso são descartados (privacidade + ruído)
+  common_mass: 0.80                # "comum" = tokens que somam os primeiros 80% da massa; o resto é "raro"
+  invented:
+    n_prenomes: 5000
+    n_sobrenomes: 5000
+    ngram_order: 3
+    min_len: 4
+    max_len: 12
+    plausibility_quantile: 0.20    # log-prob média mínima = quantil 20% dos nomes reais
+
+vocab:
+  # Nomes entram por ordem de frequência real até o corte abaixo.
+  coverage: auto           # auto = maior lista em que cada nome do treino aparece >= min_expected
+                           # vezes (esperado); ou uma fração da população, ex.: 0.95
+  min_expected: 2
+  heldout_val: 0.05        # fração dos nomes RAROS do vocabulário reservada só p/ validação
+  heldout_test: 0.10       # ... só p/ teste (nunca vistos no treino, como pede a proposta)
+
+sampling:
+  alpha: 0.5               # temperatura sobre a frequência: q_i ∝ p_i^alpha
+  alpha_cidade: 0.5
+  p_invented: 0.0          # fração de nomes inventados (sem população); 0 = só nomes reais
+  p_upper: 0.30            # linha inteira em caixa alta (comum em formulários)
+  templates:
+    - {id: nome,          weight: 0.35, pattern: "{nome}"}
+    - {id: rotulo_nome,   weight: 0.10, pattern: "Nome: {nome}"}
+    - {id: cidade_uf,     weight: 0.10, pattern: "{cidade} - {uf}"}
+    - {id: cidade_barra,  weight: 0.05, pattern: "{cidade}/{uf}"}
+    - {id: naturalidade,  weight: 0.10, pattern: "natural de {cidade} - {uf}"}
+    - {id: nome_natural,  weight: 0.10, pattern: "{nome}, natural de {cidade}"}
+    - {id: filho,         weight: 0.10, pattern: "filho de {nome_m} e de {nome_f}"}
+    - {id: filha,         weight: 0.10, pattern: "filha de {nome_m} e de {nome_f}"}
+
+fonts:
+  font_holdout_frac: 0.0   # >0 separa fontes exclusivas do teste (generalização de estilo)
+  families:
+    - Caveat
+    - Dancing Script
+    - Indie Flower
+    - Kalam
+    - Homemade Apple
+    - Shadows Into Light
+    - Reenie Beanie
+    - Nothing You Could Do
+    - Cedarville Cursive
+    - La Belle Aurore
+    - Dawning of a New Day
+    - Sacramento
+    - Allura
+    - Parisienne
+    - Alex Brush
+    - Mr Dafoe
+    - Satisfy
+    - Kristi
+    - Zeyada
+    - Waiting for the Sunrise
+    - Just Another Hand
+    - Gochi Hand
+    - Patrick Hand
+    - Architects Daughter
+    - Nanum Pen Script
+    - Sedgwick Ave
+    - Marck Script
+    - Handlee
+    - Covered By Your Grace
+    - Gloria Hallelujah
+    - Annie Use Your Telescope
+    - Bad Script
+    - Yellowtail
+    - Cookie
+
+render:
+  font_size: [36, 60]
+  word_space: [0.7, 1.6]          # multiplicador da largura do espaço da fonte
+  baseline_jitter: 3              # px por palavra
+  word_rotation: 2.0              # graus por palavra
+  slant: [-0.30, 0.15]            # cisalhamento horizontal (itálico)
+  elastic_alpha: [0.0, 3.0]       # deslocamento elástico em px
+  elastic_sigma: 6.0
+  p_stroke_change: 0.4            # dilata/erode o traço
+  height: [48, 112]               # altura final da linha em px
+  margin: [4, 24]
+  ink_colors:                     # BGR: preto, azul caneta, azul escuro, sépia
+    - [20, 20, 20]
+    - [140, 50, 20]
+    - [90, 30, 10]
+    - [40, 60, 90]
+
+degrade:
+  # Probabilidade de cada nível; cada nível escala as probabilidades das augmentations.
+  levels: {leve: 0.35, medio: 0.45, forte: 0.20}
+  scale: {leve: 0.4, medio: 0.8, forte: 1.2}
+  min_contrast: 35                # diferença mínima de cinza entre fundo e tinta
+  max_retries: 3
+  jpeg_quality: 92                # formato de saída
+
+generate:
+  name: v0
+  n: {train: 40000, val: 2000, test: 4000}
+  workers: auto            # auto = nº de CPUs
+
+bressay:
+  record: 11637681         # registro no Zenodo (CC-BY 4.0)
+  # Marcações das transcrições: @@???@@ ilegível, --xxx-- riscado ilegível,
+  # --texto-- riscado legível, ##texto## / $$texto$$ sobrescrito/subscrito.
+  drop_illegible: true     # descarta linhas com trecho ilegível
+  crossed_out: drop_line   # drop_line | keep_text | remove
+  name_stopwords: [Brasil, Deus, Estado, Estados, Governo, Constituição, Federal,
+                   República, Internet, Nação, Igreja, Ministério, Senado, Congresso,
+                   Lei, Leis, Nova, Novo, Norte, Sul, Leste, Oeste, União, Artes, Grade,
+                   Guerra, Mundial, Saúde, Primeira, Segunda, Terceira, Sétima, Máxima,
+                   Urbana, Nacional, Educação, Cultura, Justiça, Ciência, Ciências,
+                   América, Carta, Magna, Coringa]
+
+mix:
+  max_real_fraction: 0.45  # BRESSAY < 45% do treino (a POC exige predominância sintética)
+
+experiment1:
+  alphas: [0.3, 0.5, 1.0]
+  budgets: [10000, 40000, 100000]  # tamanhos de treino para a tabela de vocabulário
+  n_draws: 200000                 # sorteios de token por alpha (sem renderizar)
+  n_images: 1000                  # imagens para tempo/tamanho/inspeção
+  contact_sheet: 40
+
+# ----------------------------------------------------------------- modelo (servidor)
+model:
+  base: datalab-to/chandra-ocr-2                   # BF16, usado no treino (fine-tune do Qwen3.5-4B)
+  base_fp8: dangvansam/chandra-ocr-2-FP8-dynamic   # FP8 de terceiros, só p/ baseline no vLLM
+  dataset: v0                                      # data/final/<dataset>/
+  run: lora_v0                                     # models/<run>/{adapter,merged,merged-fp8}
+  chandra_prompt_file: configs/prompt_chandra_ocr.txt  # prompt nativo do Chandra (saída em HTML)
+
+  vllm:
+    max_model_len: 4096
+    gpu_memory_utilization: 0.85
+    max_num_seqs: 128
+    max_tokens: 192                # linhas são curtas; corta respostas que desandam
+    min_pixels: 3136               # mesmos limites do cartão do Chandra FP8
+    max_pixels: 6291456
+
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    # Camadas lineares do modelo de linguagem que recebem LoRA (o encoder de visão fica
+    # congelado). Nomes não encontrados no modelo são ignorados com aviso.
+    target: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj,
+             in_proj_qkvz, in_proj_ba, in_proj_qkv, in_proj_z, in_proj_b, in_proj_a, out_proj]
+
+  train:
+    epochs: 2
+    lr: 2.0e-4
+    batch_size: 8                  # por GPU
+    grad_accum: 2                  # lote efetivo = 16
+    warmup_ratio: 0.03
+    eval_steps: 250
+    max_val: 1000                  # linhas de validação avaliadas a cada eval_steps
+    early_stopping_patience: 3     # avaliações sem melhora na loss de validação
+    dataloader_workers: 4
+    pilot_steps: 100               # scripts/run.sh piloto
+
+  quant:
+    # Mesma receita do chandra-ocr-2-FP8-dynamic (llm-compressor), p/ comparação justa.
+    scheme: FP8_DYNAMIC
+    ignore: ['re:.*lm_head', 're:visual.*', 're:model.visual.*', 're:.*mlp.gate$',
+             're:.*embed_tokens$', 're:.*shared_expert_gate$', 're:.*mlp\.shared_expert$',
+             're:.*linear_attn.*']
