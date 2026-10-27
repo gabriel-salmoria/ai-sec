@@ -116,7 +116,7 @@ def main() -> None:
         learning_rate=tc["lr"],
         num_train_epochs=tc["epochs"],
         max_steps=tc["pilot_steps"] if pilot else -1,
-        warmup_ratio=tc["warmup_ratio"],
+        warmup_steps=tc["warmup_ratio"],  # < 1 = fração dos passos (warmup_ratio saiu do transformers 5.x)
         lr_scheduler_type="cosine",
         bf16=True,
         logging_steps=10,
