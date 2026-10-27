@@ -2,12 +2,12 @@
 # Roda o OCR-06. Sem argumentos roda tudo (dados + modelo).
 #
 #   scripts/run.sh                     tudo
-#   scripts/run.sh dados               lexicon fonts bressay generate mix exp1
+#   scripts/run.sh dados               lexicon fonts bressay generate mix exp1 exp2
 #   scripts/run.sh modelo              baseline treino quantizar avaliacao
 #   scripts/run.sh teste-rapido        checa a parte de GPU em minutos (32 linhas + 100 passos)
 #   scripts/run.sh <etapa> [...]       etapas avulsas, na ordem dada
 #
-# Etapas de dados (CPU):  lexicon fonts bressay generate mix exp1
+# Etapas de dados (CPU):  lexicon fonts bressay generate mix exp1 exp2
 # Etapas de modelo (GPU): baseline  piloto  treino  quantizar  avaliacao  metricas
 #   baseline   Chandra BF16 e FP8, sem treino, com o nosso prompt e o nativo (vLLM)
 #   piloto     100 passos de treino só para medir velocidade e memória
@@ -29,7 +29,7 @@ export HF_HOME="${HF_HOME:-$PWD/models/hf_cache}"
 export TOKENIZERS_PARALLELISM=false
 mkdir -p logs models
 
-DATA_STEPS=(lexicon fonts bressay generate mix exp1)
+DATA_STEPS=(lexicon fonts bressay generate mix exp1 exp2)
 MODEL_STEPS=(baseline treino quantizar avaliacao)
 
 STEPS=()
@@ -40,7 +40,7 @@ for a in "$@"; do
         dados) STEPS+=("${DATA_STEPS[@]}") ;;
         modelo) STEPS+=("${MODEL_STEPS[@]}") ;;
         teste-rapido) STEPS+=(teste-rapido) ;;
-        lexicon|fonts|bressay|generate|mix|exp1|baseline|piloto|treino|quantizar|avaliacao|metricas)
+        lexicon|fonts|bressay|generate|mix|exp1|exp2|baseline|piloto|treino|quantizar|avaliacao|metricas)
             STEPS+=("$a") ;;
         *) erro "etapa desconhecida: $a (veja o cabeçalho de scripts/run.sh)"; exit 2 ;;
     esac
@@ -63,7 +63,7 @@ etapa() {
     local s="$1"
     titulo "$s  ($(date +%H:%M:%S))"
     case "$s" in
-        lexicon|fonts|bressay|exp1) dados "$s" ;;
+        lexicon|fonts|bressay|exp1|exp2) dados "$s" ;;
         generate|mix) dados "$s" ${NAME:+--name "$NAME"} ;;
         baseline)
             # Um processo por modelo: o vLLM só libera a GPU quando o processo termina.

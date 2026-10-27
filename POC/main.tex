@@ -135,7 +135,7 @@
 % RESUMO (*)
 % ---------------------------------------------------------------
 \begin{abstract}
-Sistemas de OCR baseados em Modelos de Linguagem Visual (VLMs) ainda erram bastante na leitura de nomes próprios raros em documentos manuscritos: o modelo tende a trocar o nome lido por uma palavra mais comum que viu no treinamento. Em acervos e cartórios isso obriga o operador a corrigir a transcrição à mão, e o modelo não aprende nada com a correção. Esta PoC faz o \emph{fine-tuning} com LoRA do Chandra OCR 2, um modelo aberto de OCR derivado do Qwen3.5-4B, usando linhas manuscritas reais do BRESSAY e linhas sintéticas com nomes, sobrenomes e municípios montados a partir de dados públicos do IBGE, do TSE e da Receita Federal. Uma memória de correções (RAG com FAISS) continua prevista como complemento, condicionada ao cronograma. Nesta segunda entrega o relatório descreve a solução técnica: arquitetura, fluxo, preparação dos dados, estratégia de avaliação e controles de segurança. O pipeline de dados está implementado e foi validado no Experimento 1. O treino ainda não começou porque o acesso ao servidor com GPU não foi liberado, mas os scripts de baseline, treino, quantização e avaliação já estão prontos para rodar quando o acesso sair.
+Sistemas de OCR baseados em Modelos de Linguagem Visual (VLMs) ainda erram bastante na leitura de nomes próprios raros em documentos manuscritos: o modelo tende a trocar o nome lido por uma palavra mais comum que viu no treinamento. Em acervos e cartórios isso obriga o operador a corrigir a transcrição à mão, e o modelo não aprende nada com a correção. Esta PoC faz o \emph{fine-tuning} com LoRA do Chandra OCR 2, um modelo aberto de OCR derivado do Qwen3.5-4B, usando linhas manuscritas reais do BRESSAY e linhas sintéticas com nomes, sobrenomes e municípios montados a partir de dados públicos do IBGE, do TSE e da Receita Federal. Nesta terceira entrega o pipeline de dados está completo e o código de treino e de inferência está implementado, incluindo a normalização de altura das linhas e controles na saída do modelo que marcam linhas para revisão humana. A execução do Chandra depende do servidor com GPU do laboratório, ainda não liberado, então o Experimento 2 testou em CPU o pré-processamento, os controles e o cálculo das métricas sobre os conjuntos de teste reais, com predições simuladas de erro conhecido no lugar do modelo. Esses testes acharam três problemas antes da primeira rodada no servidor: um limite de tamanho que cortaria 28\% das respostas corretas, uma regra de injeção que marcava linhas legítimas e um erro de alinhamento que contava a menos os nomes pulados pelo modelo. Baseline, treino e FP8 são a próxima etapa (Experimento 3).
 \end{abstract}
 
 \textbf{Palavras-chave:} OCR, Modelos de Linguagem Visual, \emph{Fine-Tuning}, LoRA, Dados Sintéticos, Privacidade, LGPD.
@@ -165,7 +165,7 @@ O objetivo é reduzir a taxa de erro de caracteres e de palavras (CER e WER) na 
 \begin{itemize}
     \item Gerar um conjunto sintético de linhas manuscritas com nomes, sobrenomes e municípios brasileiros, priorizados pela frequência real na população.
     \item Fazer o \emph{fine-tuning} com LoRA de um VLM de OCR aberto (Chandra OCR 2) com esse conjunto e com as linhas do BRESSAY, e medir o ganho em nomes que não aparecem no treino.
-    \item Como complemento, implementar uma memória de correções (RAG) e medir quanto ela acrescenta ao modelo ajustado.
+    \item Como complemento, implementar uma memória de correções (RAG) e medir quanto ela acrescenta ao modelo ajustado. Esse objetivo ficou fora do cronograma atual (Seção~\ref{subsec:pendencias}).
 \end{itemize}
 
 % --------------------------------------------------------------
@@ -197,11 +197,11 @@ O modelo escolhido foi o Chandra OCR 2 \cite{chandra2026}, da Datalab, um VLM fe
 % --------------------------------------------------------------
 \subsection{Explicabilidade em Modelos de IA}
 
-Para o operador do cartório, o que importa saber é em quais palavras o modelo está inseguro e de qual parte da imagem cada palavra saiu. A abordagem prevista tem duas partes:
+Para o operador do cartório, o que importa saber é em quais palavras o modelo está inseguro e de qual parte da imagem cada palavra saiu. A abordagem tem duas partes:
 
 \begin{itemize}
-    \item \textbf{Confiança por palavra:} o vLLM devolve a log-probabilidade de cada \emph{token} gerado. Agregando por palavra (o menor valor entre os \emph{tokens} da palavra), a interface pode marcar os nomes com confiança baixa para revisão humana, em vez de pedir que o operador confira a linha inteira. Com isso também dá para medir se a confiança está calibrada, ou seja, se as palavras com confiança baixa são as que o modelo mais erra.
-    \item \textbf{Mapas de saliência:} para uma amostra pequena, mapas de atenção do decodificador sobre os \emph{tokens} visuais, ou Grad-CAM \cite{gradcam2017} aplicado ao encoder de visão, mostram qual região da linha sustentou cada nome. Pesos de atenção nem sempre explicam a decisão do modelo, então eles servem só de apoio visual, conferidos com um teste simples (o mapa de um nome tem que cair sobre o nome na imagem).
+    \item \textbf{Confiança por palavra:} o vLLM devolve a log-probabilidade de cada \emph{token} gerado. Agregando por palavra (o menor valor entre os \emph{tokens} da palavra), dá para marcar os nomes com confiança baixa para revisão humana, em vez de pedir que o operador confira a linha inteira. Isso já está implementado no \texttt{guard.py} (Seção~\ref{sec:threat-model}). Com o modelo rodando, também dá para medir se a confiança está calibrada, ou seja, se as palavras com confiança baixa são as que o modelo mais erra.
+    \item \textbf{Mapas de saliência:} para uma amostra pequena, mapas de atenção do decodificador sobre os \emph{tokens} visuais, ou Grad-CAM \cite{gradcam2017} aplicado ao encoder de visão, devem mostrar qual região da linha sustentou cada nome. Pesos de atenção nem sempre explicam a decisão do modelo, então eles servem só de apoio visual, conferidos com um teste simples (o mapa de um nome tem que cair sobre o nome na imagem).
 \end{itemize}
 
 A interface de correção completa está fora do escopo, então nesta PoC as duas saídas ficam disponíveis pela API e em arquivos de análise.
@@ -241,8 +241,8 @@ O trabalho dá certo se o modelo ajustado ler melhor os nomes que nunca viu no t
 
 \begin{itemize}
     \item Implementar o gerador de linhas manuscritas sintéticas com nomes do IBGE, do TSE e da Receita, degradadas com o Augraphy (feito, Seção~\ref{subsec:dados}).
-    \item Fazer o \emph{fine-tuning} com LoRA do Chandra OCR 2 com o sintético e o BRESSAY, e gerar uma versão quantizada em FP8 para servir com o vLLM (scripts prontos, aguardando o servidor).
-    \item Como suporte secundário, acoplar a memória FAISS de correções e medir o impacto dela sobre o modelo ajustado.
+    \item Fazer o \emph{fine-tuning} com LoRA do Chandra OCR 2 com o sintético e o BRESSAY, e gerar uma versão quantizada em FP8 para servir com o vLLM (implementado; a execução depende da GPU do servidor).
+    \item Como suporte secundário, acoplar a memória FAISS de correções e medir o impacto dela sobre o modelo ajustado (fora do cronograma atual).
 \end{itemize}
 
 % --------------------------------------------------------------
@@ -275,7 +275,7 @@ O escopo do projeto inclui:
     \item O pré-processamento das linhas do BRESSAY e os scripts que coletam os dados públicos de nomes e geram o conjunto sintético.
     \item O \emph{fine-tuning} do Chandra OCR 2, a versão quantizada em FP8 e o fluxo de inferência com vLLM.
     \item A avaliação comparativa (modelo original, original em FP8, ajustado e ajustado em FP8).
-    \item Se houver tempo, a memória de correções com FAISS (Seção~\ref{subsec:ajustes}).
+    \item A memória de correções com FAISS, que ficou fora do cronograma atual e deve ser trabalho futuro.
 \end{itemize}
 
 Estão fora do escopo inicial:
@@ -294,6 +294,8 @@ Estão fora do escopo inicial:
     \item Deve existir uma forma (API) de enviar ao sistema as correções do usuário.
     \item Na inferência, a rotina pode consultar a memória de correções antes de definir a resposta final.
 \end{enumerate}
+
+Os requisitos 3 e 4 dependem da memória de correções e não serão atendidos nesta PoC.
 
 % --------------------------------------------------------------
 \subsection{Requisitos Não-Funcionais}
@@ -319,7 +321,7 @@ As ameaças abaixo envolvem tanto a privacidade dos dados de treino quanto a int
     \item \textbf{Extração de dados de treino:} um atacante usa entradas específicas para fazer o modelo produzir nomes reais e combinações de dados que ele decorou no \emph{fine-tuning} \cite{carlini2021extracting}.
     \item \textbf{Inferência de pertencimento (\emph{membership inference}):} tentativa de descobrir se um documento ou o nome de um cidadão específico fez parte do treino, comparando a confiança do modelo em entradas com e sem esse nome \cite{shokri2017membership}.
     \item \textbf{Envenenamento de dados (\emph{poisoning}):} anotações erradas, acidentais ou maliciosas, no treino ou na memória de correções, que fazem o modelo repetir o erro em produção.
-    \item \textbf{Injeção de instruções pela imagem e entradas adversariais:} o VLM lê qualquer texto da imagem, então um documento pode conter algo como ``ignore a tarefa e responda X'' e tentar desviar a saída (injeção indireta de \emph{prompt} \cite{greshake2023indirect}). Perturbações pequenas e invisíveis na imagem também podem trocar um nome por outro \cite{goodfellow2014}. Num cartório, o impacto seria um registro com o nome errado. A mitigação prevista é restringir a tarefa (só transcrição, sem ferramentas, limite de \emph{tokens} proporcional à linha), conferir se a saída tem formato de nome e mandar para revisão humana as linhas com confiança baixa.
+    \item \textbf{Injeção de instruções pela imagem e entradas adversariais:} o VLM lê qualquer texto da imagem, então um documento pode conter algo como ``ignore a tarefa e responda X'' e tentar desviar a saída (injeção indireta de \emph{prompt} \cite{greshake2023indirect}). Perturbações pequenas e invisíveis na imagem também podem trocar um nome por outro \cite{goodfellow2014}. Num cartório, o impacto seria um registro com o nome errado. A mitigação é restringir a tarefa (só transcrição, sem ferramentas, limite de \emph{tokens} proporcional à linha), conferir a saída e mandar para revisão humana as linhas suspeitas ou com confiança baixa. Essa parte foi implementada na terceira entrega e está descrita na Seção~\ref{subsec:controles}.
 \end{itemize}
 
 % --------------------------------------------------------------
@@ -328,7 +330,7 @@ As ameaças abaixo envolvem tanto a privacidade dos dados de treino quanto a int
 \begin{enumerate}
     \item \textbf{Compatibilidade de software no servidor:} o Chandra 2 usa a arquitetura Qwen3.5, que só é suportada em versões recentes do \texttt{transformers} e do vLLM, e as camadas de atenção linear dependem de \emph{kernels} específicos (sem eles o treino roda, só que bem mais devagar). O \texttt{setup.sh} confere se as bibliotecas reconhecem o modelo antes de qualquer etapa, e o \texttt{run.sh teste-rapido} mede a velocidade real em poucos minutos.
     \item \textbf{Viés de representatividade:} os sobrenomes vêm de candidatos (TSE) e sócios de empresas (Receita), que não representam a população de forma uniforme, e as fontes manuscritas são 33 fontes digitais. O modelo pode ficar melhor em alguns grupos de nomes e estilos de letra do que em outros. Isso é acompanhado separando o erro por grupo de frequência na avaliação.
-    \item \textbf{Atraso na infraestrutura:} o acesso ao servidor com GPU não foi liberado até esta entrega. Nenhuma etapa com o modelo (baseline, treino, avaliação) pôde ser executada, e o cronograma foi reorganizado (Seção~\ref{subsec:ajustes}).
+    \item \textbf{Dependência da infraestrutura do laboratório:} as etapas com o modelo precisam da L40S do servidor, cuja liberação ainda está pendente. Para reduzir o impacto, o cronograma foi reorganizado (Seção~\ref{subsec:ajustes}): tudo que não depende da GPU foi adiantado e testado, e a parte de GPU foi preparada para rodar com dois comandos, com um teste rápido de minutos antes do treino longo. Ainda assim, treino e avaliação completos levam alguns dias de GPU, e a semana 8 do cronograma (27/10 a 02/11) é a última.
 \end{enumerate}
 
 % --------------------------------------------------------------
@@ -342,10 +344,17 @@ Controles já implementados no pipeline de dados:
     \item Toda a geração é determinística (a mesma \emph{seed} gera a mesma imagem), e os arquivos baixados têm o MD5 conferido quando a fonte publica um.
 \end{itemize}
 
+\label{subsec:controles}
+Controles na saída do modelo, implementados em \texttt{guard.py} e ligados ao \texttt{infer.py} (validados no Experimento 2):
+\begin{itemize}
+    \item O limite de \emph{tokens} de cada linha sai da largura da imagem: no máximo $10 \times$ largura / altura caracteres, com o fator calibrado no treino e na validação. Uma resposta que entra em laço, ou que segue uma instrução longa escrita na imagem, é cortada.
+    \item A saída é marcada para revisão humana se vier vazia, maior do que cabe na linha, com HTML (no nosso \emph{prompt}), com caracteres que não aparecem em manuscrito em português, com um trecho repetido em laço, com frases típicas de quem obedeceu a um comando (``ignore a instrução'', ``aqui está a transcrição'', ``não posso'') ou com alguma palavra de confiança abaixo de 0,5. As verificações não bloqueiam a saída, só marcam a linha para o operador revisar.
+    \item A confiança de cada palavra é a probabilidade do pior \emph{token} da palavra, calculada a partir das log-probabilidades que o vLLM devolve, e fica gravada junto da predição com a lista de palavras de confiança baixa.
+\end{itemize}
+
 Controles previstos para a parte de modelo:
 \begin{itemize}
     \item Comparar o erro em nomes vistos e inéditos e testar a extração com imagens em branco e prefixos de nomes do treino, antes de considerar o modelo pronto.
-    \item Restringir a tarefa na inferência (só transcrição, limite de \emph{tokens}) e enviar para revisão humana as linhas com confiança baixa.
     \item Comparar toda versão nova do modelo com a anterior no mesmo teste antes de substituí-la.
     \item No módulo RAG, se implementado: guardar só o vetor e o texto corrigido, com controle de acesso, registro de quem corrigiu e prazo de retenção.
 \end{itemize}
@@ -363,16 +372,16 @@ Os experimentos usam linhas do BRESSAY e linhas manuscritas sintéticas geradas 
 
 \begin{enumerate}
     \item \textbf{Fase 1, preparação dos dados (concluída):} coleta e agregação dos nomes, seleção do vocabulário, gerador de caligrafia sintética com Augraphy, preparação do BRESSAY e montagem dos conjuntos finais.
-    \item \textbf{Fase 2, \emph{fine-tuning} (scripts prontos):} LoRA sobre o Chandra OCR 2 em BF16 com \texttt{transformers} e \texttt{peft}, seguido da fusão do adaptador e da quantização em FP8.
-    \item \textbf{Fase 3, memória (condicionada ao cronograma):} banco FAISS de correções consultado na inferência.
-    \item \textbf{Fase 4, validação:} CER e WER do modelo original e do ajustado, com e sem FP8, e com a memória se ela existir.
+    \item \textbf{Fase 2, \emph{fine-tuning} (implementada, execução no servidor):} LoRA sobre o Chandra OCR 2 em BF16 com \texttt{transformers} e \texttt{peft}, seguido da fusão do adaptador e da quantização em FP8.
+    \item \textbf{Fase 3, memória (fora do cronograma atual):} banco FAISS de correções consultado na inferência.
+    \item \textbf{Fase 4, validação (métricas implementadas e verificadas):} CER e WER do modelo original e do ajustado, com e sem FP8, e com a memória se ela existir.
 \end{enumerate}
 
 % --------------------------------------------------------------
 \subsection{Arquitetura Proposta}
 \label{subsec:arquitetura}
 
-A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CPU e gera os conjuntos de treino e teste, e a parte de modelo roda no servidor com GPU.
+A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CPU e gera os conjuntos de treino e teste, e a parte de modelo roda no servidor com GPU. Na terceira entrega entraram dois componentes: a normalização de altura, aplicada às imagens tanto no treino quanto na inferência, e os controles de saída, aplicados a cada transcrição antes da avaliação.
 
 \begin{figure}[H]
 \centering
@@ -401,9 +410,9 @@ A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CP
   \end{scope}
   % modelo
   \node[box, below=1.3cm of bressay] (chandra) {Chandra OCR 2\\(BF16)};
-  \node[box, right=0.5cm of chandra] (lora) {LoRA\\(transformers + peft)};
+  \node[box, right=0.5cm of chandra] (lora) {Normalização +\\LoRA (peft)};
   \node[box, right=0.5cm of lora] (fp8) {Fusão + FP8\\(llm-compressor)};
-  \node[box, right=0.5cm of fp8] (vllm) {Inferência\\(vLLM)};
+  \node[box, right=0.5cm of fp8] (vllm) {Normalização +\\vLLM + controles\\de saída};
   \node[box, below=0.5cm of vllm] (aval) {Avaliação\\CER / WER};
   \node[plan, below=0.5cm of fp8] (rag) {Memória RAG\\(FAISS, planejada)};
   \node[box, below=0.5cm of chandra] (base) {Baseline:\\Chandra FP8};
@@ -420,7 +429,7 @@ A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CP
     \node[lane, fit=(chandra)(vllm)(aval)(base)(rag)(bot), label={[font=\scriptsize\bfseries]below left:Modelo (GPU, servidor)}] {};
   \end{scope}
 \end{tikzpicture}
-\caption{Arquitetura da PoC. Caixas tracejadas são componentes planejados que ainda não foram implementados.}
+\caption{Arquitetura da PoC. A normalização de altura e os controles de saída entraram na terceira entrega. Caixas tracejadas são componentes planejados que ainda não foram implementados.}
 \label{fig:arquitetura}
 \end{figure}
 
@@ -435,7 +444,8 @@ O fluxo completo roda com \texttt{scripts/run.sh} e segue a ordem abaixo. Cada e
     \item \textbf{bressay:} baixa o BRESSAY do Zenodo, confere o MD5, extrai as linhas, aplica a política de limpeza e marca os nomes que aparecem nas redações.
     \item \textbf{generate:} seleciona o vocabulário, sorteia linhas de texto, renderiza, degrada com o Augraphy e descarta imagens em que a tinta ficou apagada demais.
     \item \textbf{mix:} junta sintético e BRESSAY no formato de conversa do modelo e marca, em cada nome do teste, se ele aparece no treino.
-    \item \textbf{baseline / treino / quantizar / avaliacao:} rodam no servidor (Seção~\ref{subsec:aval}).
+    \item \textbf{exp1 / exp2:} validação dos dados e testes de integração sem modelo (Seção~\ref{sec:avaliacao}).
+    \item \textbf{baseline / treino / quantizar / avaliacao:} rodam no servidor (Seção~\ref{subsec:aval}). No treino e na inferência cada imagem passa pela mesma normalização de altura (\texttt{preprocess.py}), e na inferência cada saída passa pelos controles de \texttt{guard.py} antes de ser gravada.
 \end{enumerate}
 
 % --------------------------------------------------------------
@@ -454,6 +464,8 @@ Inferência & vLLM \cite{vllm2023} & Inferência em lote rápida, com suporte ao
 Quantização & FP8 dinâmico com \texttt{llm-compressor} \cite{llmcompressor} & Não precisa de dados de calibração e usa a mesma receita do FP8 público do Chandra \cite{chandrafp8}. \\
 Dados sintéticos & Pillow + OpenCV + Augraphy \cite{augraphy2022} & Renderização com fontes manuscritas e degradação de documento escaneado. \\
 Versionamento & Git + scripts determinísticos & Substitui o DVC previsto na entrega 1: os dados são regenerados a partir das fontes públicas com a mesma \emph{seed}. \\
+Pré-processamento & Pillow (\texttt{preprocess.py}) & Normaliza a altura das linhas para 64~px no treino e na inferência. Usa só Pillow, que já existe nos ambientes de treino e do vLLM. \\
+Controles de saída & Python puro (\texttt{guard.py}) & Confiança por palavra e sinais de revisão, sem dependência do modelo, então dá para testar em CPU. \\
 Memória (planejada) & FAISS & Busca vetorial em memória, sem servidor extra. \\
 \bottomrule
 \end{tabular}
@@ -501,7 +513,28 @@ As métricas são as da Seção~\ref{sec:objetivos}. O CER e o WER da linha usam
 \subsection{Situação Atual, Dificuldades e Ajustes de Escopo}
 \label{subsec:ajustes}
 
-O acesso ao servidor com GPU não foi liberado até esta entrega. Por isso nenhum baseline, treino ou avaliação com o modelo foi executado, e o cronograma original (baseline na semana 1, primeiro \emph{fine-tuning} na semana 3) atrasou. Como a parte de dados não depende de GPU, ela foi antecipada e concluída, e a parte de modelo ficou pronta em código para rodar com dois comandos quando o acesso sair. O que mudou em relação à entrega anterior:
+O cronograma original começava pelo baseline (semana 1) e pelo primeiro \emph{fine-tuning} (semana 3). Essas etapas dependem da GPU do servidor do laboratório, que ainda não foi liberada, então a ordem mudou: a parte de dados foi feita primeiro, na segunda entrega, e nesta entrega o código de treino e inferência foi terminado e testado no que não depende do modelo. A parte de GPU roda com dois comandos (\texttt{setup.sh} e \texttt{run.sh}).
+
+\subsubsection{Evolução desde a segunda entrega}
+Nesta etapa entraram:
+\begin{itemize}
+    \item \textbf{Normalização de altura} (\texttt{preprocess.py}): resolve o problema de resolução levantado no Experimento 1. Toda linha, real ou sintética, é redimensionada para 64~px de altura (dois blocos visuais do Chandra), mantendo a proporção e com largura máxima de 2.048~px. A mesma função é usada pelo \texttt{train.py} e pelo \texttt{infer.py}, então o modelo vê as imagens na mesma escala no treino e no teste.
+    \item \textbf{Controles de saída} (\texttt{guard.py}): limite de \emph{tokens} pela largura da linha, confiança por palavra e sinais de revisão (Seção~\ref{sec:threat-model}). O \texttt{infer.py} agora pede as log-probabilidades ao vLLM e grava, junto de cada predição, se a linha vai para revisão e por quê.
+    \item \textbf{Experimento 2} (\texttt{experiment2.py}, \texttt{run.sh exp2}): testes em CPU do pré-processamento, dos controles e do cálculo das métricas, com predições simuladas no lugar do modelo.
+\end{itemize}
+
+Os componentes se ligam por arquivos JSONL. O \texttt{mix} grava imagem, texto e posição de cada nome, o \texttt{infer.py} lê esses arquivos, normaliza a imagem, chama o vLLM, passa a saída pelo \texttt{guard.py} e grava a predição, e o \texttt{evaluate.py} lê as predições e calcula as métricas por nome. No Experimento 2 o vLLM foi trocado por predições simuladas e o resto rodou como vai rodar no servidor.
+
+\subsubsection{Problemas encontrados e soluções}
+\begin{itemize}
+    \item \textbf{Resolução das linhas do BRESSAY:} no teste, 90\% das linhas reais tinham um único bloco visual de altura, contra 2 a 4 nas sintéticas. A normalização para 64~px resolve isso nas duas fontes. A altura ainda vai ser conferida no baseline, comparando o CER do Chandra no BRESSAY com 32, 64 e 96~px.
+    \item \textbf{Limite de \emph{tokens} cortando respostas certas:} a primeira versão do limite usava 4 caracteres por altura de linha e cortaria 28\% das respostas corretas do teste. O fator foi recalculado olhando só treino e validação, onde o maior valor foi 9,8, e subiu para 10.
+    \item \textbf{Falsos positivos na detecção de injeção:} a regra marcava qualquer palavra começada por ``ignor-'' e pegou 16 linhas das redações (``ignoram'', ``ignorantes''). Agora ela exige ``ignor-'' seguido de instrução, tarefa ou comando, e nenhuma linha correta do teste é marcada.
+    \item \textbf{Nome pulado contado como meio certo:} a avaliação alinhava predição e gabarito caractere a caractere. Quando o nome some da predição, esse alinhamento casava o nome com letras soltas das palavras vizinhas (``Amarildo'' com o ``a'' de ``filha''), e o erro saía menor do que era. O alinhamento dos nomes passou a ser feito por palavra (Experimento 2).
+\end{itemize}
+
+\subsubsection{Mudanças de escopo acumuladas}
+O que mudou em relação à primeira entrega:
 
 \begin{itemize}
     \item \textbf{Modelo:} de um Qwen-VL genérico para o Chandra OCR 2, que já é de OCR, e do Unsloth para \texttt{transformers} + \texttt{peft}.
@@ -509,11 +542,9 @@ O acesso ao servidor com GPU não foi liberado até esta entrega. Por isso nenhu
     \item \textbf{Prioridade dos nomes:} em vez de sortear toda a cauda longa, o vocabulário segue a frequência real e corta os nomes que apareceriam menos de duas vezes.
     \item \textbf{Nomes inventados:} desligados, pelo mesmo motivo.
     \item \textbf{Gerador de estilo (One-DM/DiffusionPen):} descartado. A caligrafia vem de fontes digitais e do Augraphy.
-    \item \textbf{Memória RAG:} passou a ser condicionada ao tempo que sobrar depois do treino e da avaliação.
+    \item \textbf{Memória RAG:} saiu do cronograma atual e deve ficar como trabalho futuro, para priorizar o treino e a avaliação.
     \item \textbf{Dataset do Registro Civil:} não foi disponibilizado, então o teste fica no BRESSAY e no sintético, como a proposta previa.
 \end{itemize}
-
-Uma dificuldade apareceu na preparação dos dados: as linhas do BRESSAY são muito pequenas (altura mediana de 20~px, contra 79~px em média nas sintéticas). O Experimento 1 discute isso e o ajuste previsto.
 
 \begin{table}[H]
 \centering
@@ -524,13 +555,25 @@ Semana & Atividade & Situação \\
 \midrule
 1--4 (08/09--05/10) & Definição da PoC e primeira entrega & Feito \\
 5 (06--12/10) & Pipeline de dados, BRESSAY, Experimento 1, scripts de treino e avaliação & Feito \\
-6 (13--19/10) & Acesso ao servidor, \texttt{setup.sh}, teste rápido, baseline do Chandra & Depende do acesso \\
-7 (20--26/10) & Treino LoRA, fusão, FP8, avaliação & Planejado \\
-8 (27/10--02/11) & Testes de memorização, análise, relatório e demonstração (RAG se houver tempo) & Planejado \\
+6 (13--19/10) & Apresentação intermediária e preparação do baseline & Feito \\
+7 (20--26/10) & Normalização de altura, controles de saída, Experimento 2 (sem modelo), terceira entrega & Feito \\
+8 (27/10--02/11) & \texttt{setup.sh}, teste rápido, baseline, treino LoRA, FP8, avaliação, testes de memorização e de injeção, relatório final & Planejado \\
 \bottomrule
 \end{tabular}
-\caption{Cronograma revisado.}
+\caption{Cronograma revisado na terceira entrega. A memória RAG saiu do cronograma (Seção~\ref{subsec:pendencias}).}
 \end{table}
+
+\subsubsection{Atividades pendentes}
+\label{subsec:pendencias}
+Em ordem de prioridade, a partir da liberação do servidor:
+\begin{enumerate}
+    \item \texttt{scripts/setup.sh} e \texttt{run.sh teste-rapido}: confere se as bibliotecas reconhecem o Chandra e mede velocidade e memória em poucos minutos. É também a primeira execução real do código novo do \texttt{infer.py} (log-probabilidades e limite por linha), que até agora só foi testado com uma saída falsa do vLLM.
+    \item Baseline do Chandra BF16 e FP8 nos dois testes, com os dois \emph{prompts}, e a escolha da altura de normalização (32, 64 ou 96~px) pelo CER no BRESSAY.
+    \item Treino LoRA, fusão, FP8 e avaliação do modelo ajustado (Experimento 3).
+    \item Testes de memorização e de injeção pela imagem com o modelo: imagens em branco e com prefixos de nomes do treino, e linhas com instruções escritas. O gerador dessas imagens reaproveita o renderizador do sintético e é a próxima parte a ser implementada.
+    \item Revisão manual da lista de nomes marcados no BRESSAY (\texttt{nomes\_para\_revisao.csv}).
+\end{enumerate}
+A semana 8 concentra quase todas as etapas com GPU. Se o acesso atrasar mais, a prioridade é o baseline e um primeiro treino, e o FP8 e os testes de memorização seriam os primeiros a ficar de fora. A memória de correções (RAG com FAISS) fica como trabalho futuro, e com ela a métrica 2 (\emph{hit rate} da memória).
 
 % --------------------------------------------------------------
 \subsection{Critérios de Aceitação da PoC}
@@ -548,7 +591,7 @@ Semana & Atividade & Situação \\
 \section{Avaliação Experimental}
 \label{sec:avaliacao}
 
-Os experimentos seguem as fases da metodologia. O Experimento 1 valida o pipeline de dados e foi executado num computador pessoal (16 núcleos, sem GPU). O Experimento 2 compara o Chandra antes e depois do \emph{fine-tuning} e depende do servidor. O desenho dele está pronto, mas ainda não há resultados.
+Os experimentos seguem as fases da metodologia. O Experimento 1 valida o pipeline de dados e o Experimento 2 testa, sem o modelo, a normalização das imagens, a avaliação e os controles de saída. Os dois rodam em CPU e foram executados num computador pessoal (16 núcleos, 7~GB de RAM). O Experimento 3 compara o Chandra antes e depois do \emph{fine-tuning} e roda no servidor. O desenho e os scripts dele estão prontos.
 
 % --------------------------------------------------------------
 \subsection{Experimento 1: Validação do Pipeline de Dados}
@@ -635,19 +678,58 @@ Municípios & 1,0 & 1.692 & 95,2 & 4,8 & 20,2\% \\
 
 \textbf{Nomes inéditos nos testes.} Depois da mistura, o teste sintético tem 4.000 linhas com 13.841 nomes, dos quais 8.629 não aparecem em nenhuma linha do treino (3.348 linhas têm pelo menos um nome inédito). No teste do BRESSAY a heurística marcou 548 nomes, mas só 38 são inéditos, em 35 linhas: os autores citados nas redações de teste (Freud, Bauman, Machado de Assis) também aparecem nas redações de treino ou no vocabulário sintético. Com tão poucos casos, a medida de nomes inéditos no BRESSAY serve só como indicação, e a evidência principal para a métrica 3 vem do teste sintético.
 
-\textbf{Diferença de resolução.} As linhas do BRESSAY têm altura mediana de 20~px (5\% a 95\% entre 15 e 38~px) e largura mediana de 481~px, em tons de cinza. As sintéticas foram geradas entre 48 e 112~px de altura (média de 79~px). O Chandra divide a imagem em blocos de 32~px, então uma linha de 20~px vira menos de um bloco de altura, e o modelo veria as linhas reais e sintéticas em escalas bem diferentes. Esse problema não tinha aparecido no planejamento. O ajuste previsto é redimensionar as duas fontes para a mesma faixa de altura antes de entrarem no modelo, e a faixa vai ser escolhida no baseline, comparando o CER do Chandra original no BRESSAY com e sem o redimensionamento.
+\textbf{Diferença de resolução.} As linhas do BRESSAY têm altura mediana de 20~px (5\% a 95\% entre 15 e 38~px) e largura mediana de 481~px, em tons de cinza. As sintéticas foram geradas entre 48 e 112~px de altura (média de 79~px). O Chandra divide a imagem em blocos de 32~px, então uma linha de 20~px vira menos de um bloco de altura, e o modelo veria as linhas reais e sintéticas em escalas bem diferentes. Esse problema não tinha aparecido no planejamento. O ajuste, implementado na terceira entrega, é redimensionar as duas fontes para a mesma altura antes de entrarem no modelo.
 
 % --------------------------------------------------------------
-\subsection{Experimento 2: Baseline e \emph{Fine-Tuning} do Chandra}
+\subsection{Experimento 2: Testes de Integração sem Modelo}
+\label{subsec:exp2}
 
-O Experimento 2 roda no servidor, com a L40S. Primeiro o Chandra original e o FP8 público são avaliados nos dois testes com os dois \emph{prompts}. Depois o LoRA é treinado com o conjunto da Seção~\ref{subsec:dados} (rank 16, $\alpha_{\text{LoRA}} = 32$, taxa de aprendizado $2 \cdot 10^{-4}$, lote efetivo de 16, até 2 épocas com parada antecipada), fundido ao modelo e quantizado em FP8, e as duas versões são avaliadas da mesma forma. Serão medidos:
+O Experimento 2 testa o que vem antes e depois do modelo: o pré-processamento das imagens, os controles de saída e o cálculo das métricas. No lugar das transcrições do Chandra entram predições montadas a partir do próprio gabarito, com erros colocados de propósito, então o valor esperado de cada métrica é conhecido. O teste usa os dois conjuntos de teste reais (4.000 linhas sintéticas e 5.146 do BRESSAY), roda com \texttt{scripts/run.sh exp2} em cerca de um minuto e grava os resultados em \texttt{experiments/exp2\_integracao/}. Ele não mede a qualidade do OCR, que é medida no Experimento 3.
+
+\textbf{Normalização de altura.} A Tabela~\ref{tab:norm} mostra as linhas antes e depois da normalização. Antes, 90\% das linhas do BRESSAY tinham um bloco visual de altura. Depois, quase todas as linhas dos dois conjuntos têm dois, e as 14 que ficaram com um são linhas muito compridas, encolhidas pelo limite de largura. O custo é que o BRESSAY é ampliado cerca de 2,7 vezes e a linha mediana passa de 16 para 98 blocos visuais, o que deve deixar mais lentos a inferência no BRESSAY e também o treino, já que o BRESSAY é 30\% das linhas de treino.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{Sintético} & \multicolumn{2}{c}{BRESSAY} \\
+& Antes & Depois & Antes & Depois \\
+\midrule
+Altura mediana (px) & 80 & 64 & 24 & 64 \\
+Altura p5--p95 (px) & 51--110 & -- & 16--65 & -- \\
+Linhas com 1 bloco de altura & 0 & 2 & 4.641 & 12 \\
+Linhas com 2 blocos & 2.039 & 3.998 & 429 & 5.134 \\
+Linhas com 3 ou 4 blocos & 1.961 & 0 & 76 & 0 \\
+Blocos visuais por linha (mediana) & 48 & 32 & 16 & 98 \\
+\bottomrule
+\end{tabular}
+\caption{Linhas dos conjuntos de teste antes e depois da normalização para 64~px. Um bloco visual do Chandra tem 32~px de lado. O Experimento 1 mediu o BRESSAY inteiro, por isso a mediana lá é 20~px.}
+\label{tab:norm}
+\end{table}
+
+\textbf{Limite de tamanho.} Com o fator inicial de 4 caracteres por altura de linha, 28\% dos gabaritos de teste passavam do limite (1.157 sintéticos e 1.443 do BRESSAY). Com o fator 10 nenhum passa, e a menor folga foi de 6 caracteres. No BRESSAY, que tem linhas mais longas, o limite em caracteres fica quase sempre acima do teto de 192 \emph{tokens} do vLLM, que acaba sendo o limite de fato.
+
+\textbf{Métricas.} Para conferir o \texttt{evaluate.py}, cada gabarito foi copiado com um tipo de erro: sem erro, dentro de HTML (como responde o \emph{prompt} nativo do Chandra), um caractere trocado em cada nome, um caractere trocado só nos nomes inéditos, um caractere removido em cada nome, um caractere inserido em cada nome e o nome inteiro removido. Com sete cenários e dois testes são 14 casos, e em todos o CER medido por grupo (todos os nomes, comuns, raros, vistos e inéditos) bateu com o esperado.
+
+Isso só aconteceu depois de uma correção. No cenário do nome removido, o CER dos nomes saía 97\% em vez de 100\%, porque o alinhamento caractere a caractere casava o nome que sumiu com letras das palavras vizinhas. Como um modelo de OCR pular um nome é um erro comum, a métrica estava contando a menos justamente um dos erros que interessam. O alinhamento dos nomes passou a ser feito por palavra. A troca criou alguns casos de borda, como nomes que ocupam só parte de uma palavra (``Coruripe/AL'', ``Byung-Chul'') e cidades com ``de'' no meio (``Rio de Janeiro''), que também foram corrigidos.
+
+Com um caractere trocado por nome, o CER dos nomes no teste sintético foi 14,3\% (os nomes têm 7 letras em média) e nenhum nome ficou exato. Com erro só nos inéditos, os nomes vistos ficaram com 100\% de acerto e os inéditos com 0\%, então a marcação de visto ou inédito feita no \texttt{mix} chega correta ao \texttt{evaluate.py}.
+
+\textbf{Controles de saída.} Os 9.146 gabaritos de teste também passaram pelo \texttt{guard.py} como se fossem predições, para ver quantas linhas corretas iriam para revisão sem motivo. Na primeira versão foram 16, todas pela regra de injeção, e depois da correção nenhuma. As verificações também rodaram sobre saídas defeituosas montadas a partir de 915 linhas de teste: vazias, repetidas em laço, com HTML, com uma frase de quem obedeceu a um comando, com caracteres estranhos e longas demais. Todas foram marcadas, menos 78 das longas, que vinham de linhas curtas em que quatro cópias do texto ainda cabem no limite. Como as regras e as saídas defeituosas foram escritas por mim, isso mostra só que o código faz o que deveria. Quanto ele pega das saídas ruins do modelo de verdade vai ser medido no Experimento 3.
+
+A extração da confiança foi testada com uma saída falsa no formato que o vLLM devolve (para cada \emph{token} gerado, um dicionário com as log-probabilidades dos candidatos). Para ``Maria da Silva - SC'', com log-probabilidade $-2$ no \emph{token} ``Sil'', a função ignorou os candidatos não escolhidos, deu 0,14 de confiança para ``Silva'' e mais de 0,7 para as outras palavras, e só ``Silva'' foi marcada. Sem log-probabilidades na saída, ela devolve uma lista vazia em vez de falhar.
+
+\subsection{Experimento 3: Baseline e \emph{Fine-Tuning} do Chandra}
+
+O Experimento 3 roda no servidor, com a L40S. Primeiro o Chandra original e o FP8 público são avaliados nos dois testes com os dois \emph{prompts}. Depois o LoRA é treinado com o conjunto da Seção~\ref{subsec:dados} (rank 16, $\alpha_{\text{LoRA}} = 32$, taxa de aprendizado $2 \cdot 10^{-4}$, lote efetivo de 16, até 2 épocas com parada antecipada), fundido ao modelo e quantizado em FP8, e as duas versões são avaliadas da mesma forma. Serão medidos:
 
 \begin{itemize}
     \item CER e WER da linha, CER por tipo e grupo de nome e acerto exato em nomes inéditos, para os quatro modelos e os dois testes;
     \item velocidade de treino, memória de pico e tempo de inferência por linha.
 \end{itemize}
 
-[PREENCHER NA ENTREGA 3: análise dos resultados do experimento 2]
+Também entram neste experimento a escolha da altura de normalização (32, 64 ou 96~px) e os testes de memorização e de injeção com o modelo. Cada predição já sai gravada com a confiança por palavra e os sinais de revisão, então dá para medir também se as linhas marcadas para revisão são as que o modelo mais erra.
 
 % ==============================================================
 % SEÇÃO 8 — DISCUSSÃO (*)
@@ -738,7 +820,7 @@ O Experimento 2 roda no servidor, com a L40S. Primeiro o Chandra original e o FP
 \section{Checklist de Conformidade (LGPD / Ética / Segurança)}
 \label{sec:checklist}
 
-A checklist abaixo cobre o estado atual da PoC: o pipeline de dados implementado e o treino e a inferência planejados. O que depende de resultado do modelo aparece como lacuna até o Experimento 2.
+A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho de treino e inferência e os controles de saída. O que depende de resultado do modelo aparece como lacuna até o Experimento 3.
 
 % --------------------------------------------------------------
 \subsection{Lei Geral de Proteção de Dados (LGPD)}
@@ -758,7 +840,7 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados implementado
 
     \item \textbf{Segurança (Art. 46)} \\
     Atendimento: os downloads têm o \emph{checksum} conferido, os dados ficam fora do repositório de código e o treino é majoritariamente sintético para reduzir a memorização de dados reais. \\
-    Lacuna: a resistência a extração e a inferência de pertencimento ainda não foi testada (Experimento 2), e o servidor ainda não foi avaliado quanto a controle de acesso.
+    Lacuna: a resistência a extração e a inferência de pertencimento ainda não foi testada (Experimento 3), e o servidor ainda não foi avaliado quanto a controle de acesso.
 
     \item \textbf{Não discriminação (Art. 6º, IX)} \\
     Atendimento: o erro é medido separado por grupo de frequência (nomes comuns e raros) e por tipo de nome, para detectar se o modelo piora em grupos menos representados. \\
@@ -774,12 +856,12 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados implementado
     Lacuna: a API de inferência e a memória de correções não têm autenticação, perfis de acesso nem registro de quem consultou ou corrigiu.
 
     \item \textbf{Integridade e Reprodutibilidade} \\
-    Atendimento: MD5 do BRESSAY conferido, geração determinística por \emph{seed} (verificado: as mesmas imagens com 2 e com 6 processos), configuração única versionada no Git e versões das bibliotecas registradas pelo \texttt{setup.sh}. \\
+    Atendimento: MD5 do BRESSAY conferido, geração determinística por \emph{seed} (verificado: as mesmas imagens com 2 e com 6 processos), configuração única versionada no Git e versões das bibliotecas registradas pelo \texttt{setup.sh}. O cálculo das métricas foi conferido com predições de erro conhecido em 14 cenários (Experimento 2). \\
     Lacuna: os pesos dos modelos baixados do Hugging Face não têm o \emph{hash} conferido contra uma referência.
 
     \item \textbf{Proteções Técnicas} \\
-    Atendimento: partição por autor no BRESSAY, nomes reservados para o teste e limite de 45\% de dados reais no treino. \\
-    Lacuna: as defesas contra injeção pela imagem e entradas adversariais (restrição da saída, verificação de formato, revisão por confiança) ainda não foram implementadas.
+    Atendimento: partição por autor no BRESSAY, nomes reservados para o teste e limite de 45\% de dados reais no treino. Na saída, limite de \emph{tokens} pela largura da linha, verificações (vazia, tamanho, HTML, caracteres, repetição, frases de instrução) e revisão por confiança por palavra, sem falsos positivos nos 9.146 gabaritos de teste (Experimento 2). \\
+    Lacuna: a regra de injeção só reconhece frases conhecidas, e nenhum teste de injeção ou de perturbação adversarial foi feito com o modelo. Perturbações invisíveis na imagem não são detectadas por nenhum desses controles.
 \end{itemize}
 
 % --------------------------------------------------------------
@@ -787,7 +869,7 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados implementado
 
 \begin{itemize}
     \item \textbf{Transparência Experimental} \\
-    Atendimento: o código, a configuração e os resultados do Experimento 1 estão no repositório, e o relatório diz o que ainda não foi executado. \\
+    Atendimento: o código, a configuração e os resultados dos Experimentos 1 e 2 estão no repositório, e o relatório separa o que foi medido do que ainda vai ser. \\
     Lacuna: a heurística de marcação de nomes no BRESSAY ainda não teve a revisão manual concluída, então os números de nomes no teste real são aproximados.
 
     \item \textbf{Responsabilidade} \\
@@ -806,7 +888,7 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados implementado
     \item Fazer os testes de extração e de inferência de pertencimento antes de qualquer uso com dados reais de cartório.
     \item Implementar controle de acesso por perfil e registro de auditoria na API e na memória de correções, com prazo de retenção e rotina de exclusão.
     \item Elaborar o Relatório de Impacto à Proteção de Dados e validar o modelo com dados reais de Registro Civil, com autorização do controlador.
-    \item Implementar a revisão humana obrigatória para linhas com confiança baixa.
+    \item Tornar obrigatória a revisão humana das linhas marcadas pelo \texttt{guard.py}. Hoje a marcação existe, mas nada impede que uma linha marcada seja registrada sem revisão.
 \end{itemize}
 
 % ==============================================================
@@ -839,13 +921,17 @@ ocr06/
     fonts.py render.py        fontes e renderização das linhas
     degrade.py generate.py    Augraphy e geração paralela
     bressay.py mix.py         BRESSAY e conjuntos finais
+    preprocess.py             normalização de altura (treino e inferência)
+    guard.py                  confiança por palavra e sinais de revisão
     experiment1.py            Experimento 1
+    experiment2.py            Experimento 2 (integração sem modelo)
     evaluate.py               CER/WER por grupo de nome
     model/infer.py            inferência (vLLM)
     model/train.py            treino LoRA
     model/merge.py            fusão e quantização FP8
   data/                       gerado (fora do Git)
   experiments/exp1/           resultados do Experimento 1
+  experiments/exp2_integracao/  Experimento 2
 \end{verbatim}
 
 \subsection{Comandos para Reprodução}
@@ -859,7 +945,7 @@ scripts/setup.sh          # detecta a GPU (sem GPU: --sem-gpu)
 
 \subsubsection*{2) Execução do Experimento Principal}
 \begin{verbatim}
-scripts/run.sh dados          # Experimento 1 (CPU)
+scripts/run.sh dados          # dados + Experimentos 1 e 2 (CPU)
 scripts/run.sh teste-rapido   # checagem curta na GPU
 scripts/run.sh modelo         # baseline, treino, FP8 e avaliação
 \end{verbatim}
@@ -868,7 +954,16 @@ scripts/run.sh modelo         # baseline, treino, FP8 e avaliação
 \section{Exemplos Adicionais de Resultados}
 \label{app:exemplos}
 
-[PREENCHER NA ENTREGA 3/4: descrição dos exemplos apresentados neste apêndice]
+Cada linha de predição gravada pelo \texttt{infer.py} tem o formato abaixo. O exemplo é a saída do \texttt{guard.py} no teste de confiança do Experimento 2, com log-probabilidades simuladas. Exemplos de transcrições do Chandra entram neste apêndice na entrega final.
+
+\begin{verbatim}
+{"id": "...", "source": "sintetico",
+ "text": "Maria da Silva - SC", "pred": "Maria da Silva - SC",
+ "entities": [...],
+ "guard": {"revisao": true, "motivos": ["confianca"],
+           "palavras_baixa_confianca": ["Silva"],
+           "confianca_min": 0.1353}}
+\end{verbatim}
 
 % --------------------------------------------------------------
 \section{Código-fonte}

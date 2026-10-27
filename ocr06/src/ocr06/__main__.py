@@ -6,6 +6,7 @@
     python -m ocr06 generate   # gera o dataset sintético (imagens + labels.jsonl)
     python -m ocr06 mix        # junta sintético + BRESSAY em data/final/ (formato do VLM)
     python -m ocr06 exp1       # Experimento 1: validação do pipeline de dados
+    python -m ocr06 exp2       # Experimento 2a: testes de integração sem modelo (CPU)
     python -m ocr06 all        # tudo acima, em ordem
 """
 from __future__ import annotations
@@ -14,7 +15,7 @@ import argparse
 
 from .common import load_config
 
-STEPS = ("lexicon", "fonts", "bressay", "generate", "mix", "exp1")
+STEPS = ("lexicon", "fonts", "bressay", "generate", "mix", "exp1", "exp2")
 
 
 def run(cmd: str, cfg: dict, args) -> None:
@@ -38,6 +39,9 @@ def run(cmd: str, cfg: dict, args) -> None:
     elif cmd == "exp1":
         from .experiment1 import run as run_exp1
         run_exp1(cfg)
+    elif cmd == "exp2":
+        from .experiment2 import run as run_exp2
+        run_exp2(cfg)
 
 
 def main() -> None:
@@ -46,7 +50,7 @@ def main() -> None:
     ap.add_argument("--workers", help="processos de geração (padrão: generate.workers)")
     ap.add_argument("--alpha", type=float, help="sobrescreve sampling.alpha")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for s in ("lexicon", "fonts", "bressay", "exp1"):
+    for s in ("lexicon", "fonts", "bressay", "exp1", "exp2"):
         sub.add_parser(s)
     g = sub.add_parser("generate")
     g.add_argument("--name", help="versão do dataset (padrão: generate.name)")

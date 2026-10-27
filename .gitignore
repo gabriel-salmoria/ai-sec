@@ -8,3 +8,4 @@ augraphy_cache/
 logs/
 .venv*/
 ocr06/models/
+ocr06/experiments/exp2_integracao/mock/

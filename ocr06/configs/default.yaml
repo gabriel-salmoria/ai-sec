@@ -201,3 +201,20 @@ model:
     ignore: ['re:.*lm_head', 're:visual.*', 're:model.visual.*', 're:.*mlp.gate$',
              're:.*embed_tokens$', 're:.*shared_expert_gate$', 're:.*mlp\.shared_expert$',
              're:.*linear_attn.*']
+
+# Normalização de altura antes do modelo (treino e inferência, ver src/ocr06/preprocess.py).
+# BRESSAY tem mediana de 20 px e o sintético 48-112 px; 64 px = 2 blocos visuais do Chandra.
+# A altura final ainda deve ser confirmada no baseline (BRESSAY com 32, 64 e 96 px).
+preprocess:
+  line_height: 64                  # null desliga
+  max_width: 2048                  # linhas mais longas são reduzidas junto
+
+# Controles na saída do modelo (src/ocr06/guard.py). Não bloqueiam: marcam para revisão.
+guard:
+  # limite de caracteres = k x largura / altura. k calibrado no treino+validação
+  # (p99,9 = 8,3; máximo da validação = 9,8). Com 4,0 cortava 28% dos gabaritos de teste.
+  chars_per_height: 10.0
+  min_chars: 16
+  max_bad_chars: 0                 # caracteres fora do conjunto esperado
+  min_word_conf: 0.5               # palavra abaixo disso vai para revisão
+  logprobs: 1                      # pede ao vLLM a log-prob do token gerado

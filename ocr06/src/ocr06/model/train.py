@@ -18,8 +18,7 @@ import re
 import time
 
 import torch
-from PIL import Image
-
+from ..preprocess import load_line
 from . import data_dir, final_dir, load_config, model_paths
 
 
@@ -46,9 +45,10 @@ def lora_target_regex(model, names: list[str]) -> str:
 class Collator:
     """Monta o lote e mascara (-100) tudo que não é a resposta do assistente."""
 
-    def __init__(self, processor, ddir):
+    def __init__(self, processor, ddir, cfg):
         self.p = processor
         self.ddir = ddir
+        self.cfg = cfg
         self.p.tokenizer.padding_side = "right"
 
     def _template(self, messages, generation_prompt: bool) -> str:
@@ -57,7 +57,7 @@ class Collator:
                                           enable_thinking=False)
 
     def __call__(self, rows: list[dict]) -> dict:
-        images = [Image.open(self.ddir / r["image"]).convert("RGB") for r in rows]
+        images = [load_line(self.ddir / r["image"], self.cfg) for r in rows]
         full = [self._template(r["messages"], False) for r in rows]
         batch = self.p(text=full, images=images, padding=True, return_tensors="pt")
         labels = batch["input_ids"].clone()
@@ -101,7 +101,7 @@ def main() -> None:
         target_modules=lora_target_regex(model, lc["target"]), bias="none"))
     model.print_trainable_parameters()
 
-    collator = Collator(processor, data_dir(cfg))
+    collator = Collator(processor, data_dir(cfg), cfg)
     # Mostra o que o modelo vai aprender no 1º exemplo (confere a máscara do prompt).
     b = collator(train_rows[:1])
     alvo = processor.tokenizer.decode(b["labels"][0][b["labels"][0] != -100])

@@ -6,8 +6,11 @@ Métricas (as da seção 3.2 do relatório), por arquivo de predições:
   - CER e WER da linha inteira (micro: soma das distâncias / soma dos tamanhos);
   - CER e acerto exato por entidade, separados por tipo (prenome/sobrenome/cidade),
     por bucket (comum/raro/inventado) e por `visto_no_treino` (inédito vs visto).
-Para medir a entidade, a predição é alinhada ao gabarito (Levenshtein com backtrace)
-e o trecho da predição alinhado ao span da entidade é comparado com ela.
+Para medir a entidade, a predição é alinhada ao gabarito palavra a palavra (Levenshtein
+em que trocar uma palavra custa a distância normalizada entre as duas) e as palavras da
+predição alinhadas às do nome são comparadas com ele. A primeira versão alinhava
+caractere a caractere, e quando o modelo pulava um nome o alinhamento casava o nome com
+letras soltas das palavras vizinhas ("Amarildo" -> "a" de "filha"), contando erro a menos.
 A predição passa por uma normalização leve: remove HTML (o prompt nativo do Chandra
 responde em HTML), desfaz entidades HTML, NFC e espaços repetidos.
 Saída: <split>.metricas.json ao lado das predições e experiments/modelos/comparacao.{md,tex,json}.
@@ -49,32 +52,71 @@ def distance(a, b) -> int:
     return prev[-1]
 
 
-def align(gold: str, pred: str) -> list[int]:
-    """Para cada posição 0..len(gold) do gabarito, a posição correspondente na predição."""
+# Hífen e barra viram tokens próprios, para separar "Byung-Chul" e "Coruripe/AL".
+WORD = re.compile(r"[^\s\-/]+|[\-/]")
+EDGE_PUNCT = ".,;:!?()[]\"' -–"  # bordas que não fazem parte de nome
+
+
+def align_words(gold: list[str], pred: list[str]) -> list[tuple[int | None, int | None]]:
+    """Alinhamento palavra a palavra: lista de pares (i_gabarito, j_predição), com None
+    para palavra removida ou inserida. Trocar uma palavra custa a distância de caracteres
+    normalizada (0 a 1), então palavras parecidas são pareadas e palavras sem relação
+    viram remoção + inserção."""
     n, m = len(gold), len(pred)
-    d = [[0] * (m + 1) for _ in range(n + 1)]
+
+    def sub(i, j):
+        a, b = gold[i], pred[j]
+        return 0.0 if a == b else distance(a, b) / max(len(a), len(b))
+
+    d = [[0.0] * (m + 1) for _ in range(n + 1)]
     for i in range(n + 1):
         d[i][0] = i
     for j in range(m + 1):
         d[0][j] = j
     for i in range(1, n + 1):
-        gi = gold[i - 1]
-        row, prow = d[i], d[i - 1]
         for j in range(1, m + 1):
-            row[j] = min(prow[j] + 1, row[j - 1] + 1, prow[j - 1] + (gi != pred[j - 1]))
-    pos = [0] * (n + 1)
-    i, j = n, m
-    pos[n] = m
-    while i > 0:
-        if j > 0 and d[i][j] == d[i - 1][j - 1] + (gold[i - 1] != pred[j - 1]):
-            i, j = i - 1, j - 1
-        elif d[i][j] == d[i - 1][j] + 1:
-            i -= 1
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + sub(i - 1, j - 1))
+    # No empate, remover vem antes de parear: assim a palavra da predição fica com a
+    # primeira ocorrência no gabarito ("natural de" casa o "de" de "natural de", e não
+    # o de "Rio de Janeiro" quando a cidade foi pulada).
+    pairs, i, j = [], n, m
+    while i > 0 or j > 0:
+        if i > 0 and abs(d[i][j] - (d[i - 1][j] + 1)) < 1e-9:
+            pairs.append((i - 1, None)); i -= 1
+        elif i > 0 and j > 0 and abs(d[i][j] - (d[i - 1][j - 1] + sub(i - 1, j - 1))) < 1e-9:
+            pairs.append((i - 1, j - 1)); i, j = i - 1, j - 1
         else:
-            j -= 1
+            pairs.append((None, j - 1)); j -= 1
+    return pairs[::-1]
+
+
+def entity_preds(gold: str, pred: str, ents: list[dict]) -> list[str]:
+    """Para cada entidade (span em caracteres do gabarito), o trecho da predição alinhado
+    às palavras dela, incluindo palavras inseridas no meio do nome."""
+    gw = [(m.start(), m.end()) for m in WORD.finditer(gold)]
+    pspan = [(m.start(), m.end()) for m in WORD.finditer(pred)]
+    pw = [pred[a:b] for a, b in pspan]
+    pairs = align_words([gold[a:b] for a, b in gw], pw)
+    out = []
+    for e in ents:
+        idx = {k for k, (a, b) in enumerate(gw) if a < e["end"] and b > e["start"]}
+        first = next((t for t, (i, _) in enumerate(pairs) if i in idx), None)
+        last = max((t for t, (i, _) in enumerate(pairs) if i in idx), default=None)
+        if first is None:
+            out.append("")
             continue
-        pos[i] = j
-    return pos
+        js = [j for _, j in pairs[first:last + 1] if j is not None]
+        chunk = pred[pspan[js[0]][0]:pspan[js[-1]][1]] if js else ""
+        # O nome pode ser só parte da palavra ("Coruripe/AL", "Byung-Chul"): tira da
+        # predição o que no gabarito está na mesma palavra mas fora do nome.
+        ws, we = gw[min(idx)][0], gw[max(idx)][1]
+        prefix, suffix = gold[ws:e["start"]], gold[e["end"]:we]
+        if prefix and chunk.startswith(prefix):
+            chunk = chunk[len(prefix):]
+        if suffix and chunk.endswith(suffix):
+            chunk = chunk[:-len(suffix)]
+        out.append(chunk.strip(EDGE_PUNCT))
+    return out
 
 
 class Acc:
@@ -106,9 +148,8 @@ def evaluate_file(path: Path) -> dict:
         ents = [e for e in r.get("entities", []) if e["type"] in NAME_TYPES]
         if not ents:
             continue
-        pos = align(gold, pred)
-        for e in ents:
-            g, p = gold[e["start"]:e["end"]], pred[pos[e["start"]]:pos[e["end"]]].strip()
+        for e, p in zip(ents, entity_preds(gold, pred, ents)):
+            g = gold[e["start"]:e["end"]]
             seen = e.get("visto_no_treino")
             groups = ["todas", f"tipo/{e['type']}", f"bucket/{e['bucket']}"]
             if seen is not None:

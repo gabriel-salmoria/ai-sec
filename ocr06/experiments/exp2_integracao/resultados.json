@@ -1,0 +1,446 @@
+{
+  "preprocess": {
+    "test_sintetico": {
+      "linhas": 4000,
+      "altura_antes": {
+        "mediana": 80.0,
+        "p5": 51.0,
+        "p95": 110.0
+      },
+      "altura_depois": {
+        "mediana": 64.0,
+        "min": 41
+      },
+      "largura_depois_mediana": 523.0,
+      "linhas_de_blocos_antes": {
+        "2": 2039,
+        "3": 1893,
+        "4": 68
+      },
+      "linhas_de_blocos_depois": {
+        "1": 2,
+        "2": 3998
+      },
+      "blocos_por_linha_antes_mediana": 48.0,
+      "blocos_por_linha_depois_mediana": 32.0,
+      "limite_chars_mediana": 82.0,
+      "gabaritos_acima_do_limite": 0,
+      "folga_minima": 6
+    },
+    "test_bressay": {
+      "linhas": 5146,
+      "altura_antes": {
+        "mediana": 24.0,
+        "p5": 16.0,
+        "p95": 65.0
+      },
+      "altura_depois": {
+        "mediana": 64.0,
+        "min": 40
+      },
+      "largura_depois_mediana": 1576.0,
+      "linhas_de_blocos_antes": {
+        "1": 4641,
+        "2": 429,
+        "3": 76
+      },
+      "linhas_de_blocos_depois": {
+        "1": 12,
+        "2": 5134
+      },
+      "blocos_por_linha_antes_mediana": 16.0,
+      "blocos_por_linha_depois_mediana": 98.0,
+      "limite_chars_mediana": 247.0,
+      "gabaritos_acima_do_limite": 0,
+      "folga_minima": 11
+    },
+    "ms_por_imagem": 1.54
+  },
+  "metricas": {
+    "perfeita/test_sintetico": {
+      "cer_linha": 0.0,
+      "wer_linha": 0.0,
+      "nomes": 13841,
+      "acerto_exato_nomes": 1.0,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 1.0,
+      "cer_esperado": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "ineditas": 0.0,
+        "bucket/comum": 0.0,
+        "vistas": 0.0
+      },
+      "cer_medido": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "ineditas": 0.0,
+        "bucket/comum": 0.0,
+        "vistas": 0.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "perfeita/test_bressay": {
+      "cer_linha": 0.0,
+      "wer_linha": 0.0,
+      "nomes": 548,
+      "acerto_exato_nomes": 1.0,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 1.0,
+      "cer_esperado": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.0
+      },
+      "cer_medido": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "html/test_sintetico": {
+      "cer_linha": 0.0,
+      "wer_linha": 0.0,
+      "nomes": 13841,
+      "acerto_exato_nomes": 1.0,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 1.0,
+      "cer_esperado": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "ineditas": 0.0,
+        "bucket/comum": 0.0,
+        "vistas": 0.0
+      },
+      "cer_medido": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "ineditas": 0.0,
+        "bucket/comum": 0.0,
+        "vistas": 0.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "html/test_bressay": {
+      "cer_linha": 0.0,
+      "wer_linha": 0.0,
+      "nomes": 548,
+      "acerto_exato_nomes": 1.0,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 1.0,
+      "cer_esperado": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.0
+      },
+      "cer_medido": {
+        "todas": 0.0,
+        "bucket/raro": 0.0,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "nomes/test_sintetico": {
+      "cer_linha": 0.1013,
+      "wer_linha": 0.6271,
+      "nomes": 13841,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "cer_medido": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "nomes/test_bressay": {
+      "cer_linha": 0.0012,
+      "wer_linha": 0.0077,
+      "nomes": 548,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "cer_medido": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "ineditos/test_sintetico": {
+      "cer_linha": 0.0631,
+      "wer_linha": 0.3906,
+      "nomes": 13841,
+      "acerto_exato_nomes": 0.3766,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.0889,
+        "bucket/raro": 0.1407,
+        "ineditas": 0.142,
+        "bucket/comum": 0.0001,
+        "vistas": 0.0
+      },
+      "cer_medido": {
+        "todas": 0.0889,
+        "bucket/raro": 0.1407,
+        "ineditas": 0.142,
+        "bucket/comum": 0.0001,
+        "vistas": 0.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "ineditos/test_bressay": {
+      "cer_linha": 0.0001,
+      "wer_linha": 0.0005,
+      "nomes": 548,
+      "acerto_exato_nomes": 0.9307,
+      "acerto_exato_vistas": 1.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.0116,
+        "bucket/raro": 0.0202,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.1631
+      },
+      "cer_medido": {
+        "todas": 0.0116,
+        "bucket/raro": 0.0202,
+        "vistas": 0.0,
+        "bucket/comum": 0.0,
+        "ineditas": 0.1631
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "delecao/test_sintetico": {
+      "cer_linha": 0.1013,
+      "wer_linha": 0.6278,
+      "nomes": 13841,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "cer_medido": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "delecao/test_bressay": {
+      "cer_linha": 0.0012,
+      "wer_linha": 0.0077,
+      "nomes": 548,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "cer_medido": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "insercao/test_sintetico": {
+      "cer_linha": 0.1013,
+      "wer_linha": 0.6242,
+      "nomes": 13841,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "cer_medido": {
+        "todas": 0.1427,
+        "bucket/raro": 0.1421,
+        "ineditas": 0.142,
+        "bucket/comum": 0.1436,
+        "vistas": 0.1439
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "insercao/test_bressay": {
+      "cer_linha": 0.0012,
+      "wer_linha": 0.0077,
+      "nomes": 548,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "cer_medido": {
+        "todas": 0.1676,
+        "bucket/raro": 0.1698,
+        "vistas": 0.1679,
+        "bucket/comum": 0.1646,
+        "ineditas": 0.1631
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "omitido/test_sintetico": {
+      "cer_linha": 0.7982,
+      "wer_linha": 0.6669,
+      "nomes": 13841,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 1.0,
+        "bucket/raro": 1.0,
+        "ineditas": 1.0,
+        "bucket/comum": 1.0,
+        "vistas": 1.0
+      },
+      "cer_medido": {
+        "todas": 1.0,
+        "bucket/raro": 1.0,
+        "ineditas": 1.0,
+        "bucket/comum": 1.0,
+        "vistas": 1.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    },
+    "omitido/test_bressay": {
+      "cer_linha": 0.0081,
+      "wer_linha": 0.008,
+      "nomes": 548,
+      "acerto_exato_nomes": 0.0,
+      "acerto_exato_vistas": 0.0,
+      "acerto_exato_ineditas": 0.0,
+      "cer_esperado": {
+        "todas": 1.0,
+        "bucket/raro": 1.0,
+        "vistas": 1.0,
+        "bucket/comum": 1.0,
+        "ineditas": 1.0
+      },
+      "cer_medido": {
+        "todas": 1.0,
+        "bucket/raro": 1.0,
+        "vistas": 1.0,
+        "bucket/comum": 1.0,
+        "ineditas": 1.0
+      },
+      "confere": true,
+      "diferenca_max": 0.0
+    }
+  },
+  "guard": {
+    "gabaritos": 9146,
+    "falsos_positivos": {},
+    "exemplos_falsos_positivos": {},
+    "taxa_falsos_positivos": 0.0,
+    "variantes_por_tipo": 915,
+    "detectadas": {
+      "vazia": "915/915",
+      "repeticao": "915/915",
+      "html": "915/915",
+      "instrucao": "915/915",
+      "tamanho": "837/915",
+      "caracteres": "915/915"
+    },
+    "vllm_falso_tokens": 8,
+    "vllm_sem_logprobs": [],
+    "confianca_exemplo": [
+      [
+        "Maria",
+        0.98
+      ],
+      [
+        "da",
+        0.905
+      ],
+      [
+        "Silva",
+        0.135
+      ],
+      [
+        "-",
+        0.99
+      ],
+      [
+        "SC",
+        0.741
+      ]
+    ],
+    "confianca_exemplo_guard": {
+      "revisao": true,
+      "motivos": [
+        "confianca"
+      ],
+      "palavras_baixa_confianca": [
+        "Silva"
+      ],
+      "confianca_min": 0.1353
+    }
+  }
+}
