@@ -1,0 +1,66 @@
+{
+  "gerado_em": "2026-11-07T14:40:42+00:00",
+  "seed": 42,
+  "fontes": {
+    "prenomes": "https://data.brasil.io/dataset/genero-nomes/nomes.csv.gz",
+    "municipios": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
+    "populacao": "https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/-1/variaveis/93?localidades=N6[all]",
+    "nomes_completos": [
+      "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip",
+      "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2020.zip",
+      "https://arquivos.receitafederal.gov.br/public.php/webdav/2026-10/Socios2.zip",
+      "https://arquivos.receitafederal.gov.br/public.php/webdav/2026-10/Socios3.zip"
+    ]
+  },
+  "validacao_ibge_top20": {
+    "checked": 20,
+    "mismatches": []
+  },
+  "prenomes": {
+    "brutos": 100787,
+    "descartados": {
+      "letra_repetida": 65,
+      "variante_rara_de_grupo": 211
+    },
+    "total": 100511,
+    "por_bucket": {
+      "comum": 1253,
+      "raro": 99258
+    }
+  },
+  "sobrenomes": {
+    "descartados": {
+      "abaixo_min_count": 162319
+    },
+    "total": 60691,
+    "por_bucket": {
+      "comum": 989,
+      "raro": 59702
+    }
+  },
+  "municipios": {
+    "total": 5570,
+    "por_bucket": {
+      "comum": 1332,
+      "raro": 4238
+    }
+  },
+  "inventados": {
+    "total": 10000,
+    "por_bucket": {
+      "inventado": 10000
+    }
+  },
+  "pessoas_agregadas": {
+    "tse": 823970,
+    "rfb": 3244066
+  },
+  "segundo_token_resolvido_como": {
+    "sobrenome": 1803827,
+    "prenome_composto": 1511007
+  },
+  "nomes_rejeitados_no_parsing": {
+    "tse": 154,
+    "rfb": 89
+  }
+}

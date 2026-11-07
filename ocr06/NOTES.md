@@ -25,7 +25,9 @@
    `!git clone https://<TOKEN>@github.com/gabriel-salmoria/ai-sec.git`
 4. Install with `!cd ai-sec/ocr06 && bash scripts/setup.sh`.
    - If creating the venvs fails (missing ensurepip), run `!apt-get install -y python3-venv` (or `python3.12-venv`) and run setup again.
-5. Get the data in. `data/` is not in git.
+5. Get the data in. IBGE/TSE/RFB block US IPs (Colab), so the `lexicon` step runs in Brazil and its output is in git: `data/lexicon/` plus the IBGE files in `data/raw/` (force-added; `data/` is otherwise ignored). On Colab, skip `lexicon` and run `scripts/run.sh fonts bressay generate mix exp1 exp2`. BRESSAY (Zenodo) and the fonts (Google) download fine from the US.
+   - Colab can be driven from the PC with Google's CLI (`pip install google-colab-cli`): `colab new -s l4 --gpu L4`, `colab exec`, `colab ssh` (one SSH connection per runtime at a time), `colab stop`.
+   - Old note, before the lexicon was committed:
    - Either run `scripts/run.sh dados` on the laptop (CPU, about 1 h, after `scripts/setup.sh --sem-gpu`), zip `ocr06/data/`, put it on Drive and unzip it in Colab,
    - or run `scripts/run.sh dados` in Colab, which burns CU while the GPU sits idle.
 6. Run `!cd ai-sec/ocr06 && bash scripts/run.sh teste-rapido` first. It does a vLLM FP8 baseline on 32 lines plus 100 training steps, takes about 20 min and uses about 0.5 CU. It also prints speed and peak memory.
