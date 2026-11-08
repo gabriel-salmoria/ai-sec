@@ -1,0 +1,80 @@
+{
+  "arquivo": "/content/ai-sec/ocr06/experiments/modelos/base/nosso/test_bressay.jsonl",
+  "linhas": 5146,
+  "cer": 0.1984,
+  "wer": 0.3385,
+  "linhas_exatas": 0.1228,
+  "cer_por_fonte": {
+    "bressay": 0.1984
+  },
+  "entidades": {
+    "bucket/comum": {
+      "n": 229,
+      "taxa_erro": 0.2085,
+      "acerto_exato": 0.6769
+    },
+    "bucket/raro": {
+      "n": 322,
+      "taxa_erro": 0.1701,
+      "acerto_exato": 0.6832
+    },
+    "ineditas": {
+      "n": 38,
+      "taxa_erro": 0.2832,
+      "acerto_exato": 0.5
+    },
+    "ineditas/prenome": {
+      "n": 17,
+      "taxa_erro": 0.2523,
+      "acerto_exato": 0.4706
+    },
+    "ineditas/sobrenome": {
+      "n": 21,
+      "taxa_erro": 0.3109,
+      "acerto_exato": 0.5238
+    },
+    "tipo/cidade": {
+      "n": 15,
+      "taxa_erro": 0.1988,
+      "acerto_exato": 0.7333
+    },
+    "tipo/prenome": {
+      "n": 241,
+      "taxa_erro": 0.1684,
+      "acerto_exato": 0.6888
+    },
+    "tipo/sobrenome": {
+      "n": 295,
+      "taxa_erro": 0.1997,
+      "acerto_exato": 0.6712
+    },
+    "todas": {
+      "n": 551,
+      "taxa_erro": 0.1862,
+      "acerto_exato": 0.6806
+    },
+    "vistas": {
+      "n": 513,
+      "taxa_erro": 0.1791,
+      "acerto_exato": 0.694
+    },
+    "vistas/cidade": {
+      "n": 15,
+      "taxa_erro": 0.1988,
+      "acerto_exato": 0.7333
+    },
+    "vistas/prenome": {
+      "n": 224,
+      "taxa_erro": 0.1616,
+      "acerto_exato": 0.7054
+    },
+    "vistas/sobrenome": {
+      "n": 274,
+      "taxa_erro": 0.1914,
+      "acerto_exato": 0.6825
+    }
+  },
+  "modelo": "base",
+  "prompt": "nosso",
+  "teste": "test_bressay"
+}

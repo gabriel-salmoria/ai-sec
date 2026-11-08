@@ -8,16 +8,31 @@ Saída em data/final/<nome>/:
 Cada linha: {id, source, image (relativo a data/), messages, text, entities}, e no
 teste cada entidade tem `visto_no_treino`, para medir o CER só em nomes inéditos.
 
+Formato (`mix.format`):
+  chandra  prompt nativo do Chandra (layout em HTML) e resposta no formato dele: um bloco
+           <div data-bbox="x0 y0 x1 y1" data-label="Text"><p>texto</p></div>, com a
+           caixa da tinta normalizada 0-1000. O ajuste melhora a leitura de manuscrito no
+           mesmo modo usado em páginas inteiras, sem criar um "modo linha" separado.
+  nosso    prompt curto próprio e resposta em texto puro (versão anterior).
+  misto    cada linha de treino/validação usa um dos dois, sorteado de forma fixa pelo id
+           (`mix.chandra_fraction`). A habilidade de ler é a mesma; cada prompt mantém o seu
+           formato de saída, e o prompt curto deixa o treino mais rápido.
+
 Regra da POC: o treino deve ser majoritariamente sintético. Se o BRESSAY passar de
 `max_real_fraction`, ele é subamostrado (com seed fixa).
 """
 from __future__ import annotations
 
+import html
 import json
 import random
+from multiprocessing import Pool
 from pathlib import Path
 
-from .common import resolve, write_json
+import cv2
+import numpy as np
+
+from .common import resolve, stable_unit, write_json
 
 PROMPT = ("Transcreva exatamente o texto manuscrito desta imagem, preservando a grafia, "
           "os acentos e as maiúsculas. Não corrija nomes.")
@@ -35,13 +50,32 @@ def _load(path: Path, prefix: str) -> list[dict]:
     return out
 
 
-def _chat(s: dict) -> dict:
+def ink_bbox(path: str) -> str:
+    """Caixa da tinta (x0 y0 x1 y1) normalizada 0-1000, como o Chandra descreve blocos."""
+    g = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    h, w = g.shape
+    _, ink = cv2.threshold(g, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    ys, xs = np.nonzero(ink)
+    if len(xs) < 10:
+        return "0 0 1000 1000"
+    x0, x1 = np.percentile(xs, [0.5, 99.5])
+    y0, y1 = np.percentile(ys, [0.5, 99.5])
+    n = lambda v, size: int(round(1000 * min(max(v, 0), size) / size))
+    return f"{n(x0, w)} {n(y0, h)} {n(x1 + 1, w)} {n(y1 + 1, h)}"
+
+
+def _chat(s: dict, fmt: str, prompt: str, bbox: str | None) -> dict:
+    if fmt == "chandra":
+        answer = (f'<div data-bbox="{bbox}" data-label="Text">'
+                  f'<p>{html.escape(s["text"], quote=False)}</p></div>')
+    else:
+        prompt, answer = PROMPT, s["text"]
     return {
         "id": s["id"], "source": s["source"], "image": s["image"], "text": s["text"],
         "entities": s.get("entities", []),
         "messages": [
-            {"role": "user", "content": [{"type": "image"}, {"type": "text", "text": PROMPT}]},
-            {"role": "assistant", "content": [{"type": "text", "text": s["text"]}]},
+            {"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
+            {"role": "assistant", "content": [{"type": "text", "text": answer}]},
         ],
     }
 
@@ -106,10 +140,28 @@ def build(cfg: dict, name: str) -> dict:
             lines_new += has_new
         test_stats[tname] = {"linhas": len(rows), "entidades_nome": n_ent,
                              "entidades_ineditas": n_new, "linhas_com_nome_inedito": lines_new}
-        _write(out / f"{tname}.jsonl", [_chat(s) for s in rows])
 
-    _write(out / "train.jsonl", [_chat(s) for s in train])
-    _write(out / "val.jsonl", [_chat(s) for s in val])
+    fmt = cfg["mix"].get("format", "chandra")
+    prompt = ""
+    boxes: dict[str, str] = {}
+    if fmt in ("chandra", "misto"):
+        from .common import ROOT
+        prompt = (ROOT / cfg["model"]["chandra_prompt_file"]).read_text(encoding="utf-8").strip()
+        every = train + val + [s for rows in tests.values() for s in rows]
+        with Pool() as pool:
+            vals = pool.map(ink_bbox, [str(data_dir / s["image"]) for s in every], chunksize=256)
+        boxes = {s["image"]: b for s, b in zip(every, vals)}
+    frac = cfg["mix"].get("chandra_fraction", 0.5)
+
+    def chat(s, test=False):
+        f = fmt
+        if fmt == "misto":  # no teste o prompt é escolhido na inferência; aqui tanto faz
+            f = "chandra" if test or stable_unit(cfg["seed"], "prompt", s["id"]) < frac else "nosso"
+        return _chat(s, f, prompt, boxes.get(s["image"]))
+    for tname, rows in tests.items():
+        _write(out / f"{tname}.jsonl", [chat(s, test=True) for s in rows])
+    _write(out / "train.jsonl", [chat(s) for s in train])
+    _write(out / "val.jsonl", [chat(s) for s in val])
     manifest = {
         "dataset_sintetico": name,
         "caminhos_de_imagem_relativos_a": str(data_dir),

@@ -78,6 +78,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/default.yaml")
     ap.add_argument("--pilot", action="store_true", help="poucos passos para medir velocidade")
+    ap.add_argument("--resume", action="store_true",
+                    help="continua do último checkpoint deste run (após queda da sessão)")
     args = ap.parse_args()
     cfg = load_config(args.config)
     mc, tc, lc = cfg["model"], cfg["model"]["train"], cfg["model"]["lora"]
@@ -86,12 +88,19 @@ def main() -> None:
     rng = random.Random(cfg["seed"])
 
     train_rows = load_jsonl(final_dir(cfg) / "train.jsonl")
-    val_rows = load_jsonl(final_dir(cfg) / "val.jsonl")
-    if len(val_rows) > tc["max_val"]:
-        val_rows = rng.sample(val_rows, tc["max_val"])
-    print(f"== treino: {len(train_rows)} linhas | validação: {len(val_rows)} linhas")
+    val_all = load_jsonl(final_dir(cfg) / "val.jsonl")
+    val_sets = {}
+    for src, n in tc["max_val"].items():
+        rows = [r for r in val_all if r["source"] == src]
+        val_sets[src] = rng.sample(rows, n) if len(rows) > n else rows
+    print(f"== treino: {len(train_rows)} linhas | validação: "
+          + ", ".join(f"{k} {len(v)}" for k, v in val_sets.items()))
 
     processor = AutoProcessor.from_pretrained(mc["base"], trust_remote_code=True)
+    # Mesmos limites de pixels da inferência (model.vllm), para o modelo ver as linhas na
+    # mesma escala no treino e no teste.
+    processor.image_processor.size = {"shortest_edge": mc["vllm"]["min_pixels"],
+                                      "longest_edge": mc["vllm"]["max_pixels"]}
     model = AutoModelForImageTextToText.from_pretrained(
         mc["base"], dtype=torch.bfloat16, trust_remote_code=True, attn_implementation="sdpa")
     model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
@@ -126,7 +135,7 @@ def main() -> None:
         save_steps=tc["eval_steps"],
         save_total_limit=3,
         load_best_model_at_end=not pilot,
-        metric_for_best_model="eval_loss",
+        metric_for_best_model=tc["best_metric"],
         greater_is_better=False,
         remove_unused_columns=False,
         dataloader_num_workers=tc["dataloader_workers"],
@@ -135,11 +144,14 @@ def main() -> None:
     )
     trainer = Trainer(
         model=model, args=targs, train_dataset=train_rows,
-        eval_dataset=None if pilot else val_rows, data_collator=collator,
+        eval_dataset=None if pilot else val_sets, data_collator=collator,
         callbacks=[] if pilot else [EarlyStoppingCallback(tc["early_stopping_patience"])],
     )
     t0 = time.time()
-    result = trainer.train()
+    resume = args.resume and not pilot and any(paths["checkpoints"].glob("checkpoint-*"))
+    if resume:
+        print("  continuando do último checkpoint em", paths["checkpoints"])
+    result = trainer.train(resume_from_checkpoint=True if resume else None)
     elapsed = time.time() - t0
     m = result.metrics
     sps = m.get("train_samples_per_second", 0) or 0

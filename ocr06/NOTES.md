@@ -35,6 +35,9 @@
 
 ### Colab caveats
 
+- **Data env needs Python 3.14.** On Colab's Python 3.13, augraphy's `BadPhotoCopy` (numba 0.68.1) crashes in about 21% of calls with a numba `AssertionError`, which kills `generate`. Build `.venv` with `uv python install 3.14` and `PYTHON=$(uv python find 3.14) bash scripts/setup.sh --sem-gpu`; that gave 0 failures in 400 calls, same as the PC.
+- `scripts/setup.sh` falls back to `uv venv` when Python has no `ensurepip` (Colab).
+
 - **Keep the tab open.** Colab disconnects closed or idle tabs, the VM disk is wiped, and `train.py` can't resume yet.
 - **Save outputs to Drive after each step.** Mount it with `from google.colab import drive; drive.mount('/content/drive')`. What matters:
   - `models/lora_v0/adapter/` and `models/lora_v0/treino.json`

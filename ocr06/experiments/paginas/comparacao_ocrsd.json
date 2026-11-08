@@ -1,0 +1,26 @@
+{
+  "base": {
+    "manuscrito": {
+      "cer": 0.048564611713999846,
+      "acerto_exato": 0.8161375661375662,
+      "campos": 1512
+    },
+    "impresso": {
+      "cer": 0.0,
+      "acerto_exato": 0.0,
+      "campos": 0
+    }
+  },
+  "ft": {
+    "manuscrito": {
+      "cer": 0.0640857897842428,
+      "acerto_exato": 0.798941798941799,
+      "campos": 1512
+    },
+    "impresso": {
+      "cer": 0.0,
+      "acerto_exato": 0.0,
+      "campos": 0
+    }
+  }
+}

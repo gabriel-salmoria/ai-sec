@@ -14,10 +14,12 @@
 #   treino     LoRA completo (com validação e parada antecipada)
 #   quantizar  funde o LoRA e gera a versão FP8
 #   avaliacao  modelo treinado (BF16 e FP8) nos dois testes + tabela comparativa
+#   paginas    páginas inteiras (formulários reais com campos reescritos à mão), base x treinado
 #   metricas   só recalcula as métricas/tabela a partir das predições existentes
 #
 # Variáveis: CONFIG=configs/default.yaml  WORKERS=auto  NAME=v0 (dataset)
 #            LIMIT=N (inferência só nas N primeiras linhas)  HF_HOME (cache dos modelos)
+#            RESUME=1 (treino continua do último checkpoint, após queda da sessão)
 # Logs em logs/. No servidor, sem prender o terminal:
 #   nohup scripts/run.sh > /dev/null 2>&1 &     e acompanhe com   tail -f logs/run_*.log
 set -euo pipefail
@@ -40,7 +42,7 @@ for a in "$@"; do
         dados) STEPS+=("${DATA_STEPS[@]}") ;;
         modelo) STEPS+=("${MODEL_STEPS[@]}") ;;
         teste-rapido) STEPS+=(teste-rapido) ;;
-        lexicon|fonts|bressay|generate|mix|exp1|exp2|baseline|piloto|treino|quantizar|avaliacao|metricas)
+        lexicon|fonts|bressay|generate|mix|exp1|exp2|baseline|baseline-nosso|piloto|treino|quantizar|avaliacao|paginas|metricas)
             STEPS+=("$a") ;;
         *) erro "etapa desconhecida: $a (veja o cabeçalho de scripts/run.sh)"; exit 2 ;;
     esac
@@ -58,6 +60,7 @@ infer()  { precisa .venv-vllm; .venv-vllm/bin/python -m ocr06.model.infer --conf
 treinar(){ precisa .venv-gpu; .venv-gpu/bin/python -m ocr06.model.train --config "$CONFIG" "$@"; }
 fundir() { precisa .venv-gpu; .venv-gpu/bin/python -m ocr06.model.merge --config "$CONFIG" "$@"; }
 metricas(){ precisa .venv; .venv/bin/python -m ocr06.evaluate --config "$CONFIG"; }
+dados_pages(){ precisa .venv; .venv/bin/python -m ocr06.pages build --config "$CONFIG"; }
 
 etapa() {
     local s="$1"
@@ -67,19 +70,30 @@ etapa() {
         generate|mix) dados "$s" ${NAME:+--name "$NAME"} ;;
         baseline)
             # Um processo por modelo: o vLLM só libera a GPU quando o processo termina.
-            infer --models base --prompts nosso chandra
-            infer --models base_fp8 --prompts nosso chandra
+            infer --models base --prompts chandra
+            infer --models base_fp8 --prompts chandra
             metricas ;;
         piloto) treinar --pilot ;;
-        treino) treinar ;;
+        treino) treinar ${RESUME:+--resume} ;;
         quantizar) fundir ;;
+        paginas)
+            # Teste de página inteira (formulários com campos à mão), base x treinado.
+            [ -f data/pages/xfund_hw/pages.jsonl ] || dados_pages
+            .venv-vllm/bin/python -m ocr06.model.pages_infer --config "$CONFIG" --models base ft
+            .venv/bin/python -m ocr06.pages score --config "$CONFIG" ;;
         avaliacao)
-            infer --models ft
-            infer --models ft_fp8
+            infer --models ft --prompts chandra nosso
+            infer --models ft_fp8 --prompts chandra nosso
+            metricas ;;
+        baseline-nosso)
+            # O prompt curto também é treinado (mix.format misto); base com os dois prompts,
+            # para comparar (refaz também o chandra, cujo teste BRESSAY saiu cortado antes).
+            infer --models base --prompts chandra nosso
+            infer --models base_fp8 --prompts chandra nosso
             metricas ;;
         metricas) metricas ;;
         teste-rapido)
-            LIMIT=32 infer --models base_fp8 --prompts nosso chandra
+            LIMIT=32 infer --models base_fp8 --prompts chandra
             metricas
             treinar --pilot ;;
     esac

@@ -37,7 +37,11 @@ ok "$("$PY" --version)"
 mkdir -p logs
 
 novo_venv() {  # novo_venv <pasta>
-    [ -d "$1" ] || "$PY" -m venv "$1"
+    # Sem ensurepip (ex.: Colab) o venv do Python falha; aí usa o uv, que já instala o pip.
+    if [ ! -d "$1" ] && ! "$PY" -m venv "$1" 2>/dev/null; then
+        rm -rf "$1"
+        uv venv --quiet --seed --python "$PY" "$1"
+    fi
     "$1/bin/python" -m pip install --quiet --upgrade pip
 }
 

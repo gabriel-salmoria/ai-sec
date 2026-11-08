@@ -49,17 +49,38 @@ def _init_worker(cfg: dict, split: str, out_dir: str, vocab_path: str) -> None:
     )
 
 
+def _lowres(img: np.ndarray, rc: dict, rng: np.random.Generator, xh_frac: float) -> np.ndarray:
+    """Parte das linhas sai em baixa resolução (o BRESSAY tem ~20 px de altura), para o
+    modelo também ver traço borrado depois do redimensionamento para 64 px."""
+    if rng.random() >= rc.get("p_lowres", 0):
+        return img
+    # A letra minúscula precisa continuar legível: altura do "x" >= lowres_min_xheight px.
+    lo = max(rc["lowres_height"][0], int(np.ceil(rc["lowres_min_xheight"] / max(xh_frac, 1e-3))))
+    hi = rc["lowres_height"][1]
+    if lo > hi:
+        return img
+    th = int(rng.integers(lo, hi + 1))
+    if th >= img.shape[0]:
+        return img
+    tw = max(1, round(img.shape[1] * th / img.shape[0]))
+    return cv2.resize(img, (tw, th), interpolation=cv2.INTER_AREA)
+
+
 def make_sample(cfg: dict, split: str, i: int, sampler, fonts, degrader):
     """Gera a amostra i; tenta outra seed se a degradação apagar demais a tinta."""
     dc = cfg["degrade"]
+    script = {f.replace(" ", "") for f in cfg["fonts"].get("script", [])}
     rejected = 0
     for attempt in range(dc["max_retries"] + 1):
         seed = stable_int(cfg["seed"], split, i, attempt)
         rng = np.random.default_rng(seed)
-        sample = sampler.compose(rng, cfg["sampling"]["templates"])
         font = fonts[rng.integers(len(fonts))]
-        bgr, mask, rinfo = render_line(sample["text"], font, cfg["render"], rng)
+        is_script = Path(font).stem in script
+        # Linha toda em maiúsculas só com fontes de letra de forma.
+        sample = sampler.compose(rng, cfg["sampling"]["templates"], allow_upper=not is_script)
+        bgr, mask, rinfo = render_line(sample["text"], font, cfg["render"], rng, is_script)
         img, level = degrader(bgr, seed, rng)
+        img = _lowres(img, cfg["render"], rng, rinfo["xh_frac"])
         contrast = ink_contrast(img, mask)
         if contrast >= dc["min_contrast"]:
             break

@@ -68,8 +68,78 @@ sampling:
     - {id: filha,         weight: 0.10, pattern: "filha de {nome_m} e de {nome_f}"}
 
 fonts:
-  font_holdout_frac: 0.0   # >0 separa fontes exclusivas do teste (generalização de estilo)
+  font_holdout_frac: 0.2   # fontes exclusivas do teste: mede se o modelo generaliza para letras que não viu
+  # Fontes cursivas/caligráficas: nelas a linha nunca sai toda em maiúsculas (ninguém
+  # escreve assim e o resultado fica ilegível).
+  script: [Dancing Script, Homemade Apple, Cedarville Cursive, La Belle Aurore,
+           Dawning of a New Day, Sacramento, Allura, Parisienne, Alex Brush, Mr Dafoe,
+           Satisfy, Kristi, Zeyada, Marck Script, Nothing You Could Do, Yellowtail, Cookie,
+           Bad Script, Playwrite BR, Playwrite PT, Playwrite ES, Playwrite IT Trad,
+           Playwrite FR Trad, Playwrite US Trad, Playwrite AR, Playwrite MX, Great Vibes,
+           Pinyon Script, Italianno, Petit Formal Script, Mrs Saint Delafield,
+           Herr Von Muellerhoff, Meddon, Norican, Damion, Kaushan Script, Courgette, Merienda,
+           Ms Madi, Oooh Baby, Corinthia, Tangerine, Arizonia, Monsieur La Doulaise]
   families:
+    # caligrafia escolar (Playwrite) e manuscritas extras, para mais variedade de letra
+    - Playwrite BR
+    - Playwrite PT
+    - Playwrite ES
+    - Playwrite IT Trad
+    - Playwrite FR Trad
+    - Playwrite US Trad
+    - Playwrite AR
+    - Playwrite MX
+    - Playwrite DE Grund
+    - Edu SA Beginner
+    - Edu NSW ACT Foundation
+    - Edu VIC WA NT Beginner
+    - Great Vibes
+    - Pinyon Script
+    - Italianno
+    - Petit Formal Script
+    - Mrs Saint Delafield
+    - Herr Von Muellerhoff
+    - Meddon
+    - Norican
+    - Damion
+    - Kaushan Script
+    - Courgette
+    - Merienda
+    - Ms Madi
+    - Oooh Baby
+    - Corinthia
+    - Tangerine
+    - Arizonia
+    - Monsieur La Doulaise
+    - Schoolbell
+    - Coming Soon
+    - Neucha
+    - Short Stack
+    - Delius
+    - Mali
+    - Sriracha
+    - Mynerve
+    - Grape Nuts
+    - Sue Ellen Francisco
+    - The Girl Next Door
+    - Over the Rainbow
+    - Loved by the King
+    - Give You Glory
+    - Just Me Again Down Here
+    - Swanky and Moo Moo
+    - Rock Salt
+    - Permanent Marker
+    - Caveat Brush
+    - Pangolin
+    - Gaegu
+    - Gamja Flower
+    - Nanum Brush Script
+    - Klee One
+    - Yomogi
+    - Shadows Into Light Two
+    - Crafty Girls
+    - Fuzzy Bubbles
+    - Calligraffitti
     - Caveat
     - Dancing Script
     - Indie Flower
@@ -107,14 +177,37 @@ fonts:
 
 render:
   font_size: [36, 60]
-  word_space: [0.7, 1.6]          # multiplicador da largura do espaço da fonte
+  word_space: [0.6, 1.6]          # multiplicador da largura do espaço da fonte
   baseline_jitter: 3              # px por palavra
   word_rotation: 2.0              # graus por palavra
-  slant: [-0.30, 0.15]            # cisalhamento horizontal (itálico)
-  elastic_alpha: [0.0, 3.0]       # deslocamento elástico em px
+  # Estilo de quem escreve (sorteado por linha), como as diferenças entre pessoas:
+  slant: [-0.45, 0.25]            # inclinação da letra (cisalhamento; >0 = para a direita)
+  width_scale: [0.75, 1.30]       # letra estreita/apertada ou larga/espaçada
+  stroke: [-1.0, 2.5]             # traço fino (<0, erode) ou grosso (>0, raio de dilatação em px)
+  p_pressure: 0.5                 # espessura variando ao longo da linha (pressão da caneta)
+  size_drift: 0.12                # letra cresce ou encolhe do início ao fim da linha
+  tilt: 2.0                       # graus: a linha sobe ou desce
+  bow: 0.12                       # curvatura da linha (fração do tamanho da fonte)
+  # Variação letra a letra: campos suaves ao longo da linha, ~1 nó por letra, então
+  # cada letra sai com altura, largura, inclinação e posição um pouco diferentes,
+  # sem quebrar as ligaduras das fontes cursivas.
+  glyph:
+    spacing: 0.55                 # distância entre nós, em tamanhos de fonte
+    scale: 0.08                   # altura de cada letra (desvio padrão, fração)
+    baseline: 0.05                # subida/descida de cada letra (fração do tamanho)
+    slant: 0.08                   # inclinação de cada letra
+    width: 0.15                   # largura de cada letra
+  tremor_alpha: [0.0, 1.2]        # tremor fino do traço (px)
+  tremor_sigma: 2.5
+  elastic_alpha: [0.0, 3.0]       # ondulação maior (px)
   elastic_sigma: 6.0
-  p_stroke_change: 0.4            # dilata/erode o traço
   height: [48, 112]               # altura final da linha em px
+  p_lowres: 0.35                  # fração das linhas reduzidas a baixa resolução (BRESSAY ~20 px)
+  lowres_height: [16, 30]
+  lowres_min_xheight: 7           # px: abaixo disso a minúscula fica ilegível (BRESSAY tem ~7-8)
+  min_stroke_to_thin: 5.0         # só afina o traço de fontes com traço >= 5 px
+  max_stroke_to_thicken: 8.0      # só engrossa traços <= 8 px (marcador grosso empasta)
+  script_min_width: 0.9           # cursivas não são estreitadas abaixo disso
   margin: [4, 24]
   ink_colors:                     # BGR: preto, azul caneta, azul escuro, sépia
     - [20, 20, 20]
@@ -150,6 +243,8 @@ bressay:
 
 mix:
   max_real_fraction: 0.45  # BRESSAY < 45% do treino (a POC exige predominância sintética)
+  format: misto            # chandra = prompt e saída nativos; nosso = prompt curto; misto = metade de cada (ver mix.py)
+  chandra_fraction: 0.5
 
 experiment1:
   alphas: [0.3, 0.5, 1.0]
@@ -162,17 +257,29 @@ experiment1:
 model:
   base: datalab-to/chandra-ocr-2                   # BF16, usado no treino (fine-tune do Qwen3.5-4B)
   base_fp8: dangvansam/chandra-ocr-2-FP8-dynamic   # FP8 de terceiros, só p/ baseline no vLLM
-  dataset: v0                                      # data/final/<dataset>/
+  dataset: v1                                      # data/final/<dataset>/ (v1 = mix misto)
   run: lora_v0                                     # models/<run>/{adapter,merged,merged-fp8}
-  chandra_prompt_file: configs/prompt_chandra_ocr.txt  # prompt nativo do Chandra (saída em HTML)
+  # Prompt nativo do Chandra para páginas (ocr_layout, o que o CLI do Chandra usa), no treino
+  # e na avaliação. prompt_chandra_ocr.txt é a variante sem layout.
+  chandra_prompt_file: configs/prompt_chandra_layout.txt
 
   vllm:
     max_model_len: 4096
     gpu_memory_utilization: 0.85
     max_num_seqs: 128
     max_tokens: 192                # linhas são curtas; corta respostas que desandam
-    min_pixels: 3136               # mesmos limites do cartão do Chandra FP8
-    max_pixels: 6291456
+    # Mesmos limites no treino (train.py) e na inferência. São os padrões do processador
+    # do Chandra: linha curta é ampliada até 65.536 px (com 3136 uma linha de nome virava
+    # 36 tokens no vLLM e 75 no treino, ou seja, o modelo era testado em outra escala).
+    min_pixels: 65536
+    max_pixels: 16777216
+
+  # Teste de página inteira (src/ocr06/pages.py): páginas A4 reduzidas para 2048 px de
+  # altura viram ~3 mil tokens de imagem, e a resposta de um formulário passa de 2 mil.
+  vllm_pages:
+    max_model_len: 12288
+    max_tokens: 6144
+    max_num_seqs: 16
 
   lora:
     r: 16
@@ -184,15 +291,19 @@ model:
              in_proj_qkvz, in_proj_ba, in_proj_qkv, in_proj_z, in_proj_b, in_proj_a, out_proj]
 
   train:
-    epochs: 2
-    lr: 2.0e-4
-    batch_size: 8                  # por GPU
-    grad_accum: 2                  # lote efetivo = 16
+    epochs: 1                      # 1 época (~2,8 h na G4); a parada antecipada pode encerrar antes
+    lr: 1.0e-4                     # o Chandra já lê manuscrito; ajuste mais suave
+    batch_size: 16                 # por GPU (G4 96 GB; numa L4 de 24 GB use 4 x grad_accum 4)
+    grad_accum: 1                  # lote efetivo = 16
     warmup_ratio: 0.03
-    eval_steps: 250
-    max_val: 1000                  # linhas de validação avaliadas a cada eval_steps
-    early_stopping_patience: 3     # avaliações sem melhora na loss de validação
-    dataloader_workers: 4
+    eval_steps: 300
+    # Validação separada por fonte. O melhor checkpoint e a parada antecipada usam só a
+    # loss do BRESSAY (manuscrito real): se o modelo decorar as fontes sintéticas, a loss
+    # sintética continua caindo e esconderia isso.
+    max_val: {sintetico: 400, bressay: 800}
+    best_metric: eval_bressay_loss
+    early_stopping_patience: 3     # avaliações sem melhora na loss do BRESSAY
+    dataloader_workers: 12
     pilot_steps: 100               # scripts/run.sh piloto
 
   quant:

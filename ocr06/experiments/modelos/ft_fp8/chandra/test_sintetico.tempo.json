@@ -1,0 +1,6 @@
+{
+  "modelo": "/content/ai-sec/ocr06/models/lora_v0/merged-fp8",
+  "linhas": 4000,
+  "segundos": 82.5,
+  "linhas_por_segundo": 48.46
+}

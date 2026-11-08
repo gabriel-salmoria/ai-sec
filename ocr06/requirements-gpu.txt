@@ -1,12 +1,15 @@
 # Ambiente .venv-gpu: treino LoRA + fusão + quantização FP8.
-# Sem versões fixas de propósito: o setup instala as mais novas e registra as
-# versões efetivas em logs/versoes-gpu.txt. Qwen3.5 (base do Chandra 2) exige
-# um transformers recente; o setup confere isso carregando a config do modelo.
-torch
-transformers
-accelerate
-peft
-llmcompressor
+# Versões fixas: são as do piloto que rodou no Colab (L4, 2026-11-07). Sem fixar, o pip
+# recuou para transformers 4.52 (não carrega o Qwen3.5) ao combinar torchvision e
+# llmcompressor. Qwen3.5 (base do Chandra 2) exige transformers 5.x.
+torch==2.10.0
+torchvision==0.25.0          # o processador de vídeo do Qwen3.5 exige (sem ele o treino nem carrega)
+transformers==5.21.0
+accelerate==1.15.0
+peft==0.21.2
+llmcompressor==0.15.0
+flash-linear-attention==0.6.0  # versão rápida das 24 camadas de atenção linear
+numpy>=2
 pillow
 pyyaml
 requests

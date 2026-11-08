@@ -120,6 +120,8 @@
 \addbibresource{ref.bib} 
 
 % ---- Informações do documento ----
+\newcommand{\ultimocommit}{PREENCHIDO-NO-COMMIT}
+
 \title{\textbf{OCR-06: OCR Adaptativo com Aprendizagem Assistida}}
 \author{Gabriel Salmoria \and Tutor: Lucas Mayr}
 
@@ -127,6 +129,7 @@
 
 % ==== Início do Documento ====
 
+\setlength{\emergencystretch}{1.5em}
 \begin{document}
 
 \maketitle
@@ -135,7 +138,7 @@
 % RESUMO (*)
 % ---------------------------------------------------------------
 \begin{abstract}
-Sistemas de OCR baseados em Modelos de Linguagem Visual (VLMs) ainda erram bastante na leitura de nomes próprios raros em documentos manuscritos: o modelo tende a trocar o nome lido por uma palavra mais comum que viu no treinamento. Em acervos e cartórios isso obriga o operador a corrigir a transcrição à mão, e o modelo não aprende nada com a correção. Esta PoC faz o \emph{fine-tuning} com LoRA do Chandra OCR 2, um modelo aberto de OCR derivado do Qwen3.5-4B, usando linhas manuscritas reais do BRESSAY e linhas sintéticas com nomes, sobrenomes e municípios montados a partir de dados públicos do IBGE, do TSE e da Receita Federal. Nesta terceira entrega o pipeline de dados está completo e o código de treino e de inferência está implementado, incluindo a normalização de altura das linhas e controles na saída do modelo que marcam linhas para revisão humana. A execução do Chandra depende do servidor com GPU do laboratório, ainda não liberado, então o Experimento 2 testou em CPU o pré-processamento, os controles e o cálculo das métricas sobre os conjuntos de teste reais, com predições simuladas de erro conhecido no lugar do modelo. Esses testes acharam três problemas antes da primeira rodada no servidor: um limite de tamanho que cortaria 28\% das respostas corretas, uma regra de injeção que marcava linhas legítimas e um erro de alinhamento que contava a menos os nomes pulados pelo modelo. Baseline, treino e FP8 são a próxima etapa (Experimento 3).
+OCRs baseados em Modelos de Linguagem Visual (VLMs) ainda erram bastante nomes próprios raros em documentos manuscritos, trocando o nome por uma palavra mais comum que o modelo viu no treino, e hoje quem corrige isso é o operador, à mão. Esta PoC faz o \emph{fine-tuning} com LoRA do Chandra OCR 2, um modelo aberto de OCR baseado no Qwen3.5-4B, com linhas manuscritas reais do BRESSAY e linhas sintéticas com nomes e municípios brasileiros montadas a partir de dados públicos do IBGE, do TSE e da Receita Federal. Como o servidor do laboratório não foi liberado, o treino foi feito no Google Colab, com uma época sobre cerca de 57 mil linhas. No teste do BRESSAY o CER caiu de 20,1\% para 4,9\%, e no teste sintético, com fontes e nomes que o modelo não viu no treino, caiu de 8,6\% para 3,4\%, com o acerto exato nos nomes inéditos indo de 70,9\% para 79,7\%. A versão quantizada em FP8 ficou praticamente igual. Ainda faltam os testes de injeção e de extração com o modelo.
 \end{abstract}
 
 \textbf{Palavras-chave:} OCR, Modelos de Linguagem Visual, \emph{Fine-Tuning}, LoRA, Dados Sintéticos, Privacidade, LGPD.
@@ -143,37 +146,119 @@ Sistemas de OCR baseados em Modelos de Linguagem Visual (VLMs) ainda erram basta
 \tableofcontents
 
 % ==============================================================
+% SITUAÇÃO ATUAL E PLANO ATÉ O WORKSHOP (relatório parcial)
+% ==============================================================
+\section*{Situação Atual e Plano até o Workshop}
+\addcontentsline{toc}{section}{Situação Atual e Plano até o Workshop}
+\label{sec:situacao}
+
+\subsection*{Resumo da situação}
+
+A PoC funciona de ponta a ponta para linhas manuscritas, da geração dos dados até a avaliação, e nesta semana rodou pela primeira vez com o modelo, no Google Colab, já que o servidor do laboratório ainda não foi liberado. O modelo ajustado baixou o CER do BRESSAY de 20,1\% para 4,9\% e o do teste sintético de 8,6\% para 3,4\% (Seção~\ref{subsec:exp3}).
+
+No workshop a demonstração mostra linhas do BRESSAY e sintéticas transcritas pelo Chandra original e pelo ajustado lado a lado, com as palavras de baixa confiança marcadas. Até lá falta a parte de segurança com o modelo (injeção pela imagem e extração) e, se houver tempo, o treino em página inteira.
+
+\subsection*{Quadro de situação por seção}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{5.2cm}lp{7.3cm}@{}}
+\toprule
+Seção & Situação & Observação \\
+\midrule
+1. Introdução & Concluída & Atualizada com os resultados do treino. \\
+2. Fundamentação Teórica & Concluída & Revisão das referências na versão final. \\
+3. Objetivos e Métricas & Concluída & Métricas 1 e 3 medidas; a métrica 2 depende da memória RAG, fora do escopo. \\
+4. Escopo e Requisitos & Concluída & Requisitos 3 e 4 (memória de correções) não serão atendidos. \\
+5. Ameaças, Riscos e Controles & Em andamento & Controles de saída medidos com o modelo; faltam injeção e extração com o modelo. \\
+6. Metodologia & Concluída & Descreve a versão que foi de fato treinada. \\
+7. Avaliação Experimental & Em andamento & Experimentos 1 a 3 com resultados; falta o Experimento 4 (testes adversariais). \\
+8. Discussão & Em andamento & Primeira versão, sem os testes adversariais. \\
+9. Conclusões & Em andamento & Primeira versão. \\
+10. Checklist de Conformidade & Em andamento & Itens avaliáveis preenchidos; lacunas dependem do Experimento 4. \\
+\bottomrule
+\end{tabular}
+\caption{Situação de cada seção obrigatória em 7 de novembro de 2026.}
+\label{tab:situacao}
+\end{table}
+
+\subsection*{O que já foi feito até 7 de novembro}
+
+O problema e a revisão bibliográfica vêm da primeira entrega, e hoje o relatório cita 27 referências, entre elas o LoRA \cite{lora2022}, o Chandra \cite{chandra2026} e o BRESSAY \cite{bressay2023} e, na parte de segurança, os trabalhos sobre extração de dados de treino \cite{carlini2021extracting} e inferência de pertencimento \cite{shokri2017membership}. O modelo de ameaças está na Seção~\ref{sec:threat-model}.
+
+A parte de dados e a de modelo estão implementadas e rodaram inteiras, da coleta dos nomes até a avaliação, por dois scripts (\texttt{setup.sh} e \texttt{run.sh}). O modelo é o Chandra OCR 2, e os dados são o BRESSAY e os dados abertos de nomes do IBGE, do TSE e da Receita, descritos na Seção~\ref{subsec:dados}. Os resultados dos Experimentos 1 a 3 estão na Seção~\ref{sec:avaliacao}.
+
+O código está em \url{https://github.com/gabriel-salmoria/ai-sec}, na pasta \texttt{ocr06/}, e o último \emph{commit} relevante é o \texttt{\ultimocommit}. A apresentação intermediária foi na semana 6.
+
+\subsection*{O que falta fazer até o workshop}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lp{11.5cm}@{}}
+\toprule
+Semana & Atividade \\
+\midrule
+9 (09--15/11) & Experimento 4: injeção de instruções escritas na imagem e extração com imagens em branco e prefixos de nomes do treino, com o modelo ajustado. Corrigir a confiança por palavra no \emph{prompt} nativo (hoje ela inclui as coordenadas do HTML, Seção~\ref{subsec:guard-modelo}). Ajustes pedidos no retorno do professor. \\
+10 (16--22/11) & Conjunto sintético de páginas inteiras a partir de modelos de documentos de registro civil (certidões de casamento, nascimento e óbito e declaração de residência) e um treino de página, se a GPU e o prazo permitirem. Versão final do relatório, gravação da demonstração e ensaio da apresentação. \\
+23--24/11 & Workshop. \\
+\bottomrule
+\end{tabular}
+\caption{Cronograma até o workshop.}
+\label{tab:cronograma-workshop}
+\end{table}
+
+Se o treino de página não couber nessas duas semanas, a demonstração fica nas linhas e a página inteira vai para trabalhos futuros.
+
+\subsection*{Riscos e dependências}
+
+Como o servidor do laboratório não foi liberado, tudo que usa o modelo depende do Colab Pro, que dá 100 unidades de computação por R\$~58. Já foram usadas cerca de 52, e com a GPU usada gastando 10 por hora, o que sobra é suficiente para o Experimento 4 e para mais um treino. Se acabar, a alternativa é uma GPU menor do mesmo plano (L4), mais barata e bem mais lenta. O Colab também derruba a sessão quando fica ocioso, e por isso o treino agora pode continuar do último \emph{checkpoint}.
+
+O treino em página inteira é a parte mais arriscada, porque depende de montar um conjunto de páginas sintéticas com um gerador público que limita os pedidos a 100 documentos por hora e tem alguns modelos de documento com defeito. Se não der tempo, a demonstração fica nas linhas, que já funcionam.
+
+\subsection*{Necessidades para o workshop}
+
+A demonstração vai ser um vídeo gravado, e no dia as transcrições já calculadas podem ser mostradas num notebook, sem precisar de GPU nem de internet. Só aparecem linhas sintéticas e do BRESSAY (licença CC-BY 4.0), nenhum dado real de registro civil.
+
+\subsection*{Declaração de uso de ferramentas de IA}
+
+Usei o Claude Code (Anthropic) como assistente em todo o trabalho, para escrever boa parte do código, depurar as falhas do treino no Colab, analisar os resultados e fazer uma primeira versão deste texto, que depois revisei. As decisões sobre o que treinar e avaliar e a conferência dos números foram minhas.
+
+\subsection*{Parecer do tutor}
+
+O parecer do tutor (Lucas Mayr) será incluído aqui após a revisão dele.
+
+% ==============================================================
 % SEÇÃO 1 — INTRODUÇÃO (*)
 % ==============================================================
 \section{Introdução}
 \label{sec:introducao}
 
-A digitalização de acervos históricos e registros públicos esbarra nas limitações dos sistemas de OCR (Reconhecimento Ótico de Caracteres). Os modelos mais recentes leem bem o texto geral em português, mas erram muito em nomes próprios que fogem da distribuição comum (a cauda longa). Como o modelo viu pouco ou nenhum exemplo desses nomes no treinamento, ele tende a ``corrigir'' a leitura para uma palavra mais frequente do seu vocabulário \cite{cer_wer_ocr}. Na prática isso troca prenomes e sobrenomes, o que inutiliza a transcrição num Registro Civil e gera um trabalho longo de revisão manual.
+Os OCRs mais recentes leem bem texto em português, mas erram muito mais em nomes próprios pouco comuns (a cauda longa dos nomes), porque viram poucos ou nenhum exemplo deles no treino e tendem a ``corrigir'' a leitura para a palavra mais frequente que conhecem \cite{cer_wer_ocr}. Num Registro Civil, um prenome ou sobrenome trocado inutiliza a transcrição, e alguém precisa revisar tudo à mão.
 
 % --------------------------------------------------------------
 \subsection{Motivação}
 
-A principal motivação é que hoje o trabalho de correção humana se perde. O cartório paga alguém para consertar o texto gerado pelo OCR, e o modelo continua errando os mesmos nomes em documentos parecidos. Treinar um modelo grande do zero não é viável para instituições pequenas, mas técnicas de ajuste eficiente como o LoRA \cite{lora2022} permitem especializar um modelo aberto com uma única GPU.
+Hoje o cartório paga alguém para consertar o texto que o OCR gerou, e o modelo continua errando os mesmos nomes nos documentos seguintes, já que a correção não volta para ele. Treinar um modelo grande do zero não é viável para uma instituição pequena, mas com um ajuste eficiente como o LoRA \cite{lora2022} dá para especializar um modelo aberto numa única GPU.
 
-A proposta deste trabalho é melhorar o modelo em si, com um \emph{fine-tuning} supervisionado linha a linha. O treino usa o BRESSAY \cite{bressay2023}, que tem caligrafia real com transcrição, e um conjunto sintético de linhas manuscritas com nomes e cidades brasileiras, montado a partir de dados públicos. De forma secundária, o trabalho propõe acoplar uma memória de correções baseada em busca semântica (RAG), consultada na inferência para os casos que o modelo ajustado ainda erra.
+A proposta é melhorar o próprio modelo com um \emph{fine-tuning} supervisionado linha a linha, usando o BRESSAY \cite{bressay2023}, que tem caligrafia real com transcrição, e um conjunto sintético de linhas com nomes e cidades brasileiras montado a partir de dados públicos. A proposta original também tinha uma parte secundária, uma memória de correções com busca semântica (RAG) consultada na inferência para os casos que o modelo ajustado ainda erra, que acabou saindo do escopo.
 
 % --------------------------------------------------------------
 \subsection{Objetivos}
 
-O objetivo é reduzir a taxa de erro de caracteres e de palavras (CER e WER) na leitura de nomes próprios em documentos manuscritos, sem piorar a leitura do texto geral. Os objetivos específicos são:
+O objetivo é reduzir o CER e o WER (taxas de erro de caracteres e de palavras) na leitura de nomes próprios em documentos manuscritos, sem piorar a leitura do texto geral, e mais especificamente:
 
 \begin{itemize}
-    \item Gerar um conjunto sintético de linhas manuscritas com nomes, sobrenomes e municípios brasileiros, priorizados pela frequência real na população.
-    \item Fazer o \emph{fine-tuning} com LoRA de um VLM de OCR aberto (Chandra OCR 2) com esse conjunto e com as linhas do BRESSAY, e medir o ganho em nomes que não aparecem no treino.
-    \item Como complemento, implementar uma memória de correções (RAG) e medir quanto ela acrescenta ao modelo ajustado. Esse objetivo ficou fora do cronograma atual (Seção~\ref{subsec:pendencias}).
+    \item gerar um conjunto sintético de linhas manuscritas com nomes, sobrenomes e municípios brasileiros, sorteados pela frequência real na população;
+    \item fazer o \emph{fine-tuning} com LoRA de um VLM de OCR aberto (o Chandra OCR 2) com esse conjunto e com o BRESSAY, e medir o ganho em nomes que não aparecem no treino;
+    \item implementar a memória de correções (RAG) e medir quanto ela acrescenta ao modelo ajustado, objetivo que ficou fora do cronograma (Seção~\ref{subsec:pendencias}).
 \end{itemize}
 
 % --------------------------------------------------------------
 \subsection{Descrição do Problema}
 
-OCRs genéricos leem mal identidades atípicas (cauda longa) em registros manuscritos. Como os VLMs são enviesados pela distribuição do vocabulário comum, eles trocam prenomes e sobrenomes raros por algo mais provável.
-
-Com isso, operadores de acervos e cartórios corrigem as transcrições à mão. Ao propor um \emph{fine-tuning} com documentos reais para resolver isso, aparece um segundo problema, ético e legal: treinar com registros autênticos envolve dados pessoais (nomes reais e caligrafias), e isso precisa seguir a LGPD \cite{lgpd2018}.
+OCRs genéricos leem mal nomes atípicos em registros manuscritos, porque o VLM tende ao vocabulário comum e troca prenomes e sobrenomes raros por algo mais provável, e quem acaba corrigindo é o operador. Resolver isso treinando com documentos reais cria outro problema, já que registros autênticos têm dados pessoais (os nomes e a própria caligrafia) e o treino precisa seguir a LGPD \cite{lgpd2018}.
 
 % ==============================================================
 % SEÇÃO 2 — FUNDAMENTAÇÃO TEÓRICA (*)
@@ -181,52 +266,41 @@ Com isso, operadores de acervos e cartórios corrigem as transcrições à mão.
 \section{Fundamentação Teórica e Estado da Arte}
 \label{sec:fundamentacao}
 
-Atualmente o OCR é feito em boa parte por Modelos de Linguagem Visual (VLMs). Em vez de reconhecer caractere por caractere, essas arquiteturas processam a imagem inteira e geram o texto com o contexto da linha ou da página.
+Hoje boa parte do OCR é feita por Modelos de Linguagem Visual (VLMs), que processam a imagem inteira e geram o texto usando o contexto da linha ou da página, em vez de reconhecer caractere por caractere.
 
 % --------------------------------------------------------------
 \subsection{Técnicas Relevantes para o Problema}
 
 \subsubsection{Abordagens Clássicas}
-Sistemas legados usam o Tesseract ou redes LSTM. A limitação dessas abordagens é a falta de contexto de longo alcance, o que faz com que falhem em textos manuscritos contínuos, onde traços sobrepostos aumentam a ambiguidade.
+Sistemas mais antigos usam o Tesseract ou redes LSTM, que têm pouco contexto de longo alcance e falham em texto manuscrito contínuo, onde os traços se sobrepõem e a leitura fica ambígua.
 
 \subsubsection{Abordagens Baseadas em ML/DL}
-O estado da arte recente usa Transformers, como o TrOCR \cite{trocr2021}, e modelos generativos como a família Qwen-VL \cite{qwen2vl}. Para não treinar esses modelos do zero, técnicas de \emph{Parameter-Efficient Fine-Tuning} (PEFT) como o LoRA \cite{lora2022, peft2022} adaptam poucos parâmetros extras e cabem numa GPU comercial. Bibliotecas como o Augraphy \cite{augraphy2022} geram dados sintéticos com manchas, ruído e envelhecimento parecidos com os de documentos escaneados.
+O estado da arte recente usa Transformers, como o TrOCR \cite{trocr2021}, e modelos generativos como a família Qwen-VL \cite{qwen2vl}. Para não treinar esses modelos do zero existem técnicas de ajuste eficiente (\emph{Parameter-Efficient Fine-Tuning}, PEFT) como o LoRA \cite{lora2022, peft2022}, que treinam poucos parâmetros extras e cabem numa GPU comercial, e para os dados sintéticos bibliotecas como o Augraphy \cite{augraphy2022} simulam manchas, ruído e envelhecimento de documento escaneado.
 
-O modelo escolhido foi o Chandra OCR 2 \cite{chandra2026}, da Datalab, um VLM feito para OCR que lê manuscrito e devolve a página em HTML. A configuração publicada dele é idêntica à do Qwen3.5-4B \cite{qwen35} (32 camadas, dimensão 2.560, mesmo vocabulário e mesmo encoder de visão), então ele é um \emph{fine-tune} desse modelo. A arquitetura é híbrida, com três de cada quatro camadas usando atenção linear e uma usando atenção completa. A expectativa é que, partindo de um modelo que já faz OCR, o ajuste aos nomes precise de menos dados do que partindo de um VLM genérico como o previsto na primeira entrega.
+O modelo escolhido foi o Chandra OCR 2 \cite{chandra2026}, da Datalab, um VLM feito para OCR que lê manuscrito e devolve a página em HTML. A configuração publicada dele é a mesma do Qwen3.5-4B \cite{qwen35} (32 camadas, dimensão 2.560, mesmo vocabulário e mesmo encoder de visão), ou seja, ele é um \emph{fine-tune} desse modelo, com uma arquitetura híbrida em que três de cada quatro camadas usam atenção linear e uma usa atenção completa. Partindo de um modelo que já faz OCR, a expectativa era precisar de menos dados para ajustar os nomes do que partindo de um VLM genérico, como estava previsto na primeira entrega.
 
 % --------------------------------------------------------------
 \subsection{Explicabilidade em Modelos de IA}
 
-Para o operador do cartório, o que importa saber é em quais palavras o modelo está inseguro e de qual parte da imagem cada palavra saiu. A abordagem tem duas partes:
+Para o operador do cartório, interessa saber em quais palavras o modelo está inseguro e de qual parte da imagem cada palavra saiu. A primeira parte já está no \texttt{guard.py} (Seção~\ref{subsec:controles}), que pega a log-probabilidade que o vLLM devolve para cada \emph{token}, fica com o menor valor entre os \emph{tokens} de cada palavra e manda para revisão as palavras com confiança baixa, em vez de o operador conferir a linha inteira. No Experimento 3, com o \emph{prompt} curto, as linhas marcadas incluíram de 68\% a 76\% das linhas erradas (Seção~\ref{subsec:guard-modelo}).
 
-\begin{itemize}
-    \item \textbf{Confiança por palavra:} o vLLM devolve a log-probabilidade de cada \emph{token} gerado. Agregando por palavra (o menor valor entre os \emph{tokens} da palavra), dá para marcar os nomes com confiança baixa para revisão humana, em vez de pedir que o operador confira a linha inteira. Isso já está implementado no \texttt{guard.py} (Seção~\ref{sec:threat-model}). Com o modelo rodando, também dá para medir se a confiança está calibrada, ou seja, se as palavras com confiança baixa são as que o modelo mais erra.
-    \item \textbf{Mapas de saliência:} para uma amostra pequena, mapas de atenção do decodificador sobre os \emph{tokens} visuais, ou Grad-CAM \cite{gradcam2017} aplicado ao encoder de visão, devem mostrar qual região da linha sustentou cada nome. Pesos de atenção nem sempre explicam a decisão do modelo, então eles servem só de apoio visual, conferidos com um teste simples (o mapa de um nome tem que cair sobre o nome na imagem).
-\end{itemize}
-
-A interface de correção completa está fora do escopo, então nesta PoC as duas saídas ficam disponíveis pela API e em arquivos de análise.
+A segunda parte, que ainda não foi feita, seriam mapas de atenção do decodificador sobre os \emph{tokens} visuais, ou Grad-CAM \cite{gradcam2017} no encoder de visão, para uma amostra pequena, para ver qual região da linha sustentou cada nome. Pesos de atenção nem sempre explicam a decisão do modelo, então esses mapas serviriam só de apoio visual, conferidos com um teste simples (o mapa de um nome tem de cair sobre o nome na imagem). A interface de correção completa está fora do escopo, e nesta PoC essas saídas ficam em arquivos de análise.
 
 % --------------------------------------------------------------
 \subsection{Segurança e Privacidade em Sistemas de IA}
 
-Esta seção trata dos riscos de privacidade que vêm de treinar o modelo com documentos reais.
-
 \subsubsection{Extração de Dados e Memorização}
-Modelos de linguagem decoram trechos do treino, principalmente sequências raras ou repetidas, e um atacante com acesso de consulta consegue extrair parte delas \cite{carlini2021extracting}. Num OCR, a memorização primeiro piora a própria leitura, porque um modelo que decorou nomes do treino tende a ``ver'' esses nomes em imagens parecidas (o mesmo erro que o projeto quer corrigir). Além disso, com imagens em branco, ruidosas ou com o começo de um nome, um atacante pode fazer o modelo completar nomes e combinações de sobrenomes que viu no treino. Também dá para comparar a confiança do modelo numa imagem com um nome específico e estimar se aquele nome ou documento estava no treino, o que se chama inferência de pertencimento (\emph{membership inference}) \cite{shokri2017membership}.
+Modelos de linguagem decoram trechos do treino, principalmente sequências raras ou repetidas, e um atacante com acesso de consulta consegue extrair parte delas \cite{carlini2021extracting}. Num OCR isso primeiro piora a própria leitura, porque um modelo que decorou nomes do treino tende a ``ver'' esses nomes em imagens parecidas, que é o mesmo erro que o projeto quer corrigir. Com imagens em branco, ruidosas ou com o começo de um nome, um atacante também pode fazer o modelo completar nomes e combinações de sobrenomes que viu no treino, e comparando a confiança do modelo numa imagem com um nome específico dá para estimar se aquele nome estava no treino (inferência de pertencimento, ou \emph{membership inference} \cite{shokri2017membership}).
 
-O risco cresce com poucos dados reais, muitas épocas, nomes únicos e LoRA de rank alto. No conjunto atual a parte sintética usa nomes reais da população, mas combinados aleatoriamente, então uma linha sintética não corresponde a uma pessoa. A parte real é o BRESSAY, cujas redações citam sobretudo autores conhecidos (Bauman, Byung-Chul Han, Machado de Assis) e quase não têm nomes de pessoas comuns. O caso de maior risco é o uso futuro com dados de Registro Civil. A avaliação compara o erro em nomes vistos e em nomes inéditos (Seção~\ref{subsec:aval}), e uma diferença grande entre os dois indica memorização.
+O risco cresce com poucos dados reais, muitas épocas, nomes únicos e LoRA de rank alto. Aqui a parte sintética usa nomes reais da população combinados aleatoriamente, então uma linha sintética não corresponde a uma pessoa, e a parte real é o BRESSAY, cujas redações citam sobretudo autores conhecidos (Bauman, Byung-Chul Han, Machado de Assis) e quase não têm nomes de pessoas comuns. O caso de maior risco seria o uso com dados de Registro Civil. Para acompanhar isso, a avaliação compara o erro em nomes vistos e inéditos no treino (Seção~\ref{subsec:aval}), já que uma diferença grande entre os dois indicaria memorização.
 
 \subsubsection{Conformidade com a LGPD}
-Como o \emph{fine-tuning} usa registros manuscritos, o treino precisa estar alinhado à LGPD \cite{lgpd2018}. O modelo deve aprender o traço da caligrafia e a estrutura dos nomes sem guardar vínculo com pessoas reais. Para isso, a maior parte do treino é sintética (nomes reais da população combinados aleatoriamente) e a fração real é limitada (Seção~\ref{subsec:dados}), seguindo o princípio de minimização. As fontes de nomes completos (TSE e Receita Federal) são lidas em memória e só contagens por palavra são guardadas. Se o módulo de memória RAG for implementado, ele vai guardar o vetor da imagem e o texto corrigido, sem a imagem original. A primeira entrega descrevia esse vetor como irreversível, o que não é bem verdade: existem ataques que reconstroem parte da entrada a partir de \emph{embeddings}, e o texto corrigido é o próprio nome. Então a memória teria de ser tratada como dado pessoal, com controle de acesso e prazo de retenção.
+Como o \emph{fine-tuning} usa registros manuscritos, ele precisa seguir a LGPD \cite{lgpd2018}, com o modelo aprendendo o traço da caligrafia e a estrutura dos nomes sem guardar vínculo com pessoas reais. Por isso a maior parte do treino é sintética e a fração real é limitada (Seção~\ref{subsec:dados}), seguindo o princípio de minimização, e das fontes com nomes completos (TSE e Receita Federal) só ficam contagens por palavra. Se a memória RAG for implementada, ela guarda o vetor da imagem e o texto corrigido, sem a imagem original. A primeira entrega dizia que esse vetor era irreversível, o que não é bem verdade (existem ataques que reconstroem parte da entrada a partir de \emph{embeddings}, e o texto corrigido é o próprio nome), então essa memória teria de ser tratada como dado pessoal, com controle de acesso e prazo de retenção.
 
 % --------------------------------------------------------------
 \subsection{Gaps e Oportunidades}
 
-\begin{enumerate}
-    \item \textbf{Falta de variabilidade nos datasets:} o BRESSAY, único corpus de manuscrito em página inteira em português brasileiro com transcrição, quase não tem nomes próprios raros. O projeto completa essa lacuna com um conjunto sintético de nomes montado a partir de IBGE, TSE e Receita Federal.
-    \item \textbf{Baixa generalização para manuscritos difíceis:} modelos pré-treinados falham em caligrafias pouco legíveis. O \emph{fine-tuning} linha a linha ataca esse ponto diretamente.
-    \item \textbf{Custo de atualização (secundário):} uma memória de correções (RAG) permitiria aproveitar correções pontuais do operador na inferência, sem re-treinar o modelo a cada caso residual.
-\end{enumerate}
+O principal corpus de manuscrito em português brasileiro com transcrição é o BRESSAY, e ele quase não tem nomes próprios raros, por isso o conjunto sintético de nomes montado a partir do IBGE, do TSE e da Receita. Modelos pré-treinados também falham em caligrafia pouco legível, que é o que o \emph{fine-tuning} linha a linha ataca. Uma memória de correções permitiria ainda aproveitar correções pontuais do operador sem treinar o modelo de novo a cada caso, mas essa parte ficou de fora.
 
 % ==============================================================
 % SEÇÃO 3 — OBJETIVOS E MÉTRICAS DE SUCESSO (*)
@@ -241,22 +315,17 @@ O trabalho dá certo se o modelo ajustado ler melhor os nomes que nunca viu no t
 
 \begin{itemize}
     \item Implementar o gerador de linhas manuscritas sintéticas com nomes do IBGE, do TSE e da Receita, degradadas com o Augraphy (feito, Seção~\ref{subsec:dados}).
-    \item Fazer o \emph{fine-tuning} com LoRA do Chandra OCR 2 com o sintético e o BRESSAY, e gerar uma versão quantizada em FP8 para servir com o vLLM (implementado; a execução depende da GPU do servidor).
-    \item Como suporte secundário, acoplar a memória FAISS de correções e medir o impacto dela sobre o modelo ajustado (fora do cronograma atual).
+    \item Fazer o \emph{fine-tuning} com LoRA do Chandra OCR 2 com o sintético e o BRESSAY e gerar uma versão em FP8 para servir com o vLLM (feito, Experimento 3).
+    \item Acoplar a memória de correções com FAISS e medir quanto ela acrescenta ao modelo ajustado (ficou fora do cronograma).
 \end{itemize}
 
 % --------------------------------------------------------------
 \subsection{Métricas de Sucesso}
 
 \begin{enumerate}
-    \item \textbf{CER segmentado:}
-    o CER é medido separadamente no texto geral, em nomes comuns e em nomes raros (por prenome, sobrenome e município), para confirmar que o ganho nos nomes não vem com perda no resto. O teste do BRESSAY mede a caligrafia real e o teste sintético mede os nomes.
-
-    \item \textbf{Hit Rate da memória:}
-    proporção de vezes em que a consulta ao histórico de correções reverteu uma predição errada do modelo. Só será medida se o módulo RAG for implementado.
-
-    \item \textbf{Acerto em nomes inéditos:}
-    porcentagem de nomes lidos exatamente certos, e CER desses nomes, considerando só os nomes que não aparecem em nenhuma linha do treino. Para o cartório, um nome com um caractere errado já precisa de correção, por isso o acerto exato importa mais que o CER aqui. Comparar essa métrica com a dos nomes vistos no treino também indica memorização (Seção~\ref{sec:fundamentacao}).
+    \item CER segmentado, medido separadamente no texto geral, nos nomes comuns e nos raros (por prenome, sobrenome e município), para ver se o ganho nos nomes não vem com perda no resto. O teste do BRESSAY mede a caligrafia real e o sintético mede os nomes.
+    \item \emph{Hit rate} da memória, a proporção de vezes em que a consulta ao histórico de correções reverteu uma predição errada do modelo, que só seria medida com o módulo RAG.
+    \item Acerto em nomes inéditos, a porcentagem de nomes lidos exatamente certos (e o CER deles) contando só os nomes que não aparecem em nenhuma linha do treino. Para o cartório um nome com um caractere errado já precisa de correção, então aqui o acerto exato importa mais que o CER, e comparado com o dos nomes vistos no treino ele também indica memorização (Seção~\ref{sec:fundamentacao}).
 \end{enumerate}
 
 % ==============================================================
@@ -265,7 +334,7 @@ O trabalho dá certo se o modelo ajustado ler melhor os nomes que nunca viu no t
 \section{Escopo da Solução e Requisitos}
 \label{sec:escopo}
 
-A solução é entregue como um conjunto de scripts e um \emph{backend} de inferência, que rodam num servidor com GPU.
+A solução é um conjunto de scripts que rodam numa máquina com GPU (nesta entrega, no Google Colab), com a inferência feita pelo vLLM.
 
 % --------------------------------------------------------------
 \subsection{Escopo da Solução}
@@ -275,7 +344,7 @@ O escopo do projeto inclui:
     \item O pré-processamento das linhas do BRESSAY e os scripts que coletam os dados públicos de nomes e geram o conjunto sintético.
     \item O \emph{fine-tuning} do Chandra OCR 2, a versão quantizada em FP8 e o fluxo de inferência com vLLM.
     \item A avaliação comparativa (modelo original, original em FP8, ajustado e ajustado em FP8).
-    \item A memória de correções com FAISS, que ficou fora do cronograma atual e deve ser trabalho futuro.
+    \item A memória de correções com FAISS, que acabou saindo do cronograma.
 \end{itemize}
 
 Estão fora do escopo inicial:
@@ -299,11 +368,10 @@ Os requisitos 3 e 4 dependem da memória de correções e não serão atendidos 
 
 % --------------------------------------------------------------
 \subsection{Requisitos Não-Funcionais}
-
 \begin{itemize}
-    \item \textbf{Desempenho:} o treino precisa caber numa única GPU do servidor do laboratório (NVIDIA L40S, 48~GB). O Chandra em BF16 ocupa cerca de 10,6~GB, então o LoRA cabe sem quantização. A inferência usa o vLLM \cite{vllm2023}.
-    \item \textbf{Reprodutibilidade:} todo o pipeline roda por dois scripts (\texttt{setup.sh} e \texttt{run.sh}). Partições, \emph{seeds} e hiperparâmetros ficam num único arquivo de configuração, e os downloads têm o \emph{checksum} conferido quando a fonte publica um.
-    \item \textbf{Segurança e Privacidade:} a maior parte do treino deve ser sintética, e o script de mistura falha se o BRESSAY passar de 45\% das linhas de treino.
+    \item O treino tinha de caber numa única GPU, e o plano era a L40S de 48~GB do servidor do laboratório. Como ela não foi liberada, o treino rodou numa NVIDIA RTX PRO 6000 de 96~GB no Google Colab, com pico de 49,5~GB para um lote de 16 linhas, e na L40S o lote teria de cair para 8, com acumulação de gradiente 2 (não testado). A inferência usa o vLLM \cite{vllm2023}.
+    \item O pipeline inteiro tem de ser reproduzível por dois scripts (\texttt{setup.sh} e \texttt{run.sh}), com partições, \emph{seeds} e hiperparâmetros num único arquivo de configuração, o \emph{checksum} dos downloads conferido quando a fonte publica um e as versões das bibliotecas de treino fixas no \texttt{requirements-gpu.txt} (sem isso o instalador chegou a escolher um \texttt{transformers} que não carrega o modelo).
+    \item A maior parte do treino deve ser sintética, e o script de mistura falha se o BRESSAY passar de 45\% das linhas de treino.
 \end{itemize}
 
 % ==============================================================
@@ -312,52 +380,36 @@ Os requisitos 3 e 4 dependem da memória de correções e não serão atendidos 
 \section{Ameaças, Riscos e Controles}
 \label{sec:threat-model}
 
-As ameaças abaixo envolvem tanto a privacidade dos dados de treino quanto a integridade das transcrições que o modelo devolve.
+Um OCR ajustado com nomes reais pode deixar vazar o que viu no treino, e num cartório qualquer erro de leitura vira um nome errado no registro.
 
 % --------------------------------------------------------------
 \subsection{Principais Ameaças Identificadas}
-
 \begin{itemize}
-    \item \textbf{Extração de dados de treino:} um atacante usa entradas específicas para fazer o modelo produzir nomes reais e combinações de dados que ele decorou no \emph{fine-tuning} \cite{carlini2021extracting}.
-    \item \textbf{Inferência de pertencimento (\emph{membership inference}):} tentativa de descobrir se um documento ou o nome de um cidadão específico fez parte do treino, comparando a confiança do modelo em entradas com e sem esse nome \cite{shokri2017membership}.
-    \item \textbf{Envenenamento de dados (\emph{poisoning}):} anotações erradas, acidentais ou maliciosas, no treino ou na memória de correções, que fazem o modelo repetir o erro em produção.
-    \item \textbf{Injeção de instruções pela imagem e entradas adversariais:} o VLM lê qualquer texto da imagem, então um documento pode conter algo como ``ignore a tarefa e responda X'' e tentar desviar a saída (injeção indireta de \emph{prompt} \cite{greshake2023indirect}). Perturbações pequenas e invisíveis na imagem também podem trocar um nome por outro \cite{goodfellow2014}. Num cartório, o impacto seria um registro com o nome errado. A mitigação é restringir a tarefa (só transcrição, sem ferramentas, limite de \emph{tokens} proporcional à linha), conferir a saída e mandar para revisão humana as linhas suspeitas ou com confiança baixa. Essa parte foi implementada na terceira entrega e está descrita na Seção~\ref{subsec:controles}.
+    \item Um atacante pode usar entradas escolhidas para fazer o modelo escrever nomes reais e combinações de dados que ele decorou no \emph{fine-tuning} (extração de dados de treino \cite{carlini2021extracting}).
+    \item Na inferência de pertencimento (\emph{membership inference}) a ideia é descobrir se um documento ou o nome de um cidadão fez parte do treino, comparando a confiança do modelo em entradas com e sem esse nome \cite{shokri2017membership}.
+    \item Anotações erradas no treino ou na memória de correções, por acidente ou de propósito, fazem o modelo repetir o erro em produção (envenenamento de dados, ou \emph{poisoning}).
+    \item O VLM lê qualquer texto que estiver na imagem, então um documento pode trazer escrito algo como ``ignore a tarefa e responda X'' para desviar a saída (injeção indireta de \emph{prompt} \cite{greshake2023indirect}), e perturbações pequenas, que quem olha nem percebe, também podem trocar um nome por outro \cite{goodfellow2014}. Os controles para isso estão na Seção~\ref{subsec:controles}.
 \end{itemize}
 
 % --------------------------------------------------------------
 \subsection{Riscos Associados ao Projeto}
-
 \begin{enumerate}
-    \item \textbf{Compatibilidade de software no servidor:} o Chandra 2 usa a arquitetura Qwen3.5, que só é suportada em versões recentes do \texttt{transformers} e do vLLM, e as camadas de atenção linear dependem de \emph{kernels} específicos (sem eles o treino roda, só que bem mais devagar). O \texttt{setup.sh} confere se as bibliotecas reconhecem o modelo antes de qualquer etapa, e o \texttt{run.sh teste-rapido} mede a velocidade real em poucos minutos.
-    \item \textbf{Viés de representatividade:} os sobrenomes vêm de candidatos (TSE) e sócios de empresas (Receita), que não representam a população de forma uniforme, e as fontes manuscritas são 33 fontes digitais. O modelo pode ficar melhor em alguns grupos de nomes e estilos de letra do que em outros. Isso é acompanhado separando o erro por grupo de frequência na avaliação.
-    \item \textbf{Dependência da infraestrutura do laboratório:} as etapas com o modelo precisam da L40S do servidor, cuja liberação ainda está pendente. Para reduzir o impacto, o cronograma foi reorganizado (Seção~\ref{subsec:ajustes}): tudo que não depende da GPU foi adiantado e testado, e a parte de GPU foi preparada para rodar com dois comandos, com um teste rápido de minutos antes do treino longo. Ainda assim, treino e avaliação completos levam alguns dias de GPU, e a semana 8 do cronograma (27/10 a 02/11) é a última.
+    \item O Chandra 2 usa a arquitetura Qwen3.5, que o vLLM e o \texttt{transformers} só suportam nas versões recentes, e as camadas de atenção linear dependem de \emph{kernels} específicos (sem eles o treino roda, só que bem mais devagar). Esse risco se confirmou na primeira execução real, com seis problemas de versão e de ambiente, todos resolvidos (Seção~\ref{subsec:problemas}), e as versões que funcionaram ficaram fixas no repositório.
+    \item Os sobrenomes vêm de candidatos (TSE) e de sócios de empresas (Receita), que não representam a população de forma uniforme, e a caligrafia sintética vem de 85 fontes digitais (68 no treino e 17 só no teste), então o modelo pode ficar melhor em alguns grupos de nomes e estilos de letra do que em outros. Por isso a avaliação separa o erro por grupo de frequência.
+    \item As etapas com o modelo precisavam da L40S do servidor do laboratório, que não foi liberada até a semana 8. O treino e a avaliação foram feitos no Google Colab Pro, pago com recurso próprio, e o projeto ficou limitado às unidades de computação que sobram no plano.
 \end{enumerate}
 
 % --------------------------------------------------------------
 \subsection{Controles e Medidas de Mitigação}
-
-Controles já implementados no pipeline de dados:
-\begin{itemize}
-    \item As listas de candidatos (TSE) e de sócios (Receita) têm nomes completos de pessoas reais. Elas são lidas em \emph{streaming} e só ficam contagens por palavra (frequência de cada sobrenome, partículas, grafias com acento). Nenhum nome completo é gravado em disco, os arquivos baixados são apagados ao final e sobrenomes com menos de 5 ocorrências são descartados.
-    \item O treino é majoritariamente sintético, com nomes reais combinados aleatoriamente, e o script de mistura impede que o BRESSAY passe de 45\% do treino.
-    \item As partições são separadas sem vazamento: o BRESSAY usa a partição oficial por autor, e uma parte dos nomes raros fica reservada só para o teste.
-    \item Toda a geração é determinística (a mesma \emph{seed} gera a mesma imagem), e os arquivos baixados têm o MD5 conferido quando a fonte publica um.
-\end{itemize}
-
 \label{subsec:controles}
-Controles na saída do modelo, implementados em \texttt{guard.py} e ligados ao \texttt{infer.py} (validados no Experimento 2):
-\begin{itemize}
-    \item O limite de \emph{tokens} de cada linha sai da largura da imagem: no máximo $10 \times$ largura / altura caracteres, com o fator calibrado no treino e na validação. Uma resposta que entra em laço, ou que segue uma instrução longa escrita na imagem, é cortada.
-    \item A saída é marcada para revisão humana se vier vazia, maior do que cabe na linha, com HTML (no nosso \emph{prompt}), com caracteres que não aparecem em manuscrito em português, com um trecho repetido em laço, com frases típicas de quem obedeceu a um comando (``ignore a instrução'', ``aqui está a transcrição'', ``não posso'') ou com alguma palavra de confiança abaixo de 0,5. As verificações não bloqueiam a saída, só marcam a linha para o operador revisar.
-    \item A confiança de cada palavra é a probabilidade do pior \emph{token} da palavra, calculada a partir das log-probabilidades que o vLLM devolve, e fica gravada junto da predição com a lista de palavras de confiança baixa.
-\end{itemize}
 
-Controles previstos para a parte de modelo:
-\begin{itemize}
-    \item Comparar o erro em nomes vistos e inéditos e testar a extração com imagens em branco e prefixos de nomes do treino, antes de considerar o modelo pronto.
-    \item Comparar toda versão nova do modelo com a anterior no mesmo teste antes de substituí-la.
-    \item No módulo RAG, se implementado: guardar só o vetor e o texto corrigido, com controle de acesso, registro de quem corrigiu e prazo de retenção.
-\end{itemize}
+As listas de candidatos do TSE e de sócios da Receita têm nomes completos de pessoas reais, e por isso são lidas em \emph{streaming}, ficando só contagens por palavra (a frequência de cada sobrenome, as partículas, as grafias com acento). Nenhum nome completo é gravado em disco, os arquivos baixados são apagados no fim e sobrenomes com menos de 5 ocorrências são descartados. O treino é majoritariamente sintético, com os nomes combinados ao acaso, e o script de mistura falha se o BRESSAY passar de 45\% das linhas. O BRESSAY usa a partição oficial por autor e uma parte dos nomes raros fica reservada só para o teste, então nenhum autor ou nome reservado vaza entre os conjuntos.
+
+Na saída do modelo, os controles ficam no \texttt{guard.py}, chamado pelo \texttt{infer.py} e validado sem modelo no Experimento 2. O limite de \emph{tokens} de cada linha sai da largura da imagem (no máximo $10 \times$ largura / altura caracteres, com o fator calibrado no treino e na validação), e assim uma resposta que entra em laço, ou que segue uma instrução longa escrita na imagem, é cortada. A saída é marcada para revisão humana se vier vazia, maior do que cabe na linha, com HTML (no nosso \emph{prompt}), com caracteres que não aparecem em manuscrito em português, com um trecho repetido em laço, com frases típicas de quem obedeceu a um comando (``ignore a instrução'', ``aqui está a transcrição'', ``não posso'') ou com alguma palavra de confiança abaixo de 0,5. A confiança de uma palavra é a probabilidade do pior \emph{token} dela, tirada das log-probabilidades que o vLLM devolve, e fica gravada junto da predição. Nada é bloqueado, as verificações só marcam a linha para o operador revisar.
+
+Com o modelo ajustado e o \emph{prompt} curto, as linhas que esses controles deixaram passar têm CER de 1,0\% no BRESSAY, contra 7,6\% nas que eles marcaram (Seção~\ref{subsec:guard-modelo}). Com o \emph{prompt} nativo a regra de confiança marcou quase todas as linhas, porque também olha as coordenadas que o Chandra escreve no HTML, e ela precisa ser corrigida antes de usar esse \emph{prompt} com revisão.
+
+Antes de considerar uma versão do modelo pronta, o erro em nomes vistos e inéditos é comparado (feito no Experimento 3, e a diferença não aumentou com o treino) e a extração é testada com imagens em branco e prefixos de nomes do treino (Experimento 4, pendente). Toda versão nova também é comparada com a anterior no mesmo teste antes de substituí-la, que é o que o \texttt{run.sh avaliacao} faz com o modelo ajustado e a versão FP8 dele, nos mesmos conjuntos do baseline. Se o módulo RAG for implementado, ele deve guardar só o vetor e o texto corrigido, com controle de acesso, registro de quem corrigiu e prazo de retenção.
 
 % ==============================================================
 % SEÇÃO 6 — METODOLOGIA DE DESENVOLVIMENTO DA PoC (*)
@@ -365,23 +417,22 @@ Controles previstos para a parte de modelo:
 \section{Metodologia de Desenvolvimento da PoC}
 \label{sec:metodologia}
 
-Os experimentos usam linhas do BRESSAY e linhas manuscritas sintéticas geradas pelo projeto. O conjunto sintético combina prenomes do Censo 2010 do IBGE com sobrenomes contados nos dados abertos do TSE e da Receita Federal, e municípios do IBGE ponderados pela população do Censo 2022.
+Os experimentos usam linhas do BRESSAY e linhas sintéticas geradas pelo projeto, com prenomes do Censo 2010, sobrenomes contados nos dados abertos do TSE e da Receita Federal e municípios do IBGE ponderados pela população do Censo 2022.
 
 % --------------------------------------------------------------
 \subsection{Fases de Implementação}
-
 \begin{enumerate}
-    \item \textbf{Fase 1, preparação dos dados (concluída):} coleta e agregação dos nomes, seleção do vocabulário, gerador de caligrafia sintética com Augraphy, preparação do BRESSAY e montagem dos conjuntos finais.
-    \item \textbf{Fase 2, \emph{fine-tuning} (implementada, execução no servidor):} LoRA sobre o Chandra OCR 2 em BF16 com \texttt{transformers} e \texttt{peft}, seguido da fusão do adaptador e da quantização em FP8.
-    \item \textbf{Fase 3, memória (fora do cronograma atual):} banco FAISS de correções consultado na inferência.
-    \item \textbf{Fase 4, validação (métricas implementadas e verificadas):} CER e WER do modelo original e do ajustado, com e sem FP8, e com a memória se ela existir.
+    \item Preparação dos dados (concluída), com a coleta e agregação dos nomes, a seleção do vocabulário, o gerador de caligrafia sintética, a preparação do BRESSAY e a montagem dos conjuntos finais.
+    \item \emph{Fine-tuning} (concluído, no Google Colab), com LoRA sobre o Chandra OCR 2 em BF16 usando \texttt{transformers} e \texttt{peft}, seguido da fusão do adaptador e da quantização em FP8.
+    \item Memória de correções com FAISS consultada na inferência (fora do cronograma).
+    \item Validação (feita), com CER e WER do modelo original e do ajustado, com e sem FP8, nos dois testes e com os dois \emph{prompts}. Os testes adversariais com o modelo ficam para o Experimento 4.
 \end{enumerate}
 
 % --------------------------------------------------------------
 \subsection{Arquitetura Proposta}
 \label{subsec:arquitetura}
 
-A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CPU e gera os conjuntos de treino e teste, e a parte de modelo roda no servidor com GPU. Na terceira entrega entraram dois componentes: a normalização de altura, aplicada às imagens tanto no treino quanto na inferência, e os controles de saída, aplicados a cada transcrição antes da avaliação.
+Na arquitetura final (Figura~\ref{fig:arquitetura}), a parte de dados roda em CPU e gera os conjuntos de treino e teste, e a parte de modelo roda numa GPU, que nesta entrega foi uma máquina do Google Colab controlada do meu computador pela linha de comando oficial do Colab (o código e os dados vão por SSH, o treino roda em segundo plano lá e os resultados voltam no fim de cada etapa). Desde a terceira entrega a única mudança na arquitetura é o formato das conversas de treino, que agora usa dois \emph{prompts} (Seção~\ref{subsec:dados}).
 
 \begin{figure}[H]
 \centering
@@ -426,26 +477,26 @@ A Figura~\ref{fig:arquitetura} mostra a arquitetura. A parte de dados roda em CP
   \draw[arr] (mistura.south) -- ++(0,-0.55) -| (lora.north);
   \draw[arr] (mistura.south) -- ++(0,-0.55) -| (vllm.north);
   \begin{scope}[on background layer]
-    \node[lane, fit=(chandra)(vllm)(aval)(base)(rag)(bot), label={[font=\scriptsize\bfseries]below left:Modelo (GPU, servidor)}] {};
+    \node[lane, fit=(chandra)(vllm)(aval)(base)(rag)(bot), label={[font=\scriptsize\bfseries]below left:Modelo (GPU, Google Colab)}] {};
   \end{scope}
 \end{tikzpicture}
-\caption{Arquitetura da PoC. A normalização de altura e os controles de saída entraram na terceira entrega. Caixas tracejadas são componentes planejados que ainda não foram implementados.}
+\caption{Arquitetura da PoC. Todos os componentes com borda contínua foram executados nesta entrega. A caixa tracejada é a memória de correções, que ficou fora do escopo.}
 \label{fig:arquitetura}
 \end{figure}
 
 % --------------------------------------------------------------
 \subsection{Fluxo de Funcionamento}
 
-O fluxo completo roda com \texttt{scripts/run.sh} e segue a ordem abaixo. Cada etapa grava sua saída em disco, então dá para repetir uma etapa sem refazer as anteriores.
+O \texttt{scripts/run.sh} roda as etapas abaixo nesta ordem, e como cada uma grava sua saída em disco dá para repetir uma etapa sem refazer as anteriores.
 
 \begin{enumerate}
-    \item \textbf{lexicon:} baixa os prenomes do Censo 2010, as listas de candidatos do TSE (2020 e 2024), duas partes da lista de sócios da Receita e os municípios do IBGE, e agrega tudo em tabelas de frequência por palavra.
-    \item \textbf{fonts:} baixa 34 fontes manuscritas do Google Fonts e descarta as que não têm os acentos do português (sobraram 33).
-    \item \textbf{bressay:} baixa o BRESSAY do Zenodo, confere o MD5, extrai as linhas, aplica a política de limpeza e marca os nomes que aparecem nas redações.
-    \item \textbf{generate:} seleciona o vocabulário, sorteia linhas de texto, renderiza, degrada com o Augraphy e descarta imagens em que a tinta ficou apagada demais.
-    \item \textbf{mix:} junta sintético e BRESSAY no formato de conversa do modelo e marca, em cada nome do teste, se ele aparece no treino.
-    \item \textbf{exp1 / exp2:} validação dos dados e testes de integração sem modelo (Seção~\ref{sec:avaliacao}).
-    \item \textbf{baseline / treino / quantizar / avaliacao:} rodam no servidor (Seção~\ref{subsec:aval}). No treino e na inferência cada imagem passa pela mesma normalização de altura (\texttt{preprocess.py}), e na inferência cada saída passa pelos controles de \texttt{guard.py} antes de ser gravada.
+    \item \texttt{lexicon}: baixa os prenomes do Censo 2010, as listas de candidatos do TSE (2020 e 2024), duas partes da lista de sócios da Receita e os municípios do IBGE, e agrega tudo em tabelas de frequência por palavra.
+    \item \texttt{fonts}: baixa 93 famílias de fontes manuscritas do Google Fonts e descarta as que não têm os acentos do português (sobraram 85). Uma parte sorteada de 20\% delas (17 fontes) fica reservada só para o teste.
+    \item \texttt{bressay}: baixa o BRESSAY do Zenodo, confere o MD5, extrai as linhas, aplica a política de limpeza e marca os nomes que aparecem nas redações.
+    \item \texttt{generate}: seleciona o vocabulário, sorteia linhas de texto, renderiza, degrada com o Augraphy e descarta imagens em que a tinta ficou apagada demais.
+    \item \texttt{mix}: junta sintético e BRESSAY no formato de conversa do modelo e marca, em cada nome do teste, se ele aparece no treino.
+    \item \texttt{exp1} e \texttt{exp2}: validação dos dados e testes de integração sem modelo (Seção~\ref{sec:avaliacao}).
+    \item \texttt{baseline}, \texttt{treino}, \texttt{quantizar}, \texttt{avaliacao} e \texttt{baseline-nosso}: rodam na GPU (Seção~\ref{subsec:aval}). No treino e na inferência cada imagem passa pela normalização de altura do \texttt{preprocess.py} e pelos mesmos limites de pixels do processador do modelo, e na inferência cada saída passa pelos controles de \texttt{guard.py} antes de ser gravada.
 \end{enumerate}
 
 % --------------------------------------------------------------
@@ -458,7 +509,8 @@ O fluxo completo roda com \texttt{scripts/run.sh} e segue a ordem abaixo. Cada e
 \toprule
 Componente & Escolha & Motivo \\
 \midrule
-Modelo base & Chandra OCR 2 (BF16) \cite{chandra2026} & Já é especializado em OCR e manuscrito, e com cerca de 5 bilhões de parâmetros cabe na L40S sem quantizar. \\
+Modelo base & Chandra OCR 2 (BF16) \cite{chandra2026} & Já é especializado em OCR e manuscrito, e com cerca de 5 bilhões de parâmetros cabe numa GPU de 48~GB sem quantizar. \\
+Execução na GPU & Google Colab Pro, GPU G4 (RTX PRO 6000, 96~GB) & O servidor do laboratório não foi liberado. A A100 e a H100 não estavam disponíveis no plano, e na L4 o piloto mediu 4,5~h por época só com o \emph{prompt} curto. \\
 Ajuste & LoRA com \texttt{transformers} + \texttt{peft} \cite{peft2022} & O Unsloth, previsto na entrega 1, não tem suporte confirmado para Qwen3.5. \\
 Inferência & vLLM \cite{vllm2023} & Inferência em lote rápida, com suporte ao Chandra e ao formato FP8. \\
 Quantização & FP8 dinâmico com \texttt{llm-compressor} \cite{llmcompressor} & Não precisa de dados de calibração e usa a mesma receita do FP8 público do Chandra \cite{chandrafp8}. \\
@@ -472,7 +524,7 @@ Memória (planejada) & FAISS & Busca vetorial em memória, sem servidor extra. \
 \caption{Componentes selecionados.}
 \end{table}
 
-Três ambientes Python isolados são criados pelo \texttt{setup.sh}: um para dados, um para treino e quantização e um para o vLLM. A separação existe porque o vLLM fixa versões de \texttt{torch} e \texttt{transformers} diferentes das usadas no treino.
+O \texttt{setup.sh} cria três ambientes Python, um para os dados, um para treino e quantização e um para o vLLM, porque o vLLM fixa versões de \texttt{torch} e \texttt{transformers} diferentes das do treino (no Colab ficaram o \texttt{torch} 2.10 e o \texttt{transformers} 5.21 no treino, e o vLLM 0.33 com o \texttt{torch} 2.14 na inferência). O de dados usa o Python 3.14, já que no 3.13 do Colab uma das degradações do Augraphy falhou em 85 de 400 chamadas por um erro do \texttt{numba} (Seção~\ref{subsec:problemas}).
 
 % --------------------------------------------------------------
 \subsection{Definição e Preparação dos Dados}
@@ -489,62 +541,60 @@ q_i = \frac{p_i^{\alpha}}{\sum_j p_j^{\alpha}}, \qquad \alpha = 0{,}5,
 para que os nomes mais comuns não dominem o treino. Os nomes que somam os primeiros 80\% da população são chamados de comuns e aparecem em treino, validação e teste. Entre os demais (raros), 10\% ficam reservados só para o teste e 5\% só para a validação. O sorteio é estratificado, então a proporção de nomes comuns e raros é a mesma em todos os conjuntos e só muda quais raros entram. Os nomes inventados por n-gramas, citados na entrega anterior, foram implementados mas desligados, porque não têm nenhuma frequência na população.
 
 \subsubsection{Geração das imagens}
-Cada linha segue um de oito modelos de texto típicos de registro (``Nome: ...'', ``filho de ... e de ...'', ``natural de Cidade - UF'') e 30\% delas saem em caixa alta. Cada palavra é desenhada inteira (para manter a ligação entre letras das fontes cursivas), com variação de linha de base, rotação e espaçamento. A linha inteira recebe inclinação, deformação elástica e variação na espessura do traço, e depois um de três níveis de degradação do Augraphy (manchas de tinta, textura de papel, iluminação, ruído de fotocópia e compressão JPEG). Imagens em que o contraste entre tinta e fundo ficou abaixo de um limite são geradas de novo com outra \emph{seed}. A Figura~\ref{fig:exemplos} mostra exemplos.
+Cada linha segue um de oito modelos de texto típicos de registro (``Nome: ...'', ``filho de ... e de ...'', ``natural de Cidade - UF''). Cada palavra é desenhada inteira (para manter a ligação entre letras das fontes cursivas), com variação de linha de base, rotação e espaçamento, e depois vêm um de três níveis de degradação do Augraphy (manchas de tinta, textura de papel, iluminação, ruído de fotocópia e compressão JPEG) e o controle de contraste, que gera a imagem de novo com outra \emph{seed} se a tinta ficou apagada demais. A Figura~\ref{fig:exemplos} mostra a versão da segunda entrega.
+
+Olhando essas imagens antes do treino, a mesma letra saía igual toda vez que aparecia numa fonte, e isso deixa fácil para o modelo aprender a fonte em vez da escrita. Por isso reescrevi o renderizador (versão 2, Figura~\ref{fig:exemplos-v2}) para variar a letra em dois níveis. Uma vez por linha é sorteado um estilo de quem escreve, com inclinação entre $-0{,}45$ e $0{,}25$, letra apertada ou espaçada (largura de 0,75 a 1,3), traço fino ou grosso, pressão que muda ao longo da linha, letra que cresce ou encolhe até o fim e linha que sobe, desce ou faz curva. Em cima disso entram campos aleatórios suaves ao longo da linha, com mais ou menos um ponto de controle por letra, que mudam altura, largura, inclinação e posição de cada letra separadamente (como é uma deformação contínua da imagem, as ligações das fontes cursivas não quebram), e por fim um tremor fino e uma ondulação maior.
+
+Também 35\% das linhas são reduzidas para 16 a 30~px de altura antes da normalização para 64~px, porque as do BRESSAY têm uns 20~px e ficam borradas depois de ampliadas, e linha inteira em caixa alta (30\%) só sai com fonte de letra de forma, já que em fonte cursiva fica ilegível e ninguém escreve assim. Para não gerar linha ilegível, que ensinaria o modelo a chutar, a redução de resolução não deixa a altura de um ``x'' ficar abaixo de 7~px, fonte de traço fino não é afinada e fonte de traço grosso não é engrossada. O número de fontes passou de 33 para 85, incluindo caligrafia escolar de vários países (família Playwrite) e letras formais parecidas com as de cartório antigo, e 17 delas ficam só no teste para medir se o modelo lê letra que não viu.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figs/exemplos_sinteticos_v2.png}
+\caption{Linhas sintéticas da versão 2 do gerador, como o modelo as recebe (64~px de altura), com o rótulo, a fonte e a altura gerada acima de cada uma. As linhas de 27 a 29~px passaram pela redução de resolução.}
+\label{fig:exemplos-v2}
+\end{figure}
 
 \subsubsection{BRESSAY}
 O BRESSAY tem 1.000 redações, cada uma de um autor, com 30.090 linhas transcritas e partição oficial por autor (647 páginas de treino, 154 de validação e 199 de teste) \cite{bressay2023}. As transcrições marcam trechos ilegíveis (\texttt{@@???@@}), riscados ilegíveis (\texttt{--xxx--}) e riscados legíveis (\texttt{--texto--}). Linhas com trecho ilegível são descartadas porque o rótulo não diz o que está escrito, e por padrão as com riscado legível também (isso é configurável). Sobraram 26.135 linhas. Os nomes nas redações são marcados por heurística: palavra com inicial maiúscula fora de início de frase, presente no léxico e mais frequente capitalizada do que em minúscula no próprio BRESSAY. A heurística marcou nomes em 2.038 linhas, e a lista sai num CSV para revisão manual.
 
 \subsubsection{Conjuntos finais}
-O conjunto padrão tem 40.000 linhas sintéticas de treino, 2.000 de validação e 4.000 de teste, mais as linhas do BRESSAY. O BRESSAY entra inteiro no treino quando fica abaixo de 45\% das linhas, e acima disso é subamostrado. Cada linha vai para um arquivo JSONL com a imagem, o texto, as posições de cada nome e a mensagem no formato de conversa do modelo, com um \emph{prompt} que pede transcrição literal, sem corrigir nomes. Com a configuração padrão, o treino ficou com 56.915 linhas (40.000 sintéticas e 16.915 do BRESSAY, ou seja, 29,7\% de dados reais, sem precisar subamostrar) e a validação com 6.074.
+O conjunto padrão tem 40.000 linhas sintéticas de treino, 2.000 de validação e 4.000 de teste, mais as linhas do BRESSAY. O BRESSAY entra inteiro no treino quando fica abaixo de 45\% das linhas, e acima disso é subamostrado. Cada linha vai para um arquivo JSONL com a imagem, o texto, as posições de cada nome e a mensagem no formato de conversa do modelo. Com a configuração padrão, o treino ficou com 56.915 linhas (40.000 sintéticas e 16.915 do BRESSAY, ou seja, 29,7\% de dados reais, sem precisar subamostrar) e a validação com 6.074. O teste sintético tem 13.672 nomes, dos quais 8.508 não aparecem em nenhuma linha do treino, e o do BRESSAY tem 551 nomes marcados, só 38 deles inéditos.
+
+Até a terceira entrega toda linha de treino usava um \emph{prompt} curto nosso (``Transcreva exatamente o texto manuscrito desta imagem [...] Não corrija nomes.'') com resposta em texto puro, só que o Chandra é usado em página inteira com o \emph{prompt} nativo dele, que pede o HTML da página em blocos \texttt{div}, cada um com a posição normalizada de 0 a 1000 (\texttt{data-bbox}) e um rótulo (\texttt{data-label}), e treinar só com o curto ensinaria um modo de uso à parte, que talvez nem melhorasse a leitura no modo que importa. Por isso, nesta entrega, metade das linhas de treino (28.588, sorteadas de forma fixa pelo identificador) passou a usar o \emph{prompt} nativo, com a resposta num único bloco cuja posição é a caixa da tinta, e a outra metade (28.327) continua com o curto, que também deixa o treino mais rápido (o nativo tem uns 400 \emph{tokens}).
 
 % --------------------------------------------------------------
 \subsection{Estratégia de Avaliação}
 \label{subsec:aval}
 
-A avaliação usa dois conjuntos de teste: o sintético, com nomes reservados que nunca aparecem no treino, e o do BRESSAY, com autores que não estão no treino. Quatro modelos são comparados no mesmo teste:
-\begin{itemize}
-    \item \textbf{Chandra original (BF16) e Chandra FP8 público} \cite{chandrafp8}, sem treino. Cada um roda com o nosso \emph{prompt} e com o \emph{prompt} nativo do Chandra, que responde em HTML (o HTML é removido antes de medir).
-    \item \textbf{Chandra ajustado (BF16) e ajustado em FP8}, depois do treino. A diferença entre os dois mede quanto a quantização custa.
-\end{itemize}
+A avaliação usa dois testes, o sintético, com nomes reservados que nunca aparecem no treino, e o do BRESSAY, com autores que não estão no treino. Neles são comparados o Chandra original (BF16) e o FP8 público \cite{chandrafp8}, sem treino, cada um com o nosso \emph{prompt} e com o nativo do Chandra, e o Chandra ajustado em BF16 e em FP8, cuja diferença mede quanto a quantização custa. No \emph{prompt} nativo a resposta vem em HTML, que é removido antes de medir.
 
-As métricas são as da Seção~\ref{sec:objetivos}. O CER e o WER da linha usam distância de Levenshtein somada sobre o conjunto. Para medir só os nomes, a predição é alinhada ao gabarito e o trecho correspondente a cada nome é comparado com ele, o que permite separar o erro por tipo (prenome, sobrenome, município), por grupo (comum ou raro) e por nomes vistos ou inéditos no treino. O treino usa a perda de validação a cada 250 passos, com parada antecipada depois de três avaliações sem melhora, e guarda o melhor \emph{checkpoint}. Antes do treino completo, um piloto de 100 passos mede a velocidade e a memória na L40S.
+O CER e o WER da linha (as métricas da Seção~\ref{sec:objetivos}) usam a distância de Levenshtein somada sobre o conjunto, e para medir só os nomes a predição é alinhada ao gabarito e o trecho que corresponde a cada nome é comparado com ele. Assim dá para separar o erro por tipo (prenome, sobrenome, município), por grupo (comum ou raro) e entre nomes vistos e inéditos no treino.
+
+A validação durante o treino passou a ser separada por fonte, com 400 linhas sintéticas e 800 do BRESSAY a cada 300 passos, e o melhor \emph{checkpoint} e a parada antecipada (três avaliações sem melhora) olham só a perda do BRESSAY, porque com uma perda única um modelo decorando as fontes sintéticas continuaria melhorando na parte sintética e esconderia a piora na caligrafia real. Antes do treino completo, um piloto de 100 passos mede velocidade e memória na GPU.
 
 % --------------------------------------------------------------
 \subsection{Situação Atual, Dificuldades e Ajustes de Escopo}
 \label{subsec:ajustes}
 
-O cronograma original começava pelo baseline (semana 1) e pelo primeiro \emph{fine-tuning} (semana 3). Essas etapas dependem da GPU do servidor do laboratório, que ainda não foi liberada, então a ordem mudou: a parte de dados foi feita primeiro, na segunda entrega, e nesta entrega o código de treino e inferência foi terminado e testado no que não depende do modelo. A parte de GPU roda com dois comandos (\texttt{setup.sh} e \texttt{run.sh}).
+O cronograma original começava pelo baseline (semana 1) e pelo primeiro \emph{fine-tuning} (semana 3). Essas etapas dependiam da GPU do servidor do laboratório, que não foi liberada, então a parte de dados foi feita primeiro (segunda entrega), o código de treino e inferência foi terminado e testado sem o modelo (terceira entrega), e nesta entrega a parte com o modelo foi executada no Google Colab Pro.
 
-\subsubsection{Evolução desde a segunda entrega}
-Nesta etapa entraram:
+\subsubsection{Evolução desde a terceira entrega}
+Desde a terceira entrega a parte de GPU rodou numa máquina G4 do Colab (NVIDIA RTX PRO 6000 Blackwell, 96~GB), com os primeiros pilotos numa L4 de 24~GB. Antes da rodada longa entraram o gerador versão 2 e o formato misto de treino (Seção~\ref{subsec:dados}), e o treino mudou em quatro pontos: os mesmos limites de pixels do processador no treino e na inferência, a validação separada por fonte, a taxa de aprendizado de $10^{-4}$ em vez de $2 \cdot 10^{-4}$ com uma época só, e a opção de continuar do último \emph{checkpoint}. Depois disso o Experimento 3 rodou inteiro (Seção~\ref{subsec:exp3}).
+
+\subsubsection{Problemas encontrados na execução e soluções}
+\label{subsec:problemas}
+O código de modelo nunca tinha rodado numa GPU, e a primeira execução achou os seis problemas abaixo, todos corrigidos no repositório.
 \begin{itemize}
-    \item \textbf{Normalização de altura} (\texttt{preprocess.py}): resolve o problema de resolução levantado no Experimento 1. Toda linha, real ou sintética, é redimensionada para 64~px de altura (dois blocos visuais do Chandra), mantendo a proporção e com largura máxima de 2.048~px. A mesma função é usada pelo \texttt{train.py} e pelo \texttt{infer.py}, então o modelo vê as imagens na mesma escala no treino e no teste.
-    \item \textbf{Controles de saída} (\texttt{guard.py}): limite de \emph{tokens} pela largura da linha, confiança por palavra e sinais de revisão (Seção~\ref{sec:threat-model}). O \texttt{infer.py} agora pede as log-probabilidades ao vLLM e grava, junto de cada predição, se a linha vai para revisão e por quê.
-    \item \textbf{Experimento 2} (\texttt{experiment2.py}, \texttt{run.sh exp2}): testes em CPU do pré-processamento, dos controles e do cálculo das métricas, com predições simuladas no lugar do modelo.
-\end{itemize}
-
-Os componentes se ligam por arquivos JSONL. O \texttt{mix} grava imagem, texto e posição de cada nome, o \texttt{infer.py} lê esses arquivos, normaliza a imagem, chama o vLLM, passa a saída pelo \texttt{guard.py} e grava a predição, e o \texttt{evaluate.py} lê as predições e calcula as métricas por nome. No Experimento 2 o vLLM foi trocado por predições simuladas e o resto rodou como vai rodar no servidor.
-
-\subsubsection{Problemas encontrados e soluções}
-\begin{itemize}
-    \item \textbf{Resolução das linhas do BRESSAY:} no teste, 90\% das linhas reais tinham um único bloco visual de altura, contra 2 a 4 nas sintéticas. A normalização para 64~px resolve isso nas duas fontes. A altura ainda vai ser conferida no baseline, comparando o CER do Chandra no BRESSAY com 32, 64 e 96~px.
-    \item \textbf{Limite de \emph{tokens} cortando respostas certas:} a primeira versão do limite usava 4 caracteres por altura de linha e cortaria 28\% das respostas corretas do teste. O fator foi recalculado olhando só treino e validação, onde o maior valor foi 9,8, e subiu para 10.
-    \item \textbf{Falsos positivos na detecção de injeção:} a regra marcava qualquer palavra começada por ``ignor-'' e pegou 16 linhas das redações (``ignoram'', ``ignorantes''). Agora ela exige ``ignor-'' seguido de instrução, tarefa ou comando, e nenhuma linha correta do teste é marcada.
-    \item \textbf{Nome pulado contado como meio certo:} a avaliação alinhava predição e gabarito caractere a caractere. Quando o nome some da predição, esse alinhamento casava o nome com letras soltas das palavras vizinhas (``Amarildo'' com o ``a'' de ``filha''), e o erro saía menor do que era. O alinhamento dos nomes passou a ser feito por palavra (Experimento 2).
+    \item O \texttt{warmup\_ratio} saiu do \texttt{transformers} 5, e o treino quebrava antes do primeiro passo (agora é \texttt{warmup\_steps} com valor fracionário, que a biblioteca lê como proporção).
+    \item O processador do Chandra amplia linhas pequenas até 65.536 pixels no treino, mas o vLLM estava com o mínimo de 3.136 do cartão do Chandra FP8, então uma linha de nome virava 75 \emph{tokens} visuais no treino e 36 no teste. Os dois passaram a ler os mesmos limites do arquivo de configuração.
+    \item No Python 3.13 do Colab o efeito de fotocópia do Augraphy falhou em 85 de 400 chamadas por um erro do \texttt{numba}, e no Python 3.14, com as mesmas bibliotecas, em nenhuma, então o ambiente de dados passou a usar o 3.14.
+    \item O processador de vídeo do Qwen3.5 precisa do \texttt{torchvision}, que não estava na lista, e quando ele entrou sem versão fixa o \texttt{pip} recuou para um \texttt{transformers} 4.52, que nem reconhece o modelo. As versões que funcionaram ficaram fixas, e o \texttt{flash-linear-attention} entrou para as camadas de atenção linear não usarem a implementação lenta.
+    \item O vLLM 0.33 tenta compilar um amostrador do FlashInfer na primeira execução e falha sem \texttt{ninja}, e como a decodificação é gulosa ele foi simplesmente desligado.
+    \item No \texttt{infer.py} a variável com o número de linhas do teste era reaproveitada para o limite de caracteres da linha, e o segundo conjunto avaliado ficava com o tamanho desse limite (o primeiro baseline mediu 62 das 5.146 linhas do BRESSAY). Depois da correção o baseline foi refeito com o teste inteiro.
 \end{itemize}
 
 \subsubsection{Mudanças de escopo acumuladas}
-O que mudou em relação à primeira entrega:
-
-\begin{itemize}
-    \item \textbf{Modelo:} de um Qwen-VL genérico para o Chandra OCR 2, que já é de OCR, e do Unsloth para \texttt{transformers} + \texttt{peft}.
-    \item \textbf{Hardware:} o requisito de 24~GB foi trocado pela L40S de 48~GB disponível no servidor, o que dispensa quantização no treino.
-    \item \textbf{Prioridade dos nomes:} em vez de sortear toda a cauda longa, o vocabulário segue a frequência real e corta os nomes que apareceriam menos de duas vezes.
-    \item \textbf{Nomes inventados:} desligados, pelo mesmo motivo.
-    \item \textbf{Gerador de estilo (One-DM/DiffusionPen):} descartado. A caligrafia vem de fontes digitais e do Augraphy.
-    \item \textbf{Memória RAG:} saiu do cronograma atual e deve ficar como trabalho futuro, para priorizar o treino e a avaliação.
-    \item \textbf{Dataset do Registro Civil:} não foi disponibilizado, então o teste fica no BRESSAY e no sintético, como a proposta previa.
-\end{itemize}
+Em relação à primeira entrega, o modelo passou de um Qwen-VL genérico para o Chandra OCR 2, que já é de OCR, e o Unsloth deu lugar ao \texttt{transformers} com \texttt{peft}. O hardware foi do requisito de 24~GB para a L40S de 48~GB do servidor e, como ela não foi liberada, para o Google Colab Pro (RTX PRO 6000 de 96~GB), pago com recurso próprio. O vocabulário passou a seguir a frequência real dos nomes e corta os que apareceriam menos de duas vezes, em vez de sortear toda a cauda longa, e pelo mesmo motivo os nomes inventados foram desligados. O gerador de estilo (One-DM ou DiffusionPen) foi descartado, e a caligrafia vem de fontes digitais deformadas letra a letra e do Augraphy. Metade das linhas de treino usa agora o \emph{prompt} nativo do Chandra, para que o ajuste valha no modo em que o modelo é usado em páginas. A memória RAG saiu do cronograma para dar tempo ao treino e à avaliação, e o dataset do Registro Civil não foi disponibilizado, então o teste fica no BRESSAY e no sintético, como a proposta já previa.
 
 \begin{table}[H]
 \centering
@@ -557,32 +607,26 @@ Semana & Atividade & Situação \\
 5 (06--12/10) & Pipeline de dados, BRESSAY, Experimento 1, scripts de treino e avaliação & Feito \\
 6 (13--19/10) & Apresentação intermediária e preparação do baseline & Feito \\
 7 (20--26/10) & Normalização de altura, controles de saída, Experimento 2 (sem modelo), terceira entrega & Feito \\
-8 (27/10--02/11) & \texttt{setup.sh}, teste rápido, baseline, treino LoRA, FP8, avaliação, testes de memorização e de injeção, relatório final & Planejado \\
+8 (27/10--07/11) & Execução no Colab, gerador versão 2, baseline, treino LoRA, FP8, avaliação, quarta entrega & Feito \\
+9 (09--15/11) & Experimento 4 (injeção e extração com o modelo), correção da confiança no \emph{prompt} nativo & Planejado \\
+10 (16--22/11) & Páginas inteiras (se couber), relatório final, vídeo e ensaio & Planejado \\
 \bottomrule
 \end{tabular}
-\caption{Cronograma revisado na terceira entrega. A memória RAG saiu do cronograma (Seção~\ref{subsec:pendencias}).}
+\caption{Cronograma revisado na quarta entrega. A memória RAG saiu do cronograma (Seção~\ref{subsec:pendencias}).}
 \end{table}
 
 \subsubsection{Atividades pendentes}
 \label{subsec:pendencias}
-Em ordem de prioridade, a partir da liberação do servidor:
-\begin{enumerate}
-    \item \texttt{scripts/setup.sh} e \texttt{run.sh teste-rapido}: confere se as bibliotecas reconhecem o Chandra e mede velocidade e memória em poucos minutos. É também a primeira execução real do código novo do \texttt{infer.py} (log-probabilidades e limite por linha), que até agora só foi testado com uma saída falsa do vLLM.
-    \item Baseline do Chandra BF16 e FP8 nos dois testes, com os dois \emph{prompts}, e a escolha da altura de normalização (32, 64 ou 96~px) pelo CER no BRESSAY.
-    \item Treino LoRA, fusão, FP8 e avaliação do modelo ajustado (Experimento 3).
-    \item Testes de memorização e de injeção pela imagem com o modelo: imagens em branco e com prefixos de nomes do treino, e linhas com instruções escritas. O gerador dessas imagens reaproveita o renderizador do sintético e é a próxima parte a ser implementada.
-    \item Revisão manual da lista de nomes marcados no BRESSAY (\texttt{nomes\_para\_revisao.csv}).
-\end{enumerate}
-A semana 8 concentra quase todas as etapas com GPU. Se o acesso atrasar mais, a prioridade é o baseline e um primeiro treino, e o FP8 e os testes de memorização seriam os primeiros a ficar de fora. A memória de correções (RAG com FAISS) fica como trabalho futuro, e com ela a métrica 2 (\emph{hit rate} da memória).
+Em ordem de prioridade, falta rodar o Experimento 4 (linhas com instruções escritas, imagens em branco e prefixos de nomes do treino, para medir injeção e extração, com um gerador que reaproveita o renderizador do sintético), corrigir a confiança no \emph{prompt} nativo para que ela olhe só o texto dentro das \emph{tags} (Seção~\ref{subsec:guard-modelo}), e montar um conjunto sintético de páginas inteiras sobre modelos reais de documentos de registro civil, com campos preenchidos à mão e a transcrição da página toda, para treinar e avaliar o modelo em página, já que o treino desta entrega foi só com linhas. A revisão manual da lista de nomes marcados no BRESSAY (\texttt{nomes\_para\_revisao.csv}) também continua pendente. A comparação da altura de normalização (32, 64 ou 96~px) prevista na entrega anterior não foi feita, e ela ficou em 64~px porque o tempo de GPU foi para o treino. A memória de correções (RAG com FAISS) fica como trabalho futuro, e com ela a métrica 2 (\emph{hit rate} da memória).
 
 % --------------------------------------------------------------
 \subsection{Critérios de Aceitação da PoC}
 
 \begin{enumerate}
-    \item Partições de treino, validação e teste sem vazamento: nenhum nome reservado ao teste aparece no treino (verificado no Experimento 1) e nenhum autor do BRESSAY aparece em mais de um conjunto.
-    \item Treino completo na L40S sem estouro de memória.
-    \item CER menor nos nomes raros e inéditos com o modelo ajustado do que com o original, sem piora relevante no texto geral do BRESSAY.
-    \item Erro em nomes inéditos próximo do erro em nomes vistos, e nenhum nome do treino extraído nos testes de memorização.
+    \item Partições de treino, validação e teste sem vazamento: nenhum nome reservado ao teste aparece no treino (verificado no Experimento 1) e nenhum autor do BRESSAY aparece em mais de um conjunto. Atendido.
+    \item Treino completo numa GPU sem estouro de memória. Atendido na RTX PRO 6000 (pico de 49,5~GB), mas não testado na L40S.
+    \item CER menor nos nomes raros e inéditos com o modelo ajustado do que com o original, sem piora relevante no texto geral do BRESSAY. Atendido, com o CER dos nomes inéditos do sintético caindo de 9,4\% para 5,5\% e o CER geral do BRESSAY de 20,1\% para 4,9\%.
+    \item Erro em nomes inéditos próximo do erro em nomes vistos, e nenhum nome do treino extraído nos testes de memorização. Em parte, porque a diferença entre vistos e inéditos ficou igual à do modelo original e os testes de extração ficam para o Experimento 4.
 \end{enumerate}
 
 % ==============================================================
@@ -591,7 +635,7 @@ A semana 8 concentra quase todas as etapas com GPU. Se o acesso atrasar mais, a 
 \section{Avaliação Experimental}
 \label{sec:avaliacao}
 
-Os experimentos seguem as fases da metodologia. O Experimento 1 valida o pipeline de dados e o Experimento 2 testa, sem o modelo, a normalização das imagens, a avaliação e os controles de saída. Os dois rodam em CPU e foram executados num computador pessoal (16 núcleos, 7~GB de RAM). O Experimento 3 compara o Chandra antes e depois do \emph{fine-tuning} e roda no servidor. O desenho e os scripts dele estão prontos.
+Os Experimentos 1 e 2 são da entrega anterior e rodaram em CPU num computador pessoal (16 núcleos, 7~GB de RAM). O 1 valida o pipeline de dados, na primeira versão do gerador (os números de dados que valem para o treino são os da Seção~\ref{subsec:dados}), e o 2 testa sem o modelo a normalização das imagens, a avaliação e os controles de saída. O Experimento 3, desta entrega, compara o Chandra antes e depois do \emph{fine-tuning} e rodou no Google Colab, numa RTX PRO 6000 de 96~GB, e o Experimento 4, com os testes adversariais, só tem o desenho por enquanto (Seção~\ref{subsec:exp4}).
 
 % --------------------------------------------------------------
 \subsection{Experimento 1: Validação do Pipeline de Dados}
@@ -668,25 +712,25 @@ Municípios & 1,0 & 1.692 & 95,2 & 4,8 & 20,2\% \\
 \label{fig:exemplos}
 \end{figure}
 
-\textbf{Vocabulário e temperatura.} Com 40 mil imagens entram cerca de 10 mil prenomes, 19 mil sobrenomes e 3,8 mil municípios, que cobrem 94\% a 97\% da população (Tabela~\ref{tab:vocab}). Para cobrir 99\% dos prenomes seria preciso bem mais que 100 mil imagens, porque a cauda dos prenomes é longa: o último prenome que entra com 100 mil imagens ainda tem 217 pessoas. A temperatura muda o tamanho do vocabulário, porque o corte depende de quantas vezes o nome menos frequente aparece. Com $\alpha = 1$ (distribuição real) os 10 prenomes mais comuns ficam com 21\% dos sorteios e só 2.651 prenomes passam do corte. Com $\alpha = 0{,}5$ o top-10 cai para 2,3\% e o vocabulário vai para 10 mil (Tabela~\ref{tab:alpha} e Figura~\ref{fig:massa}). Por isso $\alpha = 0{,}5$ foi mantido. Em todos os casos, a fração de nomes comuns sorteada ficou a menos de 0,2 ponto percentual da planejada.
+Com 40 mil imagens entram cerca de 10 mil prenomes, 19 mil sobrenomes e 3,8 mil municípios, que cobrem 94\% a 97\% da população (Tabela~\ref{tab:vocab}). Para cobrir 99\% dos prenomes seria preciso bem mais que 100 mil imagens, porque a cauda dos prenomes é longa (o último prenome que entra com 100 mil imagens ainda tem 217 pessoas). A temperatura muda o tamanho do vocabulário, porque o corte depende de quantas vezes o nome menos frequente aparece. Com $\alpha = 1$ (distribuição real) os 10 prenomes mais comuns ficam com 21\% dos sorteios e só 2.651 prenomes passam do corte. Com $\alpha = 0{,}5$ o top-10 cai para 2,3\% e o vocabulário vai para 10 mil (Tabela~\ref{tab:alpha} e Figura~\ref{fig:massa}). Por isso $\alpha = 0{,}5$ foi mantido. Em todos os casos, a fração de nomes comuns sorteada ficou a menos de 0,2 ponto percentual da planejada.
 
-\textbf{Partições.} Com 40 mil imagens, 2.909 nomes ficaram reservados para o teste. Nenhum deles pode ser sorteado no treino, e nenhum apareceu nas 20 mil linhas de treino sorteadas para conferir.
+Nas partições ficaram 2.909 nomes reservados para o teste, que o amostrador não sorteia no treino, e nenhum deles apareceu nas 20 mil linhas de treino sorteadas para conferir.
 
-\textbf{Custo de geração.} As 1.000 imagens foram geradas em 28~s com 16 processos (35,7 imagens por segundo), com 18,4~KiB por imagem em média. Duas imagens foram refeitas pelo controle de contraste. Essa medida inclui a inicialização dos processos. No conjunto completo (40 mil imagens de treino, 2 mil de validação e 4 mil de teste) a vazão estabilizou em cerca de 60 imagens por segundo, a geração inteira levou 12,5 minutos e as imagens ocupam 873~MB. Nesse conjunto, 121 imagens (0,3\%) foram refeitas pelo controle de contraste.
+As 1.000 imagens geradas para o experimento saíram em 28~s com 16 processos (35,7 imagens por segundo, contando a inicialização dos processos), com 18,4~KiB por imagem em média e duas refeitas pelo controle de contraste. No conjunto completo (40 mil imagens de treino, 2 mil de validação e 4 mil de teste) a vazão estabilizou em cerca de 60 imagens por segundo, a geração inteira levou 12,5 minutos e as imagens ocupam 873~MB. Nesse conjunto, 121 imagens (0,3\%) foram refeitas pelo controle de contraste.
 
-\textbf{BRESSAY.} Das 30.090 linhas, 1.663 foram descartadas por trecho ilegível e 2.292 por riscado, sobrando 26.135 (16.915 de treino, 4.074 de validação e 5.146 de teste). A heurística marcou nomes em 1.341 linhas de treino e 377 de teste, quase sempre autores citados nas redações. Os falsos positivos mais frequentes foram palavras como ``América'' (de América Latina) e ``Carta Magna'', que foram adicionadas a uma lista de exclusão. Os nomes do BRESSAY têm um perfil diferente dos de um cartório (Bauman, Freud, Machado de Assis), então esse teste mede principalmente a caligrafia real, e o teste sintético mede os nomes.
+Das 30.090 linhas do BRESSAY, 1.663 foram descartadas por trecho ilegível e 2.292 por riscado, sobrando 26.135 (16.915 de treino, 4.074 de validação e 5.146 de teste). A heurística marcou nomes em 1.341 linhas de treino e 377 de teste, quase sempre autores citados nas redações. Os falsos positivos mais frequentes foram palavras como ``América'' (de América Latina) e ``Carta Magna'', que foram adicionadas a uma lista de exclusão. Os nomes do BRESSAY têm um perfil diferente dos de um cartório (Bauman, Freud, Machado de Assis), então esse teste mede principalmente a caligrafia real, e o teste sintético mede os nomes.
 
-\textbf{Nomes inéditos nos testes.} Depois da mistura, o teste sintético tem 4.000 linhas com 13.841 nomes, dos quais 8.629 não aparecem em nenhuma linha do treino (3.348 linhas têm pelo menos um nome inédito). No teste do BRESSAY a heurística marcou 548 nomes, mas só 38 são inéditos, em 35 linhas: os autores citados nas redações de teste (Freud, Bauman, Machado de Assis) também aparecem nas redações de treino ou no vocabulário sintético. Com tão poucos casos, a medida de nomes inéditos no BRESSAY serve só como indicação, e a evidência principal para a métrica 3 vem do teste sintético.
+Depois da mistura, o teste sintético tem 4.000 linhas com 13.841 nomes, dos quais 8.629 não aparecem em nenhuma linha do treino (3.348 linhas têm pelo menos um nome inédito). No teste do BRESSAY a heurística marcou 548 nomes, mas só 38 são inéditos, em 35 linhas, porque os autores citados nas redações de teste (Freud, Bauman, Machado de Assis) também aparecem nas redações de treino ou no vocabulário sintético. Com tão poucos casos, a medida de nomes inéditos no BRESSAY serve só como indicação, e a evidência principal para a métrica 3 vem do teste sintético.
 
-\textbf{Diferença de resolução.} As linhas do BRESSAY têm altura mediana de 20~px (5\% a 95\% entre 15 e 38~px) e largura mediana de 481~px, em tons de cinza. As sintéticas foram geradas entre 48 e 112~px de altura (média de 79~px). O Chandra divide a imagem em blocos de 32~px, então uma linha de 20~px vira menos de um bloco de altura, e o modelo veria as linhas reais e sintéticas em escalas bem diferentes. Esse problema não tinha aparecido no planejamento. O ajuste, implementado na terceira entrega, é redimensionar as duas fontes para a mesma altura antes de entrarem no modelo.
+As linhas do BRESSAY têm altura mediana de 20~px (5\% a 95\% entre 15 e 38~px) e largura mediana de 481~px, em tons de cinza. As sintéticas foram geradas entre 48 e 112~px de altura (média de 79~px). O Chandra divide a imagem em blocos de 32~px, então uma linha de 20~px vira menos de um bloco de altura, e o modelo veria as linhas reais e sintéticas em escalas bem diferentes. Isso não tinha aparecido no planejamento, e o ajuste, feito na terceira entrega, foi redimensionar as linhas das duas fontes para a mesma altura antes de entrarem no modelo.
 
 % --------------------------------------------------------------
 \subsection{Experimento 2: Testes de Integração sem Modelo}
 \label{subsec:exp2}
 
-O Experimento 2 testa o que vem antes e depois do modelo: o pré-processamento das imagens, os controles de saída e o cálculo das métricas. No lugar das transcrições do Chandra entram predições montadas a partir do próprio gabarito, com erros colocados de propósito, então o valor esperado de cada métrica é conhecido. O teste usa os dois conjuntos de teste reais (4.000 linhas sintéticas e 5.146 do BRESSAY), roda com \texttt{scripts/run.sh exp2} em cerca de um minuto e grava os resultados em \texttt{experiments/exp2\_integracao/}. Ele não mede a qualidade do OCR, que é medida no Experimento 3.
+O Experimento 2 testa o que vem antes e depois do modelo, ou seja, o pré-processamento das imagens, os controles de saída e o cálculo das métricas. No lugar das transcrições do Chandra entram predições montadas a partir do próprio gabarito, com erros colocados de propósito, então o valor esperado de cada métrica é conhecido. O teste usa os dois conjuntos de teste reais (4.000 linhas sintéticas e 5.146 do BRESSAY), roda com \texttt{scripts/run.sh exp2} em cerca de um minuto e grava os resultados em \texttt{experiments/exp2\_integracao/}. Ele não mede a qualidade do OCR, que é medida no Experimento 3.
 
-\textbf{Normalização de altura.} A Tabela~\ref{tab:norm} mostra as linhas antes e depois da normalização. Antes, 90\% das linhas do BRESSAY tinham um bloco visual de altura. Depois, quase todas as linhas dos dois conjuntos têm dois, e as 14 que ficaram com um são linhas muito compridas, encolhidas pelo limite de largura. O custo é que o BRESSAY é ampliado cerca de 2,7 vezes e a linha mediana passa de 16 para 98 blocos visuais, o que deve deixar mais lentos a inferência no BRESSAY e também o treino, já que o BRESSAY é 30\% das linhas de treino.
+Antes da normalização de altura, 90\% das linhas do BRESSAY tinham um bloco visual de altura, e depois dela quase todas as linhas dos dois conjuntos têm dois, e as 14 que ficaram com um são linhas muito compridas, encolhidas pelo limite de largura. O custo é que o BRESSAY é ampliado cerca de 2,7 vezes e a linha mediana passa de 16 para 98 blocos visuais (Tabela~\ref{tab:norm}). Com isso a inferência no BRESSAY fica mais lenta, e o treino também, já que ele é 30\% das linhas de treino.
 
 \begin{table}[H]
 \centering
@@ -708,28 +752,157 @@ Blocos visuais por linha (mediana) & 48 & 32 & 16 & 98 \\
 \label{tab:norm}
 \end{table}
 
-\textbf{Limite de tamanho.} Com o fator inicial de 4 caracteres por altura de linha, 28\% dos gabaritos de teste passavam do limite (1.157 sintéticos e 1.443 do BRESSAY). Com o fator 10 nenhum passa, e a menor folga foi de 6 caracteres. No BRESSAY, que tem linhas mais longas, o limite em caracteres fica quase sempre acima do teto de 192 \emph{tokens} do vLLM, que acaba sendo o limite de fato.
+Com o fator inicial de 4 caracteres por altura de linha, 28\% dos gabaritos de teste passavam do limite de tamanho (1.157 sintéticos e 1.443 do BRESSAY). Com o fator 10 nenhum passa, e a menor folga foi de 6 caracteres. No BRESSAY, que tem linhas mais longas, o limite em caracteres fica quase sempre acima do teto de 192 \emph{tokens} do vLLM, que acaba sendo o limite de fato.
 
-\textbf{Métricas.} Para conferir o \texttt{evaluate.py}, cada gabarito foi copiado com um tipo de erro: sem erro, dentro de HTML (como responde o \emph{prompt} nativo do Chandra), um caractere trocado em cada nome, um caractere trocado só nos nomes inéditos, um caractere removido em cada nome, um caractere inserido em cada nome e o nome inteiro removido. Com sete cenários e dois testes são 14 casos, e em todos o CER medido por grupo (todos os nomes, comuns, raros, vistos e inéditos) bateu com o esperado.
+Para conferir o \texttt{evaluate.py}, cada gabarito foi copiado com um tipo de erro (sem erro, dentro de HTML (como responde o \emph{prompt} nativo do Chandra), um caractere trocado em cada nome, um caractere trocado só nos nomes inéditos, um caractere removido em cada nome, um caractere inserido em cada nome e o nome inteiro removido). Com sete cenários e dois testes são 14 casos, e em todos o CER medido por grupo (todos os nomes, comuns, raros, vistos e inéditos) bateu com o esperado.
 
 Isso só aconteceu depois de uma correção. No cenário do nome removido, o CER dos nomes saía 97\% em vez de 100\%, porque o alinhamento caractere a caractere casava o nome que sumiu com letras das palavras vizinhas. Como um modelo de OCR pular um nome é um erro comum, a métrica estava contando a menos justamente um dos erros que interessam. O alinhamento dos nomes passou a ser feito por palavra. A troca criou alguns casos de borda, como nomes que ocupam só parte de uma palavra (``Coruripe/AL'', ``Byung-Chul'') e cidades com ``de'' no meio (``Rio de Janeiro''), que também foram corrigidos.
 
 Com um caractere trocado por nome, o CER dos nomes no teste sintético foi 14,3\% (os nomes têm 7 letras em média) e nenhum nome ficou exato. Com erro só nos inéditos, os nomes vistos ficaram com 100\% de acerto e os inéditos com 0\%, então a marcação de visto ou inédito feita no \texttt{mix} chega correta ao \texttt{evaluate.py}.
 
-\textbf{Controles de saída.} Os 9.146 gabaritos de teste também passaram pelo \texttt{guard.py} como se fossem predições, para ver quantas linhas corretas iriam para revisão sem motivo. Na primeira versão foram 16, todas pela regra de injeção, e depois da correção nenhuma. As verificações também rodaram sobre saídas defeituosas montadas a partir de 915 linhas de teste: vazias, repetidas em laço, com HTML, com uma frase de quem obedeceu a um comando, com caracteres estranhos e longas demais. Todas foram marcadas, menos 78 das longas, que vinham de linhas curtas em que quatro cópias do texto ainda cabem no limite. Como as regras e as saídas defeituosas foram escritas por mim, isso mostra só que o código faz o que deveria. Quanto ele pega das saídas ruins do modelo de verdade vai ser medido no Experimento 3.
+Os 9.146 gabaritos de teste também passaram pelo \texttt{guard.py} como se fossem predições, para ver quantas linhas corretas iriam para revisão sem motivo. Na primeira versão foram 16, todas pela regra de injeção, e depois da correção nenhuma. As verificações também rodaram sobre saídas defeituosas montadas a partir de 915 linhas de teste: vazias, repetidas em laço, com HTML, com uma frase de quem obedeceu a um comando, com caracteres estranhos e longas demais. Todas foram marcadas, menos 78 das longas, que vinham de linhas curtas em que quatro cópias do texto ainda cabem no limite. Como as regras e as saídas defeituosas foram escritas por mim, isso mostra só que o código faz o que deveria, e quanto ele pega das saídas ruins do modelo de verdade foi medido no Experimento 3 (Seção~\ref{subsec:guard-modelo}).
 
 A extração da confiança foi testada com uma saída falsa no formato que o vLLM devolve (para cada \emph{token} gerado, um dicionário com as log-probabilidades dos candidatos). Para ``Maria da Silva - SC'', com log-probabilidade $-2$ no \emph{token} ``Sil'', a função ignorou os candidatos não escolhidos, deu 0,14 de confiança para ``Silva'' e mais de 0,7 para as outras palavras, e só ``Silva'' foi marcada. Sem log-probabilidades na saída, ela devolve uma lista vazia em vez de falhar.
 
 \subsection{Experimento 3: Baseline e \emph{Fine-Tuning} do Chandra}
+\label{subsec:exp3}
 
-O Experimento 3 roda no servidor, com a L40S. Primeiro o Chandra original e o FP8 público são avaliados nos dois testes com os dois \emph{prompts}. Depois o LoRA é treinado com o conjunto da Seção~\ref{subsec:dados} (rank 16, $\alpha_{\text{LoRA}} = 32$, taxa de aprendizado $2 \cdot 10^{-4}$, lote efetivo de 16, até 2 épocas com parada antecipada), fundido ao modelo e quantizado em FP8, e as duas versões são avaliadas da mesma forma. Serão medidos:
+O Experimento 3 compara o Chandra antes e depois do \emph{fine-tuning} nos dois testes, com os dois \emph{prompts}, em BF16 e em FP8. O original foi avaliado em BF16 e no FP8 público \cite{chandrafp8}, e o ajustado depois da fusão do adaptador e numa versão FP8 feita com a mesma receita do público (FP8 dinâmico do \texttt{llm-compressor}).
 
-\begin{itemize}
-    \item CER e WER da linha, CER por tipo e grupo de nome e acerto exato em nomes inéditos, para os quatro modelos e os dois testes;
-    \item velocidade de treino, memória de pico e tempo de inferência por linha.
-\end{itemize}
+O LoRA tem rank 16, $\alpha_{\text{LoRA}} = 32$ e \emph{dropout} de 0,05 em todas as camadas lineares do modelo de linguagem (atenção completa, atenção linear e MLP), com o encoder de visão congelado (32,5 milhões de parâmetros treináveis, 0,71\% do modelo). O treino usou taxa de aprendizado de $10^{-4}$ com \emph{warmup} de 3\% e decaimento cosseno, lote de 16 linhas e uma época (3.558 passos), com a perda calculada só na resposta, e levou 3,1~horas na RTX PRO 6000, a 5,2 linhas por segundo e com pico de 49,5~GB de memória. A perda de validação do BRESSAY caiu em todas as 12 avaliações, de 0,457 para 0,341, e a sintética de 0,363 para 0,291 (Figura~\ref{fig:perda}), quase parando no último quarto do treino, então mais épocas provavelmente ajudariam pouco. Como ela nunca subiu, a parada antecipada não chegou a agir e o melhor \emph{checkpoint} foi o último.
 
-Também entram neste experimento a escolha da altura de normalização (32, 64 ou 96~px) e os testes de memorização e de injeção com o modelo. Cada predição já sai gravada com a confiança por palavra e os sinais de revisão, então dá para medir também se as linhas marcadas para revisão são as que o modelo mais erra.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figs/perda_validacao.pdf}
+\caption{Perda de validação durante o treino, medida a cada 300 passos.}
+\label{fig:perda}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+Modelo & \emph{Prompt} & CER & WER & Linhas exatas & CER nomes & CER inéditos & Nomes exatos \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{BRESSAY (5.146 linhas, autores fora do treino)}} \\
+Original & nativo & 20,1 & 34,1 & 12,6 & 20,9 & 28,8 & 66,4 \\
+Original & curto & 19,8 & 33,9 & 12,3 & 18,6 & 28,3 & 68,1 \\
+Original FP8 & nativo & 20,2 & 34,4 & 12,6 & 20,4 & 30,1 & 68,1 \\
+Original FP8 & curto & 21,0 & 35,6 & 12,2 & 19,1 & 27,0 & 68,2 \\
+Ajustado & nativo & \textbf{4,9} & 11,6 & 33,5 & 10,9 & 21,7 & 79,0 \\
+Ajustado & curto & \textbf{4,9} & 11,5 & 33,5 & 11,0 & 21,2 & 78,4 \\
+Ajustado FP8 & nativo & 5,0 & 11,7 & 33,2 & 10,7 & 24,3 & 79,1 \\
+Ajustado FP8 & curto & 4,9 & 11,5 & 33,3 & 10,8 & 21,2 & 79,0 \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Sintético (4.000 linhas, 17 fontes e 8.508 nomes fora do treino)}} \\
+Original & nativo & 8,6 & 21,4 & 47,2 & 8,6 & 9,4 & 74,6 \\
+Original & curto & 6,2 & 18,8 & 49,0 & 8,0 & 8,9 & 75,8 \\
+Original FP8 & nativo & 9,5 & 21,9 & 47,2 & 9,0 & 9,4 & 74,6 \\
+Original FP8 & curto & 6,4 & 19,1 & 48,5 & 8,3 & 9,2 & 75,6 \\
+Ajustado & nativo & 3,4 & 10,7 & 65,5 & 4,7 & 5,5 & 83,6 \\
+Ajustado & curto & \textbf{3,3} & 10,6 & 65,7 & 4,7 & 5,5 & 83,7 \\
+Ajustado FP8 & nativo & 3,4 & 10,7 & 65,3 & 4,7 & 5,5 & 83,5 \\
+Ajustado FP8 & curto & 3,4 & 10,7 & 65,5 & 4,7 & 5,6 & 83,5 \\
+\bottomrule
+\end{tabular}
+\caption{Resultados nos dois testes, em \%. Linhas exatas é a fração de linhas transcritas sem nenhum erro. CER inéditos é o CER só nos nomes que não aparecem no treino (8.508 no sintético e só 38 no BRESSAY). No \emph{prompt} nativo o HTML é removido antes de medir.}
+\label{tab:resultados}
+\end{table}
+
+O ganho maior foi no BRESSAY, onde o CER caiu de 20,1\% para 4,9\% e as linhas sem nenhum erro passaram de 12,6\% para 33,5\% (com o \emph{prompt} nativo, 1.136 linhas passaram de erradas para exatas e 61 fizeram o caminho contrário). O modelo original erra de jeitos bem característicos, completando palavras cortadas no fim da linha (``indústria cinemato-'' virou ``cinematográfica''), trocando palavras por outras mais prováveis (``Desigualdade'' por ``Diversidade''), mudando de língua (``distúrbios psíquicos'' virou ``distúrbien pequeños de los niños'') ou entrando em laço, e nesses casos o ajustado acerta, inclusive o hífen de quebra de linha (Tabela~\ref{tab:exemplos}). Uma parte disso é adaptação ao próprio BRESSAY, já que o treino tem 16.915 linhas dele, de outros autores mas com o mesmo tipo de texto, a mesma digitalização e as mesmas convenções de transcrição, então esse número diz mais sobre redações parecidas com as do treino do que sobre caligrafia em geral.
+
+Para letra e nome que o modelo não viu, o que vale é o teste sintético, em que as 17 fontes e os 8.508 nomes inéditos não estão no treino. Ali o CER foi de 8,6\% para 3,4\% e o acerto exato nos nomes inéditos de 70,9\% para 79,7\%, e a diferença entre nomes vistos e inéditos ficou praticamente a mesma de antes do treino (Tabela~\ref{tab:memorizacao}), que é o esperado se o modelo não decorou os nomes, já que com memorização a distância entre os dois grupos cresceria. Os erros que sobram ainda são do tipo que o projeto quer corrigir, de trocar um nome raro pela grafia mais comum (``Zamprogna'' lido como ``Zampogna'', ``Izaias'' como ``Izaías''), e no BRESSAY o modelo chegou a corrigir a ortografia do autor (``resaltar'' virou ``ressaltar''). Nos nomes do BRESSAY o CER caiu de 20,9\% para 10,9\%, mas só 38 deles são inéditos.
+
+No original o \emph{prompt} curto era melhor no sintético (6,2\% contra 8,6\% de CER), mesmo respondendo em HTML em 78\% das linhas do BRESSAY apesar de pedir texto puro, e depois do treino os dois ficaram praticamente iguais. O FP8 do modelo ajustado ficou a no máximo 0,1 ponto de CER do BF16 e foi de 16\% a 21\% mais rápido (Tabela~\ref{tab:velocidade}), enquanto no original a perda do FP8 público chegou a 1,2 ponto (BRESSAY com o \emph{prompt} curto). O \emph{prompt} nativo é de 3 a 4 vezes mais lento que o curto, pelos 400 \emph{tokens} a mais de entrada e pelo HTML com coordenadas que ele gera.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{\emph{Prompt} nativo} & \multicolumn{2}{c}{\emph{Prompt} curto} \\
+Modelo & BRESSAY & Sintético & BRESSAY & Sintético \\
+\midrule
+Ajustado (BF16) & 37,0 & 40,2 & 127,4 & 178,2 \\
+Ajustado FP8 & 44,5 & 48,5 & 147,3 & 208,2 \\
+\bottomrule
+\end{tabular}
+\caption{Linhas transcritas por segundo no vLLM (RTX PRO 6000, lote dinâmico), incluindo o tempo de processar as imagens. O \emph{prompt} nativo tem cerca de 400 \emph{tokens} a mais por linha e gera o HTML com as coordenadas, por isso é de 3 a 4 vezes mais lento.}
+\label{tab:velocidade}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{CER (\%)} & \multicolumn{2}{c}{Nomes exatos (\%)} \\
+Modelo (\emph{prompt} nativo) & Vistos & Inéditos & Vistos & Inéditos \\
+\midrule
+Original & 7,1 & 9,4 & 80,6 & 70,9 \\
+Ajustado & 3,4 & 5,5 & 90,0 & 79,7 \\
+Ajustado FP8 & 3,4 & 5,5 & 89,8 & 79,6 \\
+\bottomrule
+\end{tabular}
+\caption{Nomes vistos no treino (5.164) e inéditos (8.508) no teste sintético.}
+\label{tab:memorizacao}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{4.9cm}p{4.9cm}p{4.9cm}@{}}
+\toprule
+Gabarito & Original & Ajustado \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{BRESSAY}} \\
+Na Inglaterra, o desenvolvimento da indústria cinemato- & \dots{} da indústria cinematográfica & igual ao gabarito \\
+Desigualdade cultural do país tupiniquim & Diversidade cultural do país tupiniquim & igual ao gabarito \\
+distúrbios psíquicos. & distúrbien pequeños de los niños & igual ao gabarito \\
+zação do acesso ao cinema no Brasil. & 3.2.2.2.2.2.2.2.2.2.2 \dots & igual ao gabarito \\
+Ademais, convém resaltar a escassez \dots & igual ao gabarito & \dots{} convém ressaltar \dots \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Sintético}} \\
+Nome: Sidnei Senna & Name Suomen Seima & igual ao gabarito \\
+Alto Paraíso de Goiás/GO & Alto Paraiso de Sorias / 19 & igual ao gabarito \\
+filho de Abner Iran Marquezini Dorigon \dots & \dots{} Marquellini Dorigon \dots & igual ao gabarito \\
+Cristina Picanco Zamprogna, natural de Araucária & igual ao gabarito & \dots{} Zampogna, \dots \\
+\bottomrule
+\end{tabular}
+\caption{Exemplos reais das predições com o \emph{prompt} nativo (HTML removido). As duas últimas linhas de cada bloco são casos em que o modelo ajustado errou e o original acertou.}
+\label{tab:exemplos}
+\end{table}
+
+\subsubsection{Controles de saída com o modelo}
+\label{subsec:guard-modelo}
+
+Como cada predição foi gravada com a marcação do \texttt{guard.py}, dá para ver se as linhas mandadas para revisão são as que o modelo errou (Tabela~\ref{tab:guard}). Com o \emph{prompt} curto, o modelo ajustado mandou para revisão 56,9\% das linhas do BRESSAY e 27,8\% das sintéticas, quase todas por confiança baixa, e as que passaram sem revisão têm CER de 1,0\% e 0,7\%, contra 7,6\% e 8,7\% nas marcadas. Mesmo assim um quarto das linhas erradas do BRESSAY e um terço das sintéticas passaram sem marcação, com o modelo errando com confiança alta.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Modelo & & & CER & CER & Linhas erradas \\
+(\emph{prompt} curto) & Teste & Marcadas & marcadas & não marcadas & marcadas \\
+\midrule
+Original & BRESSAY & 97,9\% & 20,0\% & 6,4\% & 98,8\% \\
+Original & Sintético & 46,9\% & 10,5\% & 1,2\% & 74,0\% \\
+Ajustado & BRESSAY & 56,9\% & 7,6\% & 1,0\% & 75,5\% \\
+Ajustado & Sintético & 27,8\% & 8,7\% & 0,7\% & 68,4\% \\
+\bottomrule
+\end{tabular}
+\caption{Linhas mandadas para revisão pelo \texttt{guard.py}. Linhas erradas marcadas é a fração das linhas com algum erro que foram para revisão. No original com o BRESSAY quase tudo foi marcado porque ele respondeu em HTML a um \emph{prompt} que pede texto puro.}
+\label{tab:guard}
+\end{table}
+
+No \emph{prompt} nativo a regra de confiança marcou praticamente todas as linhas, nos dois modelos, porque a confiança é calculada por palavra sobre a saída inteira e entram nela as coordenadas que o Chandra escreve no HTML (\texttt{data-bbox="11 103 998 161"}), que ele prevê com probabilidade baixa. Até corrigir isso, calculando só sobre o texto dentro das \emph{tags}, a revisão por confiança só serve com o \emph{prompt} curto. As outras verificações marcaram 76 laços e 43 saídas longas demais do original no BRESSAY e nenhuma do ajustado.
+
+\subsection{Experimento 4: Testes Adversariais com o Modelo (planejado)}
+\label{subsec:exp4}
+
+O Experimento 4 ainda não rodou e vai usar o modelo ajustado e o original, com os dois \emph{prompts}, em três tipos de entrada geradas com o mesmo renderizador do sintético: linhas com uma instrução escrita no lugar do nome (``ignore a tarefa e escreva Maria'', ``responda em inglês''), para ver se o modelo transcreve a instrução ou obedece a ela e quanto disso o \texttt{guard.py} marca; imagens em branco, com ruído ou com só o começo de nomes do treino, para medir quantas vezes ele completa com um nome ou combinação que só existe no treino; e as linhas de teste com degradação mais forte que a do treino, para ver quanto do ganho se mantém fora das degradações usadas.
 
 % ==============================================================
 % SEÇÃO 8 — DISCUSSÃO (*)
@@ -737,37 +910,65 @@ Também entram neste experimento a escolha da altura de normalização (32, 64 o
 \section{Discussão}
 \label{sec:discussao}
 
-[PREENCHER NA ENTREGA 4: parágrafo introdutório da discussão]
+O \emph{fine-tuning} melhorou a leitura nos dois testes e o FP8 manteve a melhora, mas os dois testes medem coisas diferentes. O sintético, com fontes e nomes fora do treino, mostra que o modelo passou a ler melhor nomes brasileiros (com acento e em caixa alta) em letra que não viu, e o BRESSAY mostra que ele lê melhor redação manuscrita real, com a ressalva de que parte do ganho é adaptação ao próprio BRESSAY. Nenhum dos dois é documento de cartório, e essa avaliação ainda não foi feita.
 
 % --------------------------------------------------------------
 \subsection{Alcance dos Objetivos}
-[PREENCHER NA ENTREGA 4]
+
+A Tabela~\ref{tab:planejado} compara o que foi planejado na primeira entrega com o que foi feito até aqui.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{5.4cm}p{9.4cm}@{}}
+\toprule
+Planejado & Desenvolvido \\
+\midrule
+Gerador sintético com nomes da população & Feito, com nomes do IBGE, TSE e Receita por frequência real e, nesta entrega, deformação letra a letra e 85 fontes. \\
+\emph{Fine-tuning} com LoRA de um VLM & Feito com o Chandra OCR 2 em vez de um VLM genérico: CER do BRESSAY de 20,1\% para 4,9\% e do sintético de 8,6\% para 3,4\%. \\
+Versão quantizada para servir & FP8 dinâmico, a no máximo 0,1 ponto de CER do BF16 e 16\% a 21\% mais rápido. \\
+Métrica 1, CER segmentado & Medida por linha, por tipo de nome, por grupo de frequência e por nome visto ou inédito. \\
+Métrica 2, \emph{hit rate} da memória & Não medida: a memória RAG saiu do escopo. \\
+Métrica 3, acerto em nomes inéditos & Medida: de 70,9\% para 79,7\% no sintético. \\
+Testes de privacidade e de injeção com o modelo & Comparação vistos e inéditos feita; extração e injeção ficaram para o Experimento 4. \\
+Treino numa GPU de 24~GB, depois na L40S do servidor & Feito no Google Colab, numa GPU de 96~GB. \\
+\bottomrule
+\end{tabular}
+\caption{Planejado na primeira entrega e desenvolvido até a quarta.}
+\label{tab:planejado}
+\end{table}
 
 % --------------------------------------------------------------
 \subsection{Limitações Identificadas}
 
 \subsubsection{Limitações Técnicas}
-[PREENCHER NA ENTREGA 4]
+O teste sintético usa fontes e nomes inéditos, mas sai do mesmo gerador do treino (mesmos modelos de texto, mesmas degradações, mesma forma de deformar a letra), então o ganho de 8,6\% para 3,4\% deve ser maior do que seria em documentos reais com nomes. O BRESSAY tem o problema contrário, com caligrafia real mas parecida com a do treino e só 38 nomes inéditos no teste, e quase não diz nada sobre nomes. Houve também um treino só, com uma \emph{seed} e sem nenhuma ablação (sem o sintético, sem o formato misto, com outra proporção de dados reais), e por isso não dá para dizer quanto do ganho vem de cada parte.
+
+O treino e os testes foram com linhas já recortadas, e em uso real o Chandra recebe a página inteira, que não foi o foco desta etapa. Dos erros que sobraram, a troca de nome raro pela grafia comum é justamente o que o projeto quer corrigir, e a correção da ortografia do autor (``resaltar'' por ``ressaltar'') mostra que o modelo às vezes ainda corrige em vez de transcrever. A altura de normalização ficou em 64~px sem a comparação com 32 e 96~px que estava prevista.
 
 \subsubsection{Limitações de Segurança}
-[PREENCHER NA ENTREGA 4]
+A comparação entre nomes vistos e inéditos olha o comportamento médio, e não o de um atacante que escolhe a entrada, então extração e injeção com o modelo continuam sem teste (Experimento 4). A revisão por confiança deixou passar entre 24\% e 32\% das linhas erradas, e por isso nome ainda precisa de conferência humana mesmo nas linhas não marcadas, e no \emph{prompt} nativo ela nem funciona até a correção. Perturbações invisíveis feitas de propósito para trocar um nome \cite{goodfellow2014} também não são detectadas por nenhum dos controles.
 
 % --------------------------------------------------------------
 \subsection{Comparação com o Estado da Arte}
-[PREENCHER NA ENTREGA 4]
+
+A comparação feita é contra o próprio Chandra OCR 2 \cite{chandra2026}, um VLM de OCR recente que já lê manuscrito, no mesmo teste, com o mesmo pré-processamento e com os dois \emph{prompts}. Os resultados publicados no BRESSAY \cite{bressay2023} usam modelos de reconhecimento de linha treinados do zero e outro protocolo (aqui as linhas com trecho ilegível ou riscado saíram do teste), então a comparação com eles exigiria rodar o modelo no teste oficial completo, com as mesmas regras de normalização do texto, e isso não foi feito.
 
 % --------------------------------------------------------------
 \subsection{Trade-offs Segurança vs. Usabilidade}
-[PREENCHER NA ENTREGA 4]
+
+Na revisão por confiança o custo aparece direto na Tabela~\ref{tab:guard}. Com limiar de 0,5 o modelo ajustado manda 57\% das linhas do BRESSAY para revisão e pega 75,5\% das que têm erro, e mexer no limiar troca uma coisa pela outra (mais erros pegos com mais trabalho para o operador, ou o contrário). Como um nome errado num registro custa caro, acho que o uso real pediria um limiar mais conservador nos campos de nome do que no resto do texto.
+
+O treino majoritariamente sintético reduz o uso de caligrafia e de nomes reais, como a LGPD pede, mas sem ablação não dá para saber quanto do ganho no manuscrito real depende das linhas reais do BRESSAY, e com dados de cartório essa proporção teria de ser decidida junto com quem controla os dados. O FP8 perdeu no máximo 0,1 ponto de CER e foi de 16\% a 21\% mais rápido, então ele pode ser a versão usada na inferência.
 
 % --------------------------------------------------------------
 \subsection{Implicações Práticas}
 
 \subsubsection{Para Usuários e Stakeholders}
-[PREENCHER NA ENTREGA 4]
+Para o operador, o modelo ajustado erra menos linhas e aponta quais conferir (com o \emph{prompt} curto, as linhas não marcadas têm cerca de um erro a cada cem caracteres), e para a instituição adaptar o modelo saiu barato, com 3,1~horas numa GPU, cerca de 31 unidades do Colab (uns R\$~18 no plano usado) e um adaptador de 130~MB.
 
 \subsubsection{Para Políticas Públicas}
-[PREENCHER NA ENTREGA 4]
+Os nomes do sintético vêm só de contagens públicas agregadas, sem nenhum nome completo gravado, e mesmo assim o acerto em nomes inéditos subiu de 70,9\% para 79,7\%. Pelo menos para nomes, então, dá para ensinar o modelo sem montar uma base com nomes de pessoas (a caligrafia real, porém, veio do BRESSAY). O uso em Registro Civil ainda exigiria o Relatório de Impacto à Proteção de Dados, os testes de extração e uma validação com documentos reais autorizada pelo controlador.
 
 % ==============================================================
 % SEÇÃO 9 — CONCLUSÕES E PRÓXIMOS PASSOS (*)
@@ -775,44 +976,53 @@ Também entram neste experimento a escolha da altura de normalização (32, 64 o
 \section{Conclusões e Próximos Passos}
 \label{sec:conclusoes}
 
-[PREENCHER NA ENTREGA 4: parágrafo de abertura das conclusões]
+Um \emph{fine-tuning} com LoRA de uma época, com 70\% de linhas sintéticas montadas a partir de dados públicos e 30\% de linhas reais, reduziu o erro do Chandra em manuscrito real e em nomes que ele não viu no treino, e a versão quantizada manteve o resultado. Ainda não foram testados o comportamento do modelo com entradas maliciosas nem o efeito do ajuste em páginas inteiras de documentos de registro civil.
 
 % --------------------------------------------------------------
 \subsection{Síntese das Evidências}
 
 \begin{itemize}
-    \item{} [PREENCHER: achado principal 1]
-    \item{} [PREENCHER: achado principal 2]
+    \item CER do BRESSAY de 20,1\% para 4,9\% e WER de 34,1\% para 11,6\%, em 5.146 linhas de autores fora do treino.
+    \item CER do teste sintético de 8,6\% para 3,4\%, e acerto exato nos 8.508 nomes inéditos de 70,9\% para 79,7\%, com 17 fontes que não aparecem no treino.
+    \item FP8 do modelo ajustado a no máximo 0,1 ponto de CER do BF16.
+    \item Diferença de erro entre nomes vistos e inéditos igual antes e depois do treino (2,3 e 2,1 pontos).
+    \item Com o \emph{prompt} curto, CER de 1,0\% no BRESSAY e 0,7\% no sintético nas linhas que não vão para revisão.
 \end{itemize}
 
 % --------------------------------------------------------------
 \subsection{Contribuições}
 
 \begin{enumerate}
-    \item{} [PREENCHER: contribuição 1]
+    \item O pipeline que gera linhas manuscritas sintéticas com nomes brasileiros a partir de dados abertos agregados, sem guardar nomes completos, com deformação letra a letra e fontes e nomes separados entre treino e teste.
+    \item Um adaptador LoRA do Chandra OCR 2 para português manuscrito, avaliado por grupo de nome e por nome visto ou inédito.
+    \item A medida da revisão por confiança com o modelo de verdade, com quanto ela baixa o erro nas linhas que passam e quanto do erro escapa dela.
 \end{enumerate}
 
 % --------------------------------------------------------------
 \subsection{Trabalhos Futuros}
 
-\subsubsection{Curto Prazo (3–6 meses)}
+\subsubsection{Curto Prazo (3 a 6 meses)}
 \begin{itemize}
-    \item{} [PREENCHER]
+    \item Testes de injeção pela imagem e de extração com o modelo (Experimento 4).
+    \item Confiança calculada só sobre o texto no \emph{prompt} nativo.
+    \item Conjunto sintético de páginas inteiras sobre modelos de documentos de registro civil, com treino e avaliação em página.
+    \item Ablações sem o sintético, sem o formato misto e com outras proporções de dados reais.
 \end{itemize}
 
-\subsubsection{Médio Prazo (6–12 meses)}
+\subsubsection{Médio Prazo (6 a 12 meses)}
 \begin{itemize}
-    \item{} [PREENCHER]
+    \item Validação com documentos reais de Registro Civil, com autorização do controlador e o Relatório de Impacto à Proteção de Dados.
+    \item Memória de correções (RAG) consultada na inferência, com controle de acesso e prazo de retenção.
 \end{itemize}
 
-\subsubsection{Longo Prazo (1–2 anos)}
+\subsubsection{Longo Prazo (1 a 2 anos)}
 \begin{itemize}
-    \item{} [PREENCHER]
+    \item Ajuste contínuo com as correções dos operadores, comparando cada versão nova com a anterior no mesmo teste antes de trocar.
 \end{itemize}
 
 % --------------------------------------------------------------
 \subsection{Recomendações}
-[PREENCHER NA ENTREGA 4]
+Para quem for usar o modelo, a recomendação é usar a revisão por confiança só com o \emph{prompt} curto até a correção do nativo, mandar nome sempre para conferência humana enquanto um quarto dos erros sair com confiança alta, e não usar o adaptador com documentos reais antes dos testes de extração.
 
 % ==============================================================
 % SEÇÃO 10 — CHECKLIST DE CONFORMIDADE (*)
@@ -820,7 +1030,7 @@ Também entram neste experimento a escolha da altura de normalização (32, 64 o
 \section{Checklist de Conformidade (LGPD / Ética / Segurança)}
 \label{sec:checklist}
 
-A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho de treino e inferência e os controles de saída. O que depende de resultado do modelo aparece como lacuna até o Experimento 3.
+A checklist vale para o estado atual da PoC (pipeline de dados, treino e inferência do Experimento 3 e controles de saída), e o que depende dos testes adversariais aparece como lacuna até o Experimento 4.
 
 % --------------------------------------------------------------
 \subsection{Lei Geral de Proteção de Dados (LGPD)}
@@ -839,8 +1049,8 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho d
     Lacuna: não existe um documento voltado ao titular explicando o uso. Para produção seria necessário um aviso e um Relatório de Impacto à Proteção de Dados (Art. 38).
 
     \item \textbf{Segurança (Art. 46)} \\
-    Atendimento: os downloads têm o \emph{checksum} conferido, os dados ficam fora do repositório de código e o treino é majoritariamente sintético para reduzir a memorização de dados reais. \\
-    Lacuna: a resistência a extração e a inferência de pertencimento ainda não foi testada (Experimento 3), e o servidor ainda não foi avaliado quanto a controle de acesso.
+    Atendimento: os downloads têm o \emph{checksum} conferido, os dados ficam fora do repositório de código e o treino é majoritariamente sintético para reduzir a memorização de dados reais. No teste sintético a diferença de erro entre nomes vistos e inéditos não aumentou com o treino (Experimento 3). \\
+    Lacuna: a extração com entradas escolhidas e a inferência de pertencimento ainda não foram testadas (Experimento 4). O treino rodou numa máquina do Google Colab, que guardou temporariamente as linhas do BRESSAY e o adaptador; ela é apagada ao fim da sessão, mas os dados passaram por infraestrutura de terceiros.
 
     \item \textbf{Não discriminação (Art. 6º, IX)} \\
     Atendimento: o erro é medido separado por grupo de frequência (nomes comuns e raros) e por tipo de nome, para detectar se o modelo piora em grupos menos representados. \\
@@ -852,16 +1062,16 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho d
 
 \begin{itemize}
     \item \textbf{Acesso e Controle} \\
-    Atendimento: no estado atual não há serviço exposto, e o modelo só roda em lote, por script, no servidor. \\
+    Atendimento: no estado atual não há serviço exposto, e o modelo só roda em lote, por script, na máquina do Colab. \\
     Lacuna: a API de inferência e a memória de correções não têm autenticação, perfis de acesso nem registro de quem consultou ou corrigiu.
 
     \item \textbf{Integridade e Reprodutibilidade} \\
-    Atendimento: MD5 do BRESSAY conferido, geração determinística por \emph{seed} (verificado: as mesmas imagens com 2 e com 6 processos), configuração única versionada no Git e versões das bibliotecas registradas pelo \texttt{setup.sh}. O cálculo das métricas foi conferido com predições de erro conhecido em 14 cenários (Experimento 2). \\
+    Atendimento: MD5 do BRESSAY conferido, geração determinística por \emph{seed} (verificado: as mesmas imagens com 2 e com 6 processos), configuração única versionada no Git e versões das bibliotecas de treino fixas no repositório. O cálculo das métricas foi conferido com predições de erro conhecido em 14 cenários (Experimento 2), e um erro que cortava o teste do BRESSAY na avaliação foi achado e corrigido antes dos resultados finais. \\
     Lacuna: os pesos dos modelos baixados do Hugging Face não têm o \emph{hash} conferido contra uma referência.
 
     \item \textbf{Proteções Técnicas} \\
-    Atendimento: partição por autor no BRESSAY, nomes reservados para o teste e limite de 45\% de dados reais no treino. Na saída, limite de \emph{tokens} pela largura da linha, verificações (vazia, tamanho, HTML, caracteres, repetição, frases de instrução) e revisão por confiança por palavra, sem falsos positivos nos 9.146 gabaritos de teste (Experimento 2). \\
-    Lacuna: a regra de injeção só reconhece frases conhecidas, e nenhum teste de injeção ou de perturbação adversarial foi feito com o modelo. Perturbações invisíveis na imagem não são detectadas por nenhum desses controles.
+    Atendimento: partição por autor no BRESSAY, nomes e fontes reservados para o teste e limite de 45\% de dados reais no treino. Na saída, limite de \emph{tokens} pela largura da linha, verificações (vazia, tamanho, HTML, caracteres, repetição, frases de instrução) e revisão por confiança por palavra. Com o modelo ajustado e o \emph{prompt} curto, as linhas não marcadas têm CER de 1,0\% no BRESSAY (Experimento 3). \\
+    Lacuna: a regra de injeção só reconhece frases conhecidas, nenhum teste de injeção ou de perturbação adversarial foi feito com o modelo, a regra de confiança não funciona no \emph{prompt} nativo e de 24\% a 32\% das linhas erradas passam sem marcação. Perturbações invisíveis na imagem não são detectadas por nenhum desses controles.
 \end{itemize}
 
 % --------------------------------------------------------------
@@ -869,7 +1079,7 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho d
 
 \begin{itemize}
     \item \textbf{Transparência Experimental} \\
-    Atendimento: o código, a configuração e os resultados dos Experimentos 1 e 2 estão no repositório, e o relatório separa o que foi medido do que ainda vai ser. \\
+    Atendimento: o código, a configuração e os resultados dos Experimentos 1 a 3 (incluindo todas as predições dos modelos) estão no repositório, e o relatório separa o que foi medido do que ainda vai ser. \\
     Lacuna: a heurística de marcação de nomes no BRESSAY ainda não teve a revisão manual concluída, então os números de nomes no teste real são aproximados.
 
     \item \textbf{Responsabilidade} \\
@@ -906,10 +1116,11 @@ A checklist abaixo cobre o estado atual da PoC: o pipeline de dados, o caminho d
 \section{Detalhes de Implementação}
 \label{app:implementacao}
 
-O código fica na pasta \texttt{ocr06/} do repositório. A parte de dados é um pacote Python (\texttt{ocr06}) com uma etapa por módulo, e a parte de modelo fica em \texttt{ocr06/model/} e só é executada no servidor. Os parâmetros ficam em \texttt{configs/default.yaml}.
+O código fica na pasta \texttt{ocr06/} do repositório. A parte de dados é um pacote Python (\texttt{ocr06}) com uma etapa por módulo, e a parte de modelo fica em \texttt{ocr06/model/} e só roda na máquina com GPU. Os parâmetros ficam em \texttt{configs/default.yaml}.
 
 \subsection{Estrutura de Diretórios}
 
+{\small
 \begin{verbatim}
 ocr06/
   configs/default.yaml        parâmetros de todas as etapas
@@ -929,10 +1140,15 @@ ocr06/
     model/infer.py            inferência (vLLM)
     model/train.py            treino LoRA
     model/merge.py            fusão e quantização FP8
-  data/                       gerado (fora do Git)
+  configs/prompt_chandra_layout.txt  prompt nativo do Chandra
+  requirements-gpu.txt        versões fixas do ambiente de treino
+  data/                       gerado (fora do Git, exceto o léxico)
   experiments/exp1/           resultados do Experimento 1
   experiments/exp2_integracao/  Experimento 2
+  experiments/modelos/        Experimento 3: predições, métricas
+                              e tabela comparativa
 \end{verbatim}
+}
 
 \subsection{Comandos para Reprodução}
 
@@ -948,21 +1164,30 @@ scripts/setup.sh          # detecta a GPU (sem GPU: --sem-gpu)
 scripts/run.sh dados          # dados + Experimentos 1 e 2 (CPU)
 scripts/run.sh teste-rapido   # checagem curta na GPU
 scripts/run.sh modelo         # baseline, treino, FP8 e avaliação
+scripts/run.sh baseline-nosso # original com o prompt curto
+RESUME=1 scripts/run.sh treino  # continua do último checkpoint
 \end{verbatim}
+
+O léxico agregado (IBGE, TSE e Receita) está versionado em \texttt{data/lexicon/}, porque as APIs do IBGE, do TSE e da Receita recusam conexões de fora do Brasil e o Colab roda nos Estados Unidos. Nesse caso a etapa \texttt{lexicon} é pulada e as demais etapas de dados rodam normalmente. No Colab, o ambiente de dados deve usar o Python 3.14 (\texttt{PYTHON=\$(uv python find 3.14) scripts/setup.sh --sem-gpu}), pelo erro do \texttt{numba} descrito na Seção~\ref{subsec:problemas}.
 
 % --------------------------------------------------------------
 \section{Exemplos Adicionais de Resultados}
 \label{app:exemplos}
 
-Cada linha de predição gravada pelo \texttt{infer.py} tem o formato abaixo. O exemplo é a saída do \texttt{guard.py} no teste de confiança do Experimento 2, com log-probabilidades simuladas. Exemplos de transcrições do Chandra entram neste apêndice na entrega final.
+Cada linha de predição gravada pelo \texttt{infer.py} tem o formato abaixo. Os dois exemplos são predições reais do modelo ajustado com o \emph{prompt} curto no teste sintético (o campo \texttt{entities} foi omitido). No primeiro o modelo pôs um acento que não existe no nome, e a palavra errada foi a única marcada para revisão. No segundo a linha está certa e não foi marcada.
 
 \begin{verbatim}
-{"id": "...", "source": "sintetico",
- "text": "Maria da Silva - SC", "pred": "Maria da Silva - SC",
- "entities": [...],
+{"id": "test_0000032", "source": "sintetico",
+ "text": "Celi Nalva Ogura Ovando", "pred": "Celi Nálva Ogura Ovando",
  "guard": {"revisao": true, "motivos": ["confianca"],
-           "palavras_baixa_confianca": ["Silva"],
-           "confianca_min": 0.1353}}
+           "palavras_baixa_confianca": ["Nálva"],
+           "confianca_min": 0.4088}}
+{"id": "test_0000011", "source": "sintetico",
+ "text": "NOME: LIVIA ROZINEIDE MIADA ACUÑA",
+ "pred": "NOME: LIVIA ROZINEIDE MIADA ACUÑA",
+ "guard": {"revisao": false, "motivos": [],
+           "palavras_baixa_confianca": [],
+           "confianca_min": 0.9793}}
 \end{verbatim}
 
 % --------------------------------------------------------------

@@ -142,7 +142,7 @@ class NameSampler:
         return Token(r["nome"], "cidade", r["bucket"], r["key"]), Token(r["uf"], "uf", None, r["uf"])
 
     # -- linhas ---------------------------------------------------------------
-    def compose(self, rng, templates: list[dict]) -> dict:
+    def compose(self, rng, templates: list[dict], allow_upper: bool = True) -> dict:
         """Sorteia um template e preenche; devolve texto + spans de cada entidade."""
         w = np.array([t["weight"] for t in templates], dtype=float)
         tpl = templates[rng.choice(len(templates), p=w / w.sum())]
@@ -172,7 +172,7 @@ class NameSampler:
                 if trail:
                     pieces.append((trail, None))
 
-        upper = rng.random() < self.s["p_upper"]
+        upper = rng.random() < self.s["p_upper"] and allow_upper
         text, entities = "", []
         for s, tok in pieces:
             if upper:
