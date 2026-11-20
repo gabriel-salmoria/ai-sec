@@ -305,6 +305,10 @@ model:
     early_stopping_patience: 3     # avaliações sem melhora na loss do BRESSAY
     dataloader_workers: 12
     pilot_steps: 100               # scripts/run.sh piloto
+    # Páginas inteiras (exemplos com `spans`/`w_default`, ver train.py); as linhas não mudam.
+    page_max_side: 2048            # lado maior da página no treino; o mesmo de model/pages_infer.py
+    curriculum: false              # true = ordem por `level` crescente (pensado para 1 época);
+                                   # exemplos sem `level` (linhas) intercalados ao longo do treino
 
   quant:
     # Mesma receita do chandra-ocr-2-FP8-dynamic (llm-compressor), p/ comparação justa.

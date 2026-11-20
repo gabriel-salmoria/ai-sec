@@ -14,7 +14,8 @@ from ..common import ROOT, load_config, resolve
 def model_paths(cfg: dict) -> dict[str, Path]:
     run = ROOT / "models" / cfg["model"]["run"]
     return {"run": run, "adapter": run / "adapter", "merged": run / "merged",
-            "merged_fp8": run / "merged-fp8", "checkpoints": run / "checkpoints"}
+            "merged_fp8": run / "merged-fp8", "merged_int4": run / "merged-int4",
+            "checkpoints": run / "checkpoints"}
 
 
 def final_dir(cfg: dict) -> Path:
@@ -29,7 +30,8 @@ def model_ref(cfg: dict, tag: str) -> str:
     """Tag curta -> caminho/ID do modelo: base, base_fp8, ft, ft_fp8."""
     p = model_paths(cfg)
     refs = {"base": cfg["model"]["base"], "base_fp8": cfg["model"]["base_fp8"],
-            "ft": str(p["merged"]), "ft_fp8": str(p["merged_fp8"])}
+            "ft": str(p["merged"]), "ft_fp8": str(p["merged_fp8"]), "ft_int4": str(p["merged_int4"]),
+            "base_fp8_ours": str(ROOT / "models" / "base_fp8")}
     if tag not in refs:
         raise SystemExit(f"modelo desconhecido: {tag} (use {', '.join(refs)})")
     return refs[tag]

@@ -46,6 +46,17 @@ def load_line(path, cfg: dict) -> Image.Image:
     return normalize_line(Image.open(path).convert("RGB"), cfg)
 
 
+def load_page(path, max_side: int = 2048) -> Image.Image:
+    """Página inteira: só reduz até o lado maior caber em `max_side` (sem a normalização de
+    altura das linhas). Mesmo redimensionamento de model/pages_infer.py, para o modelo ver
+    a página no treino na mesma escala da inferência."""
+    im = Image.open(path).convert("RGB")
+    f = max_side / max(im.size)
+    if f < 1:
+        im = im.resize((round(im.width * f), round(im.height * f)), Image.LANCZOS)
+    return im
+
+
 def max_chars(w: int, h: int, cfg: dict) -> int:
     """Limite superior de caracteres que cabem numa linha de largura w e altura h.
     Usado para limitar os tokens gerados (um token tem pelo menos um caractere na

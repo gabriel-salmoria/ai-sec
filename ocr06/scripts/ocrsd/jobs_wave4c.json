@@ -1,0 +1,117 @@
+[
+ {
+  "dir": "w4c_dnv_sjvas-w5-b50-azul_00",
+  "document_type": "dnv",
+  "mapping_id": "mapeamento_seguindo_norma",
+  "writing": {
+   "model": "sjvasquez",
+   "font_family": "caveat",
+   "intensity": 0.65,
+   "writer": 5,
+   "handwriting": true,
+   "text_handwriting": true,
+   "bias": 0.5,
+   "color": "#193787",
+   "width": 1.5,
+   "pressure": 0.25,
+   "dropout": 0.0,
+   "text_policy": "normalize"
+  },
+  "count": 10,
+  "seed": 43001,
+  "filter": "strong",
+  "text_only": true
+ },
+ {
+  "dir": "w4c_obito_sjvas-w4-b75-azul_03",
+  "document_type": "certidao_obito",
+  "mapping_id": "mapeamento_certidao_obito_v4",
+  "writing": {
+   "model": "sjvasquez",
+   "font_family": "caveat",
+   "intensity": 0.65,
+   "writer": 4,
+   "handwriting": true,
+   "text_handwriting": true,
+   "bias": 0.75,
+   "color": "#193787",
+   "width": 1.5,
+   "pressure": 0.25,
+   "dropout": 0.0,
+   "text_policy": "normalize"
+  },
+  "count": 10,
+  "seed": 43002,
+  "filter": "strong",
+  "text_only": true
+ },
+ {
+  "dir": "w4c_nascimento_cnj_sjvas-w1-b30-azulesc_05",
+  "document_type": "certidao_nascimento_cnj",
+  "mapping_id": "mapeamento_certidao_nascimento_cnj_v3",
+  "writing": {
+   "model": "sjvasquez",
+   "font_family": "caveat",
+   "intensity": 0.65,
+   "writer": 1,
+   "handwriting": true,
+   "text_handwriting": true,
+   "bias": 0.3,
+   "color": "#0b2a6f",
+   "width": 1.5,
+   "pressure": 0.25,
+   "dropout": 0.0,
+   "text_policy": "normalize"
+  },
+  "count": 10,
+  "seed": 43003,
+  "filter": "strong",
+  "text_only": true
+ },
+ {
+  "dir": "w4c_dnv_caveat95-preto_01",
+  "document_type": "dnv",
+  "mapping_id": "mapeamento_seguindo_norma",
+  "writing": {
+   "model": "font",
+   "font_family": "caveat",
+   "intensity": 0.95,
+   "writer": null,
+   "handwriting": true,
+   "text_handwriting": true,
+   "bias": 0.75,
+   "color": "#1a1a1a",
+   "width": 1.5,
+   "pressure": 0.25,
+   "dropout": 0.0,
+   "text_policy": "normalize"
+  },
+  "count": 10,
+  "seed": 43004,
+  "filter": "medium",
+  "text_only": false
+ },
+ {
+  "dir": "w4c_casamento_cnj_homemade95-preto_04",
+  "document_type": "certidao_casamento_cnj",
+  "mapping_id": "mapeamento_certidao_casamento_cnj_v2",
+  "writing": {
+   "model": "font",
+   "font_family": "homemade_apple",
+   "intensity": 0.95,
+   "writer": null,
+   "handwriting": true,
+   "text_handwriting": true,
+   "bias": 0.75,
+   "color": "#1a1a1a",
+   "width": 1.5,
+   "pressure": 0.25,
+   "dropout": 0.0,
+   "text_policy": "normalize"
+  },
+  "count": 10,
+  "seed": 43005,
+  "filter": "light",
+  "text_only": false
+ }
+]

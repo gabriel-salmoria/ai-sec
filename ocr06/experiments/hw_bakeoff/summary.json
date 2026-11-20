@@ -1,0 +1,59 @@
+{
+ "graves": {
+  "jobs": 113,
+  "ok": 73,
+  "failed_charset": 40,
+  "failed_other": [],
+  "sec_per_line_median": 0.516,
+  "sec_per_line_mean": 0.581,
+  "height_px_median": 118,
+  "device": [
+   "cpu"
+  ]
+ },
+ "vatrpp": {
+  "jobs": 60,
+  "ok": 60,
+  "failed_charset": 0,
+  "failed_other": [],
+  "sec_per_line_median": 0.041,
+  "sec_per_line_mean": 0.084,
+  "height_px_median": 144.0,
+  "device": [
+   "cuda"
+  ]
+ },
+ "emuru": {
+  "jobs": 60,
+  "ok": 58,
+  "failed_charset": 0,
+  "failed_other": [
+   [
+    "Hospital São Lucas",
+    "bressay_0675",
+    "RuntimeError: no end-of-text detected within 160 tokens (output is truncated or degenerate)"
+   ],
+   [
+    "São João del-Rei",
+    "bressay_7574",
+    "RuntimeError: no end-of-text detected within 160 tokens (output is truncated or degenerate)"
+   ]
+  ],
+  "sec_per_line_median": 0.894,
+  "sec_per_line_mean": 1.059,
+  "height_px_median": 103.0,
+  "device": [
+   "cuda"
+  ]
+ },
+ "emuru_cpu": {
+  "jobs": 0,
+  "ok": 0,
+  "failed_charset": 0,
+  "failed_other": [],
+  "sec_per_line_median": null,
+  "sec_per_line_mean": null,
+  "height_px_median": null,
+  "device": []
+ }
+}

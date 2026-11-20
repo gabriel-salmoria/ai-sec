@@ -1,0 +1,22 @@
+{
+ "bressay_1631": {
+  "image": "refs/bressay_1631.png",
+  "text": "nados às doenças mentais,",
+  "source": "BRESSAY 1631-020.jpg box (8, 212, 596, 266)"
+ },
+ "bressay_0675": {
+  "image": "refs/bressay_0675.png",
+  "text": "ciedade brasileira era marcada pelo",
+  "source": "BRESSAY 0675-066.jpg box (13, 60, 690, 128)"
+ },
+ "bressay_7574": {
+  "image": "refs/bressay_7574.png",
+  "text": "mo era o controle ideológico",
+  "source": "BRESSAY 7574-030.jpg box (14, 88, 590, 143)"
+ },
+ "graves_style3": {
+  "image": "refs/graves_style3.png",
+  "text": "Maria da Silva",
+  "source": "render_graves.py style 3 bias 0.75 seed 1"
+ }
+}

@@ -24,7 +24,16 @@ from . import ROOT, data_dir, load_config, model_ref, resolve
 NAME = "xfund_hw"
 
 
-def run(cfg: dict, tag: str, sets: list[str], limit: int | None) -> None:
+def _load(path, max_side: int) -> Image.Image:
+    """Página com o lado maior <= max_side (o mesmo tamanho usado no treino de páginas)."""
+    im = Image.open(path).convert("RGB")
+    f = max_side / max(im.size)
+    if f < 1:
+        im = im.resize((round(im.width * f), round(im.height * f)), Image.LANCZOS)
+    return im
+
+
+def run(cfg: dict, tag: str, sets: list[str], limit: int | None, out_name: str | None = None) -> None:
     from transformers import AutoProcessor
     from vllm import LLM, SamplingParams
 
@@ -44,13 +53,13 @@ def run(cfg: dict, tag: str, sets: list[str], limit: int | None) -> None:
     stop_ids = [i for i in (processor.tokenizer.convert_tokens_to_ids(t)
                             for t in ("<|im_end|>", "<|endoftext|>")) if isinstance(i, int)]
     params = SamplingParams(temperature=0.0, max_tokens=pc["max_tokens"], stop_token_ids=stop_ids)
-    out_dir = resolve(cfg, "experiments") / "paginas" / tag
+    out_dir = resolve(cfg, "experiments") / "paginas" / (out_name or tag)
     out_dir.mkdir(parents=True, exist_ok=True)
     for name in sets:
         path = data_dir(cfg) / "pages" / name / "pages.jsonl"
         rows = [json.loads(line) for line in open(path, encoding="utf-8")][:limit]
         reqs = [{"prompt": prompt, "multi_modal_data": {
-                    "image": Image.open(data_dir(cfg) / r["image"]).convert("RGB")}} for r in rows]
+                    "image": _load(data_dir(cfg) / r["image"], pc.get("max_side", 2048))}} for r in rows]
         t0 = time.time()
         outs = llm.generate(reqs, params)
         dt = time.time() - t0
@@ -73,10 +82,11 @@ def main() -> None:
     ap.add_argument("--models", nargs="+", default=["base", "ft"])
     ap.add_argument("--sets", nargs="+", default=[NAME])
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--out-name", help="pasta de saída (ex.: lora_v0), em vez do nome curto do modelo")
     args = ap.parse_args()
     cfg = load_config(args.config)
     for tag in args.models:
-        run(cfg, tag, args.sets, args.limit)
+        run(cfg, tag, args.sets, args.limit, args.out_name if len(args.models) == 1 else None)
 
 
 if __name__ == "__main__":

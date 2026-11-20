@@ -179,7 +179,7 @@ def render_line(text: str, font_path: str, rc: dict, rng: np.random.Generator,
     # Cor da tinta sobre papel branco.
     colors = rc["ink_colors"]
     ink = np.array(colors[rng.integers(len(colors))], np.float32)
-    ink = np.clip(ink + rng.normal(0, 10, 3), 0, 255)
+    ink = np.clip(ink + rng.normal(0, rc.get("ink_color_jitter", 10), 3), 0, 255)
     a = (canvas.astype(np.float32) / 255.0)[..., None]
     bgr = (255.0 * (1 - a) + ink * a).astype(np.uint8)
     return bgr, canvas, {"font_size": size, "stroke": stroke, "xh_frac": round(xh_frac, 3),

@@ -38,6 +38,7 @@ mkdir -p logs
 
 novo_venv() {  # novo_venv <pasta>
     # Sem ensurepip (ex.: Colab) o venv do Python falha; aí usa o uv, que já instala o pip.
+    [ -d "$1" ] && [ ! -x "$1/bin/python" ] && rm -rf "$1"   # venv pela metade
     if [ ! -d "$1" ] && ! "$PY" -m venv "$1" 2>/dev/null; then
         rm -rf "$1"
         uv venv --quiet --seed --python "$PY" "$1"

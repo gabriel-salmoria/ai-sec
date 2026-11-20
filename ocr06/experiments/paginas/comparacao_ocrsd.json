@@ -1,9 +1,11 @@
 {
   "base": {
+    "paginas": 50,
+    "paginas_ignoradas": 30,
     "manuscrito": {
-      "cer": 0.048564611713999846,
-      "acerto_exato": 0.8161375661375662,
-      "campos": 1512
+      "cer": 0.009199247334309012,
+      "acerto_exato": 0.885956644674835,
+      "campos": 1061
     },
     "impresso": {
       "cer": 0.0,
@@ -12,10 +14,12 @@
     }
   },
   "ft": {
+    "paginas": 50,
+    "paginas_ignoradas": 30,
     "manuscrito": {
-      "cer": 0.0640857897842428,
-      "acerto_exato": 0.798941798941799,
-      "campos": 1512
+      "cer": 0.009582549306571887,
+      "acerto_exato": 0.8991517436380773,
+      "campos": 1061
     },
     "impresso": {
       "cer": 0.0,

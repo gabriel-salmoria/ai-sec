@@ -168,7 +168,14 @@ def score(cfg: dict, name: str = NAME) -> dict:
     for f in sorted(root.glob(f"*/{name}.jsonl")):
         tag = f.parent.name
         acc = {k: {"dist": 0, "chars": 0, "campos": 0, "exatos": 0} for k in ("manuscrito", "impresso")}
+        scored_pages = skipped_pages = 0
         for r in map(json.loads, open(f, encoding="utf-8")):
+            # Prediction files can outlive a dataset rebuild. Compare only IDs for
+            # which the current page manifest still has ground truth.
+            if r["id"] not in pages:
+                skipped_pages += 1
+                continue
+            scored_pages += 1
             pred = normalize(r["pred"])
             for fld in pages[r["id"]]["fields"]:
                 d = infix_distance(fld["text"], pred)
@@ -177,9 +184,10 @@ def score(cfg: dict, name: str = NAME) -> dict:
                 a["chars"] += len(fld["text"])
                 a["campos"] += 1
                 a["exatos"] += d == 0
-        results[tag] = {k: {"cer": a["dist"] / max(a["chars"], 1),
+        results[tag] = {"paginas": scored_pages, "paginas_ignoradas": skipped_pages,
+                        **{k: {"cer": a["dist"] / max(a["chars"], 1),
                             "acerto_exato": a["exatos"] / max(a["campos"], 1), "campos": a["campos"]}
-                        for k, a in acc.items()}
+                        for k, a in acc.items()}}
     title = {"xfund_hw": "formulários XFUND-PT com os campos preenchidos reescritos à mão",
              "ocrsd": "certidões sintéticas do OCRSD (casamento, nascimento, óbito) preenchidas à mão"}
     lines = [f"Páginas inteiras: {title.get(name, name)}.",
@@ -188,12 +196,15 @@ def score(cfg: dict, name: str = NAME) -> dict:
              "|---|---|---|---|---|"]
     for tag, m in results.items():
         hw, pr = m["manuscrito"], m["impresso"]
-        lines.append(f"| {tag} | {100 * hw['cer']:.1f} | {100 * hw['acerto_exato']:.1f} | "
+        lines.append(f"| {tag} ({m['paginas']} páginas) | {100 * hw['cer']:.1f} | {100 * hw['acerto_exato']:.1f} | "
                      f"{100 * pr['cer']:.1f} | {100 * pr['acerto_exato']:.1f} |")
     suffix = "" if name == NAME else f"_{name}"
     (root / f"comparacao{suffix}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (root / f"comparacao{suffix}.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     print("\n".join(lines))
+    for tag, m in results.items():
+        if m["paginas_ignoradas"]:
+            print(f"Aviso: {tag}: {m['paginas_ignoradas']} predições sem gabarito atual foram ignoradas.")
     return results
 
 

@@ -1,0 +1,6 @@
+#!/bin/sh
+# Run a command on a Colab session over the official `colab ssh` bridge.
+#   SESSION=s1 scripts/colab/cssh 'nvidia-smi'
+S="${SESSION:-s1}"
+exec ssh -o ProxyCommand="colab ssh --proxy-mode -s $S" -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ServerAliveInterval=30 "root@colab-$S" "$@"

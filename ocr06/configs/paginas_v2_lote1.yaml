@@ -1,0 +1,439 @@
+# Treino de páginas (sessão 2): lora_v1 a partir do Chandra base, com os arquivos de
+# data/final/pages_v1. Cópia de default.yaml com o bloco model.train ajustado.
+seed: 42
+paths:
+  raw: data/raw
+  lexicon: data/lexicon
+  fonts: data/fonts
+  synthetic: data/synthetic
+  bressay: data/bressay
+  final: data/final
+  experiments: experiments
+sources:
+  prenomes_url: https://data.brasil.io/dataset/genero-nomes/nomes.csv.gz
+  ibge_ranking_url: https://servicodados.ibge.gov.br/api/v2/censos/nomes/ranking
+  municipios_url: https://servicodados.ibge.gov.br/api/v1/localidades/municipios
+  populacao_url: https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/-1/variaveis/93?localidades=N6[all]
+  tse:
+    url: https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_{year}.zip
+    years:
+    - 2024
+    - 2020
+  rfb:
+    webdav_url: https://arquivos.receitafederal.gov.br/public.php/webdav/
+    share_token: YggdBLfdninEJX9
+    month: latest
+    shards:
+    - 2
+    - 3
+  keep_raw: false
+lexicon:
+  prenome_min_freq: 20
+  prenome_typo_ratio: 0.0001
+  sobrenome_min_count: 5
+  common_mass: 0.8
+  invented:
+    n_prenomes: 5000
+    n_sobrenomes: 5000
+    ngram_order: 3
+    min_len: 4
+    max_len: 12
+    plausibility_quantile: 0.2
+vocab:
+  coverage: auto
+  min_expected: 2
+  heldout_val: 0.05
+  heldout_test: 0.1
+sampling:
+  alpha: 0.5
+  alpha_cidade: 0.5
+  p_invented: 0.0
+  p_upper: 0.3
+  templates:
+  - id: nome
+    weight: 0.35
+    pattern: '{nome}'
+  - id: rotulo_nome
+    weight: 0.1
+    pattern: 'Nome: {nome}'
+  - id: cidade_uf
+    weight: 0.1
+    pattern: '{cidade} - {uf}'
+  - id: cidade_barra
+    weight: 0.05
+    pattern: '{cidade}/{uf}'
+  - id: naturalidade
+    weight: 0.1
+    pattern: natural de {cidade} - {uf}
+  - id: nome_natural
+    weight: 0.1
+    pattern: '{nome}, natural de {cidade}'
+  - id: filho
+    weight: 0.1
+    pattern: filho de {nome_m} e de {nome_f}
+  - id: filha
+    weight: 0.1
+    pattern: filha de {nome_m} e de {nome_f}
+fonts:
+  font_holdout_frac: 0.2
+  script:
+  - Dancing Script
+  - Homemade Apple
+  - Cedarville Cursive
+  - La Belle Aurore
+  - Dawning of a New Day
+  - Sacramento
+  - Allura
+  - Parisienne
+  - Alex Brush
+  - Mr Dafoe
+  - Satisfy
+  - Kristi
+  - Zeyada
+  - Marck Script
+  - Nothing You Could Do
+  - Yellowtail
+  - Cookie
+  - Bad Script
+  - Playwrite BR
+  - Playwrite PT
+  - Playwrite ES
+  - Playwrite IT Trad
+  - Playwrite FR Trad
+  - Playwrite US Trad
+  - Playwrite AR
+  - Playwrite MX
+  - Great Vibes
+  - Pinyon Script
+  - Italianno
+  - Petit Formal Script
+  - Mrs Saint Delafield
+  - Herr Von Muellerhoff
+  - Meddon
+  - Norican
+  - Damion
+  - Kaushan Script
+  - Courgette
+  - Merienda
+  - Ms Madi
+  - Oooh Baby
+  - Corinthia
+  - Tangerine
+  - Arizonia
+  - Monsieur La Doulaise
+  families:
+  - Playwrite BR
+  - Playwrite PT
+  - Playwrite ES
+  - Playwrite IT Trad
+  - Playwrite FR Trad
+  - Playwrite US Trad
+  - Playwrite AR
+  - Playwrite MX
+  - Playwrite DE Grund
+  - Edu SA Beginner
+  - Edu NSW ACT Foundation
+  - Edu VIC WA NT Beginner
+  - Great Vibes
+  - Pinyon Script
+  - Italianno
+  - Petit Formal Script
+  - Mrs Saint Delafield
+  - Herr Von Muellerhoff
+  - Meddon
+  - Norican
+  - Damion
+  - Kaushan Script
+  - Courgette
+  - Merienda
+  - Ms Madi
+  - Oooh Baby
+  - Corinthia
+  - Tangerine
+  - Arizonia
+  - Monsieur La Doulaise
+  - Schoolbell
+  - Coming Soon
+  - Neucha
+  - Short Stack
+  - Delius
+  - Mali
+  - Sriracha
+  - Mynerve
+  - Grape Nuts
+  - Sue Ellen Francisco
+  - The Girl Next Door
+  - Over the Rainbow
+  - Loved by the King
+  - Give You Glory
+  - Just Me Again Down Here
+  - Swanky and Moo Moo
+  - Rock Salt
+  - Permanent Marker
+  - Caveat Brush
+  - Pangolin
+  - Gaegu
+  - Gamja Flower
+  - Nanum Brush Script
+  - Klee One
+  - Yomogi
+  - Shadows Into Light Two
+  - Crafty Girls
+  - Fuzzy Bubbles
+  - Calligraffitti
+  - Caveat
+  - Dancing Script
+  - Indie Flower
+  - Kalam
+  - Homemade Apple
+  - Shadows Into Light
+  - Reenie Beanie
+  - Nothing You Could Do
+  - Cedarville Cursive
+  - La Belle Aurore
+  - Dawning of a New Day
+  - Sacramento
+  - Allura
+  - Parisienne
+  - Alex Brush
+  - Mr Dafoe
+  - Satisfy
+  - Kristi
+  - Zeyada
+  - Waiting for the Sunrise
+  - Just Another Hand
+  - Gochi Hand
+  - Patrick Hand
+  - Architects Daughter
+  - Nanum Pen Script
+  - Sedgwick Ave
+  - Marck Script
+  - Handlee
+  - Covered By Your Grace
+  - Gloria Hallelujah
+  - Annie Use Your Telescope
+  - Bad Script
+  - Yellowtail
+  - Cookie
+render:
+  font_size:
+  - 36
+  - 60
+  word_space:
+  - 0.6
+  - 1.6
+  baseline_jitter: 3
+  word_rotation: 2.0
+  slant:
+  - -0.45
+  - 0.25
+  width_scale:
+  - 0.75
+  - 1.3
+  stroke:
+  - -1.0
+  - 2.5
+  p_pressure: 0.5
+  size_drift: 0.12
+  tilt: 2.0
+  bow: 0.12
+  glyph:
+    spacing: 0.55
+    scale: 0.08
+    baseline: 0.05
+    slant: 0.08
+    width: 0.15
+  tremor_alpha:
+  - 0.0
+  - 1.2
+  tremor_sigma: 2.5
+  elastic_alpha:
+  - 0.0
+  - 3.0
+  elastic_sigma: 6.0
+  height:
+  - 48
+  - 112
+  p_lowres: 0.35
+  lowres_height:
+  - 16
+  - 30
+  lowres_min_xheight: 7
+  min_stroke_to_thin: 5.0
+  max_stroke_to_thicken: 8.0
+  script_min_width: 0.9
+  margin:
+  - 4
+  - 24
+  ink_colors:
+  - - 20
+    - 20
+    - 20
+  - - 140
+    - 50
+    - 20
+  - - 90
+    - 30
+    - 10
+  - - 40
+    - 60
+    - 90
+degrade:
+  levels:
+    leve: 0.35
+    medio: 0.45
+    forte: 0.2
+  scale:
+    leve: 0.4
+    medio: 0.8
+    forte: 1.2
+  min_contrast: 35
+  max_retries: 3
+  jpeg_quality: 92
+generate:
+  name: v0
+  n:
+    train: 40000
+    val: 2000
+    test: 4000
+  workers: auto
+bressay:
+  record: 11637681
+  drop_illegible: true
+  crossed_out: drop_line
+  name_stopwords:
+  - Brasil
+  - Deus
+  - Estado
+  - Estados
+  - Governo
+  - Constituição
+  - Federal
+  - República
+  - Internet
+  - Nação
+  - Igreja
+  - Ministério
+  - Senado
+  - Congresso
+  - Lei
+  - Leis
+  - Nova
+  - Novo
+  - Norte
+  - Sul
+  - Leste
+  - Oeste
+  - União
+  - Artes
+  - Grade
+  - Guerra
+  - Mundial
+  - Saúde
+  - Primeira
+  - Segunda
+  - Terceira
+  - Sétima
+  - Máxima
+  - Urbana
+  - Nacional
+  - Educação
+  - Cultura
+  - Justiça
+  - Ciência
+  - Ciências
+  - América
+  - Carta
+  - Magna
+  - Coringa
+mix:
+  max_real_fraction: 0.45
+  format: misto
+  chandra_fraction: 0.5
+experiment1:
+  alphas:
+  - 0.3
+  - 0.5
+  - 1.0
+  budgets:
+  - 10000
+  - 40000
+  - 100000
+  n_draws: 200000
+  n_images: 1000
+  contact_sheet: 40
+model:
+  base: datalab-to/chandra-ocr-2
+  base_fp8: dangvansam/chandra-ocr-2-FP8-dynamic
+  dataset: pages_v2
+  run: lora_v2
+  chandra_prompt_file: configs/prompt_chandra_layout.txt
+  vllm:
+    max_model_len: 4096
+    gpu_memory_utilization: 0.85
+    max_num_seqs: 128
+    max_tokens: 192
+    min_pixels: 65536
+    max_pixels: 16777216
+  vllm_pages:
+    max_model_len: 12288
+    max_tokens: 6144
+    max_num_seqs: 1
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+    - in_proj_qkvz
+    - in_proj_ba
+    - in_proj_qkv
+    - in_proj_z
+    - in_proj_b
+    - in_proj_a
+    - out_proj
+  train:
+    epochs: 1
+    lr: 0.0001
+    batch_size: 4
+    grad_accum: 4
+    warmup_ratio: 0.03
+    eval_steps: 25
+    max_val:
+      local: 20
+      ocrsd: 20
+    best_metric: eval_local_loss
+    early_stopping_patience: 1000
+    dataloader_workers: 8
+    pilot_steps: 5
+    page_max_side: 2048
+    curriculum: true
+    lr_scheduler: constant_with_warmup
+    init_adapter: models/lora_v1/adapter
+    name_boost: 2.0
+  quant:
+    scheme: FP8_DYNAMIC
+    ignore:
+    - re:.*lm_head
+    - re:visual.*
+    - re:model.visual.*
+    - re:.*mlp.gate$
+    - re:.*embed_tokens$
+    - re:.*shared_expert_gate$
+    - re:.*mlp\.shared_expert$
+    - re:.*linear_attn.*
+preprocess:
+  line_height: 64
+  max_width: 2048
+guard:
+  chars_per_height: 10.0
+  min_chars: 16
+  max_bad_chars: 0
+  min_word_conf: 0.5
+  logprobs: 1

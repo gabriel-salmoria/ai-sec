@@ -46,7 +46,7 @@ class Pool:
 
 
 def _pool(V: list[dict], splits: dict, split: str, alpha: float) -> Pool:
-    vis = [r for r in V if splits[r["key"]] in ("all", split)]
+    vis = list(V) if split == "any" else [r for r in V if splits[r["key"]] in ("all", split)]
     return Pool(vis, stratified_q(vis, alpha, bucket_masses(V, alpha)) if vis else None)
 
 
