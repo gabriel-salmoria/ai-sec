@@ -9,3 +9,22 @@ logs/
 .venv*/
 ocr06/models/
 ocr06/experiments/exp2_integracao/mock/
+ocr06/third_party/
+
+# LaTeX (arquivos de compilação)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.run.xml
+*.nav
+*.snm
+
+# OCR-06: saídas brutas grandes
+ocr06/experiments/hw_bakeoff/out/
+ocr06/experiments/hw_bakeoff/jobs/
