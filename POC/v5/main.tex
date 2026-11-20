@@ -1,0 +1,1215 @@
+% ===============================
+% Template de Relatório de PoC (INE5448)
+% IA & Segurança — LabREC/UFSC
+% Versão 2.1
+% ===============================
+% INSTRUÇÕES GERAIS:
+%   1. Substitua todos os campos marcados com [PREENCHER] pelas suas informações.
+%   2. Mantenha a estrutura de seções — adicione subseções conforme necessário.
+%   3. As seções marcadas com (*) são obrigatórias.
+%   4. Remova os comentários de instrução antes de submeter.
+% ===============================
+
+\documentclass[12pt,a4paper]{article}
+
+% ---- Codificação, idioma e fontes ----
+% inputenc/\DeclareUnicodeCharacter só existem no pdfLaTeX; no LuaLaTeX (vimtex)
+% o mesmo mapeamento é feito com newunicodechar.
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+  \DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow}}
+  \DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
+  \DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+  \DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+  \DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+  \DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\else
+  \usepackage{newunicodechar}
+  \newunicodechar{→}{\ensuremath{\rightarrow}}
+  \newunicodechar{←}{\ensuremath{\leftarrow}}
+  \newunicodechar{↔}{\ensuremath{\leftrightarrow}}
+  \newunicodechar{×}{\ensuremath{\times}}
+  \newunicodechar{≥}{\ensuremath{\geq}}
+  \newunicodechar{≤}{\ensuremath{\leq}}
+  \newunicodechar{±}{\ensuremath{\pm}}
+\fi
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{times}
+
+% ---- Matemática, figuras e links ----
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em}
+\setlist[enumerate]{leftmargin=1.5em}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+
+% ---- Configuração de hyperlinks ----
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={Relatório Final de PoC - INE5448},
+    pdfpagemode=FullScreen,
+}
+
+% ---- Configuração de listagens de código ----
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    tabsize=2,
+    commentstyle=\color{gray},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    literate=
+        {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+        {À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+        {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+        {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+        {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+        {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+        {ã}{{\~a}}1 {õ}{{\~o}}1 {Ã}{{\~A}}1 {Õ}{{\~O}}1
+        {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+        {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{blue}\bfseries,
+  basicstyle=\ttfamily\small,
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\color{green}]{:},
+  morestring=[b]',
+  morestring=[b]",
+  literate=
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+    {ã}{{\~a}}1 {õ}{{\~o}}1 {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+}
+
+\usepackage[table]{xcolor}
+
+% ---- Bibliografia numérica (biber) ----
+\usepackage[backend=biber,style=numeric,sorting=nyt,maxbibnames=99]{biblatex}
+\addbibresource{ref.bib} 
+
+% ---- Informações do documento ----
+\title{\textbf{OCR-06: OCR Adaptativo com Aprendizagem Assistida}}
+\author{Gabriel Salmoria \and Tutor: Lucas Mayr}
+
+\date{\small \today}
+
+% ==== Início do Documento ====
+
+\setlength{\emergencystretch}{1.5em}
+\begin{document}
+
+\maketitle
+
+% ---------------------------------------------------------------
+% RESUMO (*)
+% ---------------------------------------------------------------
+\begin{abstract}
+OCRs baseados em Modelos de Linguagem Visual (VLMs) leem bem o texto comum, mas trocam nomes próprios raros pela forma mais provável, e em certidões de Registro Civil cada nome errado precisa ser corrigido pelo operador. Neste trabalho, o Chandra OCR 2, um OCR de pesos abertos, foi ajustado com LoRA para ler os campos manuscritos de certidões sem que dados de pessoas reais entrassem no treino. Os nomes vêm de contagens agregadas do IBGE, do TSE e da Receita Federal, e todas as páginas de treino são sintéticas. Na primeira etapa, o ajuste com linhas manuscritas reduziu o CER do BRESSAY de 20,1\% para 4,9\% e elevou de 70,9\% para 79,7\% a taxa de nomes inéditos lidos sem erro, mas não melhorou a leitura de páginas inteiras. Na segunda, o modelo foi treinado com 3.500 páginas de certidões geradas pelo OCRSD e por um gerador próprio, no formato HTML que o Chandra já produz. Em dois testes de 100 páginas, a fração de campos manuscritos lidos sem erro passou de 55,4\% para 72,2\% e de 55,8\% para 72,0\%, e a de nomes de 24,3\% para 32,5\% no teste com nomes nunca vistos e de 40,4\% para 50,2\% no teste com nomes na frequência real, todas com intervalo de confiança acima de zero. Em páginas do OCRSD escritas por mãos fora do treino, o acerto nos campos foi de 84,6\% para 95,5\%. Quantizado em INT4, o modelo ocupa 5,0~GiB e lê uma página em 14,9~s. Fora das certidões o modelo original continua melhor, e os nomes raros nunca vistos seguem como a principal fonte de erro.
+\end{abstract}
+
+\textbf{Palavras-chave:} OCR, Modelos de Linguagem Visual, LoRA, Dados Sintéticos, Registro Civil, Quantização, LGPD.
+
+\tableofcontents
+
+% ==============================================================
+% SEÇÃO 1 — INTRODUÇÃO (*)
+% ==============================================================
+\section{Introdução}
+\label{sec:introducao}
+
+Em 2023, os cartórios brasileiros registraram 2,5 milhões de nascimentos, 1,4 milhão de óbitos e 941 mil casamentos \cite{ibge_rc2023}, e cada uma dessas certidões traz vários nomes de pessoas (registrado, pais, avós, cônjuges, declarante, oficial). Os OCRs atuais, baseados em VLMs, leem bem palavras comuns, mas erram com frequência nomes próprios raros, que quase não aparecem no treino e acabam trocados pela forma mais provável que o modelo conhece. Num teste com certidões geradas para esta PoC, o Chandra OCR 2 original leu sem nenhum erro 55,4\% dos campos manuscritos e só 24,3\% dos campos de nome. Em um registro civil esse é o erro mais caro, porque um nome com uma letra trocada já é um erro no documento e obriga o operador a conferir cada campo.
+
+% --------------------------------------------------------------
+\subsection{Motivação}
+
+A correção manual custa tempo e não melhora o modelo, que continua errando os mesmos nomes nos documentos seguintes. Ajustar o modelo com os próprios registros seria o caminho natural, e é aí que o problema passa a ser de segurança: registros reais carregam dados pessoais, o treino fica sujeito à LGPD e um modelo ajustado pode memorizar e expor os nomes que viu.
+
+A proposta deste trabalho é treinar sem esses registros. Os nomes vêm de contagens agregadas de dados públicos, a caligrafia vem de um corpus público de redações, o BRESSAY \cite{bressay2023}, e de geradores de escrita, e as certidões de treino são sintéticas. O ajuste é feito com LoRA \cite{lora2022}, que cabe em uma única GPU, de modo que uma instituição pequena poderia repetir o processo.
+
+% --------------------------------------------------------------
+\subsection{Objetivos}
+
+O objetivo geral é verificar se um ajuste com LoRA, feito só com dados sintéticos e públicos, melhora a leitura dos campos manuscritos de certidões de Registro Civil, principalmente os nomes que o modelo nunca viu, sem que ele memorize os nomes do treino e em uma versão que possa ser servida com pouca memória. Os objetivos específicos são:
+\begin{itemize}
+    \item gerar linhas manuscritas sintéticas com nomes, sobrenomes e municípios brasileiros, sorteados pela frequência real na população, e ajustar o Chandra OCR 2 com elas e com o BRESSAY;
+    \item gerar páginas inteiras de certidões sintéticas, com os nomes do mesmo léxico, e ajustar o modelo em página inteira, no formato de saída que ele já usa;
+    \item medir o ganho em nomes ausentes do treino e o efeito da quantização em FP8 e INT4 sobre a acurácia e a velocidade.
+\end{itemize}
+A memória de correções (RAG) prevista na proposta ficou fora do escopo, para que o tempo fosse dedicado ao treino e à avaliação em página.
+
+% --------------------------------------------------------------
+\subsection{Descrição do Problema}
+
+O problema tratado é transcrever os campos manuscritos de certidões, e em especial os nomes próprios raros, sem treinar com dados pessoais reais. Uma solução precisa ser avaliada em três aspectos: o erro em nomes ausentes do treino, a leitura do restante da página e a possibilidade de o modelo reproduzir os nomes que viu.
+
+% ==============================================================
+% SEÇÃO 2 — FUNDAMENTAÇÃO TEÓRICA (*)
+% ==============================================================
+\section{Fundamentação Teórica e Estado da Arte}
+\label{sec:fundamentacao}
+
+Hoje a maior parte dos OCRs de alto desempenho é baseada em VLMs, que leem a imagem inteira e geram o texto usando o contexto da linha ou da página.
+
+% --------------------------------------------------------------
+\subsection{Técnicas Relevantes para o Problema}
+
+\subsubsection{Abordagens Clássicas}
+Sistemas anteriores, como o Tesseract e os modelos baseados em LSTM, dispõem de pouco contexto de longo alcance e têm desempenho limitado em manuscrito contínuo, em que a sobreposição dos traços torna a leitura ambígua.
+
+\subsubsection{Abordagens Baseadas em ML/DL}
+O estado da arte recente emprega Transformers, como o TrOCR \cite{trocr2021}, e modelos generativos multimodais, como a família Qwen-VL \cite{qwen2vl}. Com técnicas de ajuste eficiente (\emph{Parameter-Efficient Fine-Tuning}, PEFT), como o LoRA \cite{lora2022, peft2022}, treina-se apenas um pequeno conjunto de parâmetros adicionais, e o ajuste cabe em GPUs comerciais. Para dados sintéticos, bibliotecas como o Augraphy \cite{augraphy2022} simulam manchas, ruído e envelhecimento de documentos digitalizados.
+
+O modelo escolhido foi o Chandra OCR 2 \cite{chandra2026}, da Datalab, um VLM especializado em OCR que transcreve manuscrito e devolve a página inteira em HTML. Cada bloco da saída é um \texttt{<div>} com a caixa onde o texto está, em coordenadas normalizadas de 0 a 1000, e um rótulo (texto, título, tabela, imagem). A configuração publicada é a mesma do Qwen3.5-4B \cite{qwen35} (32 camadas, dimensão 2.560, mesmo vocabulário e mesmo encoder de visão), do qual ele é um \emph{fine-tune}, e a arquitetura é híbrida, com três de cada quatro camadas usando atenção linear.
+
+\subsubsection{Geração Sintética de Documentos Manuscritos}
+O OCRSD \cite{ocrsd}, do Operador Nacional do Registro Civil (ON-RCPN), gera certidões sintéticas a partir de modelos em branco e de registros fictícios, com os campos escritos por fontes manuscritas ou por geradores neurais de escrita. Entre esses geradores estão o de Graves \cite{graves2013}, uma rede recorrente que desenha o traço a partir do texto, e o VATr++ \cite{vatrpp2024}, um Transformer que imita o estilo de um escritor a partir de algumas amostras. Os dois foram treinados com escrita em inglês e, nas páginas geradas, não desenham os acentos do português.
+
+\subsubsection{Quantização}
+A quantização reduz a precisão dos pesos para diminuir a memória e acelerar a inferência. No FP8 dinâmico, os pesos são guardados em ponto flutuante de 8 bits, com uma escala por canal, e as ativações são quantizadas a cada passo, com escala calculada na hora. No W4A16, só os pesos vão para inteiros de 4 bits, com uma escala por grupo, e as contas são feitas em 16 bits. As duas receitas do \texttt{llm-compressor} \cite{llmcompressor} usadas aqui não precisam de dados de calibração, e o vLLM \cite{vllm2023} tem \emph{kernels} para ambas.
+
+% --------------------------------------------------------------
+\subsection{Explicabilidade em Modelos de IA}
+
+Para o operador, interessa saber quais palavras o modelo leu com baixa confiança e de que região da imagem cada uma foi lida. A confiança por palavra está implementada no \texttt{guard.py}, com as log-probabilidades devolvidas pelo vLLM: a confiança de uma palavra é a menor probabilidade entre os seus \emph{tokens}, e as palavras abaixo do limiar vão para revisão. A região vem da própria saída de página do Chandra, em que cada bloco traz a caixa de onde foi lido, e é isso que permite comparar cada campo do gabarito só com o texto lido naquela região (Seção~\ref{subsec:aval}). Mapas de atenção ou Grad-CAM \cite{gradcam2017} sobre o encoder de visão não foram implementados.
+
+% --------------------------------------------------------------
+\subsection{Segurança e Privacidade em Sistemas de IA}
+
+\subsubsection{Extração de Dados e Memorização}
+Modelos de linguagem memorizam trechos do treino, sobretudo sequências raras ou repetidas, e um adversário com acesso de consulta pode extrair parte delas \cite{carlini2021extracting}. Em OCR, a memorização prejudica primeiro a própria leitura, porque um modelo que decorou nomes do treino tende a vê-los em imagens parecidas, que é o erro que o projeto quer corrigir. Com imagens em branco, ruidosas ou com o início de um nome, um adversário também pode levar o modelo a completar nomes vistos no treino, e, comparando a confiança do modelo em imagens com e sem um nome, é possível estimar se esse nome estava no treino (inferência de pertencimento \cite{shokri2017membership}).
+
+O risco cresce com poucos dados reais, muitas épocas, nomes únicos e LoRA de posto alto. Nesta PoC, os nomes sintéticos são combinados ao acaso, então nenhuma linha ou certidão corresponde a uma pessoa real, e o BRESSAY cita sobretudo autores conhecidos (Bauman, Byung-Chul Han, Machado de Assis). O caso de maior risco seria o treino com certidões reais. Para acompanhar a memorização, o erro em nomes vistos no treino é comparado com o erro em nomes inéditos.
+
+\subsubsection{Conformidade com a LGPD}
+Por envolver documentos de identificação civil, um OCR ajustado para cartórios está sujeito à LGPD \cite{lgpd2018}. O modelo deve aprender o traço da caligrafia e a estrutura dos nomes e dos documentos sem guardar vínculo com pessoas reais. Seguindo o princípio da minimização, o treino desta PoC não usa nenhuma certidão real e, das fontes com nomes completos (TSE e Receita Federal), só ficam contagens por palavra.
+
+% --------------------------------------------------------------
+\subsection{Gaps e Oportunidades}
+
+O BRESSAY, principal corpus de manuscrito em português brasileiro com transcrição, quase não tem nomes próprios raros, e não há conjunto público de certidões reais transcritas, já que elas trazem dados pessoais. O OCRSD reproduz o formato das certidões, e seus registros usam um repertório de 68 prenomes e 35 sobrenomes comuns, adequado para treinar caligrafia e layout. A oportunidade explorada aqui é combinar os modelos de documento do OCRSD com nomes sorteados de estatísticas da população, para treinar e testar a leitura de nomes raros em páginas inteiras.
+
+% ==============================================================
+% SEÇÃO 3 — OBJETIVOS E MÉTRICAS DE SUCESSO (*)
+% ==============================================================
+\section{Objetivos e Métricas de Sucesso}
+\label{sec:objetivos}
+
+O critério central de sucesso é que o modelo ajustado leia melhor os campos manuscritos e os nomes ausentes do treino sem passar a cortar ou repetir a página e sem sinal de memorização.
+
+% --------------------------------------------------------------
+\subsection{Objetivos do Estudo}
+
+\begin{itemize}
+    \item Gerador de linhas manuscritas sintéticas com nomes do IBGE, do TSE e da Receita Federal, degradadas com o Augraphy (concluído, Seção~\ref{subsec:dados-linhas}).
+    \item Ajuste com LoRA do Chandra OCR 2 em linhas, com versão FP8 (concluído, Experimento 3).
+    \item Gerador de certidões sintéticas em página inteira e ajuste do modelo em duas etapas (concluído, Seção~\ref{subsec:dados-paginas} e Experimento 4).
+    \item Versões FP8 e INT4 do modelo ajustado em páginas, com medida de acurácia, memória e velocidade (concluído, Experimento 5).
+    \item Memória de correções com FAISS (fora do escopo).
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Métricas de Sucesso}
+
+\begin{enumerate}
+    \item CER segmentado em linhas, medido separadamente no texto geral, nos nomes comuns e nos raros (por prenome, sobrenome e município), para verificar se o ganho nos nomes não ocorre à custa do restante do texto.
+    \item \emph{Hit rate} da memória de correções, não aplicável, pois o módulo RAG ficou fora do escopo.
+    \item Acerto em nomes inéditos, a porcentagem de nomes transcritos sem nenhum erro, contando só os nomes ausentes do treino. Para o cartório, um nome com um caractere errado já exige correção, por isso o acerto exato informa mais que o CER, e, comparado ao acerto nos nomes vistos, ele também indica memorização.
+    \item Acerto exato por campo manuscrito em página inteira, no total e por classe de campo (nome, data, número, opção fixa, lugar e texto livre), com o campo procurado na região da página onde está escrito.
+    \item Completude da página e taxas de truncamento e de laço, para verificar se o modelo continua transcrevendo a página inteira.
+\end{enumerate}
+
+% ==============================================================
+% SEÇÃO 4 — ESCOPO DA SOLUÇÃO E REQUISITOS (*)
+% ==============================================================
+\section{Escopo da Solução e Requisitos}
+\label{sec:escopo}
+
+A solução é um pipeline em Python que gera os dados, treina e quantiza o modelo e transcreve linhas ou páginas manuscritas, com a inferência servida pelo vLLM.
+
+% --------------------------------------------------------------
+\subsection{Escopo da Solução}
+
+O escopo do projeto inclui:
+\begin{itemize}
+    \item a coleta dos dados públicos de nomes, o gerador de linhas sintéticas e o pré-processamento do BRESSAY;
+    \item o gerador local de certidões e a extração das páginas do OCRSD, com gabaritos no formato de saída do Chandra;
+    \item o ajuste do Chandra OCR 2 em linhas e em páginas, a fusão do adaptador e as versões FP8 e INT4;
+    \item a inferência com vLLM e a avaliação comparativa entre o modelo original e os ajustados, em linhas e em páginas.
+\end{itemize}
+
+Estão fora do escopo:
+\begin{itemize}
+    \item interfaces gráficas completas para o usuário final e a integração com um sistema real de cartório;
+    \item certidões reais, que exigiriam autorização do controlador dos dados;
+    \item textos em outros idiomas ou inteiramente tipográficos;
+    \item a memória de correções com FAISS.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Requisitos Funcionais}
+
+\begin{enumerate}
+    \item O sistema recebe a imagem de uma página de certidão e devolve a transcrição no formato HTML do Chandra, com a posição de cada bloco.
+    \item O sistema recebe o recorte de uma linha manuscrita e devolve a transcrição.
+    \item O treino permite configurar o LoRA, os pesos da perda e o currículo por arquivo e executar rodadas curtas para medir velocidade e memória.
+    \item Uma API deve permitir o envio das correções do usuário, e a inferência deve poder consultar a memória de correções.
+\end{enumerate}
+O requisito 4 depende da memória de correções e não foi atendido.
+
+% --------------------------------------------------------------
+\subsection{Requisitos Não-Funcionais}
+
+\begin{itemize}
+    \item O treino e a inferência devem caber em uma única GPU. O treino em linhas ocupou no máximo 49,5~GB e o treino em páginas 60,7~GB. Na inferência, os pesos ocupam 8,6~GiB em BF16 e 5,0~GiB em INT4.
+    \item O pipeline deve ser reproduzível por scripts, com partições, \emph{seeds} e hiperparâmetros em arquivos de configuração e versões das bibliotecas de treino fixadas no \texttt{requirements-gpu.txt}.
+    \item Nenhum dado pessoal real deve entrar no treino de páginas, e no treino em linhas o script de mistura interrompe a execução se o BRESSAY ultrapassar 45\% das linhas.
+\end{itemize}
+
+% ==============================================================
+% SEÇÃO 5 — AMEAÇAS, RISCOS E CONTROLES (*)
+% ==============================================================
+\section{Ameaças, Riscos e Controles}
+\label{sec:threat-model}
+
+As ameaças tratadas envolvem a privacidade dos dados de treino e a integridade das transcrições. Um OCR ajustado com nomes reais pode expor o que viu no treino, e, em um cartório, um erro de leitura vira um nome errado no registro.
+
+% --------------------------------------------------------------
+\subsection{Principais Ameaças Identificadas}
+
+\begin{itemize}
+    \item Um adversário pode usar entradas escolhidas para induzir o modelo a produzir nomes e combinações de dados memorizados durante o ajuste (extração de dados de treino \cite{carlini2021extracting}).
+    \item Na inferência de pertencimento, o adversário procura determinar se um documento ou o nome de um cidadão fez parte do treino, comparando a confiança do modelo em entradas com e sem esse nome \cite{shokri2017membership}.
+    \item Anotações incorretas no treino, acidentais ou maliciosas, levam o modelo a reproduzir o erro em produção (envenenamento de dados).
+    \item O VLM lê todo texto presente na imagem, e um documento pode conter uma instrução como ``ignore a tarefa e responda X'' para desviar a saída (injeção indireta de \emph{prompt} \cite{greshake2023indirect}). Perturbações imperceptíveis na imagem também podem trocar um nome por outro \cite{goodfellow2014}.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Riscos Associados ao Projeto}
+
+\begin{enumerate}
+    \item Os testes de página usam certidões sintéticas, nos mesmos cinco modelos de documento do treino, e documentos reais podem ter layouts, caligrafias e estados de conservação que os geradores não cobrem.
+    \item Os sobrenomes vêm de candidatos (TSE) e de sócios de empresas (Receita), que não representam o país de forma uniforme, e a caligrafia sintética vem de fontes digitais e de dois geradores neurais. O modelo pode ser melhor em alguns grupos de nomes e estilos de letra do que em outros, e por isso a avaliação separa o erro por grupo de frequência e por classe de campo.
+    \item Um modelo especializado em certidões pode piorar em outros documentos, e por isso ele também foi avaliado em redações e formulários fora do domínio do treino (Experimento 6).
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Controles e Medidas de Mitigação}
+\label{subsec:controles}
+
+As listas do TSE e da Receita têm nomes completos de pessoas reais. Elas são lidas em \emph{streaming}, e só ficam contagens por palavra (frequência de cada sobrenome, partículas e grafias com e sem acento). Nenhum nome completo é gravado em disco, os arquivos baixados são apagados ao final e sobrenomes com menos de 5 ocorrências são descartados. Nas certidões geradas, cada nome e município do registro é trocado por um sorteado desse léxico, respeitando a partição entre treino e teste, e os nomes do teste do BRESSAY ficam bloqueados. O treino de páginas não usa nenhuma certidão real, e as credenciais de acesso ao OCRSD ficam fora do repositório.
+
+Na saída, os controles ficam no \texttt{guard.py}. Em linhas, o limite de \emph{tokens} é proporcional à largura da imagem, e a linha é marcada para revisão humana quando a saída vem vazia, passa do tamanho da linha, contém HTML (no \emph{prompt} curto), caracteres que não ocorrem em manuscrito em português, trechos repetidos, frases típicas de quem obedeceu a um comando (``aqui está a transcrição'', ``não posso'') ou alguma palavra com confiança abaixo de 0,5. Com o modelo ajustado e o \emph{prompt} curto, as linhas aceitas sem revisão têm CER de 1,0\% no BRESSAY, contra 7,6\% nas marcadas (Seção~\ref{subsec:guard-modelo}). Em páginas, a saída é limitada a 6.144 \emph{tokens}, e a avaliação mede a fração de páginas truncadas ou em laço.
+
+Antes de substituir uma versão do modelo, a nova é comparada com a anterior nas mesmas páginas, com intervalo de confiança pareado, como foi feito entre o lora\_v1 e o lora\_v2. A memorização é acompanhada pela diferença de acerto entre nomes vistos e inéditos, em linhas (Tabela~\ref{tab:memorizacao}) e em páginas (Tabela~\ref{tab:memo-paginas}).
+
+% ==============================================================
+% SEÇÃO 6 — METODOLOGIA DE DESENVOLVIMENTO DA PoC (*)
+% ==============================================================
+\section{Metodologia de Desenvolvimento da PoC}
+\label{sec:metodologia}
+
+O trabalho foi feito em duas etapas. Na primeira, o Chandra foi ajustado com linhas manuscritas, e o adaptador resultante é chamado aqui de lora\_v0. Como esse ajuste não melhorou a leitura de certidões inteiras (Seção~\ref{subsec:linhas-paginas}), a segunda etapa treinou o modelo com páginas inteiras, e dela saíram os adaptadores lora\_v1 e lora\_v2.
+
+% --------------------------------------------------------------
+\subsection{Fases de Implementação}
+\begin{enumerate}
+    \item Dados de linhas: coleta e agregação dos nomes, seleção do vocabulário, gerador de caligrafia sintética, preparação do BRESSAY e montagem dos conjuntos.
+    \item Ajuste em linhas: LoRA sobre o Chandra OCR 2 em BF16 com \texttt{transformers} e \texttt{peft}, fusão do adaptador e quantização em FP8 (lora\_v0).
+    \item Dados de páginas: extração de 1.000 páginas do OCRSD, gerador local de certidões e gabaritos no formato HTML do Chandra.
+    \item Ajuste em páginas: lora\_v1, a partir do Chandra, e lora\_v2, continuando o lora\_v1 com mais páginas e peso maior nos nomes.
+    \item Fusão e quantização do lora\_v2 em FP8 e INT4.
+    \item Avaliação em linhas, em certidões e em documentos fora das certidões.
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Arquitetura Proposta}
+\label{subsec:arquitetura}
+
+Na arquitetura final (Figura~\ref{fig:arquitetura}), a parte de dados é executada em CPU e gera os conjuntos de linhas e de páginas, e a parte de modelo é executada em GPU. O léxico de nomes e a sua partição entre treino e teste alimentam os dois geradores.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    font=\scriptsize,
+    box/.style={draw, rounded corners=2pt, align=center, minimum height=0.95cm, text width=2.55cm, fill=white},
+    arr/.style={-{Stealth[length=2mm]}},
+    lane/.style={draw=gray!50, rounded corners=4pt, inner sep=6pt}]
+  % dados
+  \node[box] (fontes) {IBGE, TSE,\\Receita Federal};
+  \node[box, right=0.55cm of fontes] (lexico) {Léxico agregado\\(contagens)};
+  \node[box, right=0.55cm of lexico] (vocab) {Vocabulário e partição\\de nomes};
+  \node[box, right=0.55cm of vocab] (linhas) {Linhas sintéticas\\(fontes + Augraphy)};
+  \node[box, below=0.5cm of fontes] (bressay) {BRESSAY\\(Zenodo)};
+  \node[box, right=0.55cm of bressay] (limpeza) {Limpeza e\\marcação de nomes};
+  \node[box, below=0.5cm of linhas] (conj) {Conjuntos de treino\\e teste};
+  \node[box, below=0.5cm of bressay] (ocrsd) {OCRSD\\(1.000 páginas)};
+  \node[box, right=0.55cm of ocrsd] (modelos) {Modelos em branco e\\mapas de campos};
+  \node[box, right=0.55cm of modelos] (gerpag) {Gerador de certidões\\(mãos, níveis)};
+  \node[box, right=0.55cm of gerpag] (alvos) {Gabaritos no HTML\\do Chandra};
+  \draw[arr] (fontes) -- (lexico);
+  \draw[arr] (lexico) -- (vocab);
+  \draw[arr] (vocab) -- (linhas);
+  \draw[arr] (linhas) -- (conj);
+  \draw[arr] (bressay) -- (limpeza);
+  \draw[arr] (limpeza) -- (conj);
+  \draw[arr] (ocrsd) -- (modelos);
+  \draw[arr] (modelos) -- (gerpag);
+  \draw[arr] (vocab) -- (gerpag);
+  \draw[arr] (gerpag) -- (alvos);
+  \draw[arr] (alvos) -- (conj);
+  \begin{scope}[on background layer]
+    \node[lane, fit=(fontes)(linhas)(ocrsd)(alvos), label={[font=\scriptsize\bfseries]above left:Dados (CPU)}] {};
+  \end{scope}
+  % modelo
+  \node[box, below=1.45cm of ocrsd] (chandra) {Chandra OCR 2\\(BF16)};
+  \node[box, right=0.55cm of chandra] (lora) {LoRA: linhas (v0),\\páginas (v1, v2)};
+  \node[box, right=0.55cm of lora] (quant) {Fusão + FP8 / INT4\\(llm-compressor)};
+  \node[box, right=0.55cm of quant] (vllm) {vLLM + controles\\de saída};
+  \node[box, below=0.5cm of vllm] (aval) {Avaliação: CER em linhas,\\campos em páginas};
+  \draw[arr] (chandra) -- (lora);
+  \draw[arr] (lora) -- (quant);
+  \draw[arr] (quant) -- (vllm);
+  \draw[arr] (vllm) -- (aval);
+  \coordinate (bus) at ($(alvos.south)+(0,-0.55)$);
+  \draw[arr] (conj.east) -- ++(0.4,0) |- (bus) -| (lora.north);
+  \draw[arr] (bus) -- (vllm.north);
+  \node[below=0.3cm of chandra, inner sep=0pt, minimum size=0pt] (bot) {};
+  \draw[arr] (chandra.south) -- (bot.center) -| ($(aval.west)+(-0.3,0)$) -- (aval.west);
+  \begin{scope}[on background layer]
+    \node[lane, fit=(chandra)(vllm)(aval)(bot), label={[font=\scriptsize\bfseries]below left:Modelo (GPU)}] {};
+  \end{scope}
+\end{tikzpicture}
+\caption{Arquitetura da PoC. A linha do Chandra original até a avaliação representa o modelo de referência, executado nos mesmos testes.}
+\label{fig:arquitetura}
+\end{figure}
+
+% --------------------------------------------------------------
+\subsection{Fluxo de Funcionamento}
+
+Cada etapa grava sua saída em disco e pode ser repetida sem refazer as anteriores. A parte de linhas é executada pelo \texttt{scripts/run.sh}, nas etapas \texttt{lexicon}, \texttt{fonts}, \texttt{bressay}, \texttt{generate}, \texttt{mix}, \texttt{baseline}, \texttt{treino}, \texttt{quantizar} e \texttt{avaliacao}. A parte de páginas segue os módulos abaixo, com a configuração de cada etapa de treino em \texttt{configs/paginas.yaml} (lora\_v1) e \texttt{configs/paginas\_v2.yaml} (lora\_v2).
+
+\begin{enumerate}
+    \item \texttt{scripts/ocrsd/gen.py} e \texttt{extract.py}: pedem os lotes ao OCRSD, extraem as páginas e os campos e marcam os campos cuja tinta perdeu os acentos.
+    \item \texttt{ocr06.forms.build}: gera as certidões locais a partir dos modelos em branco do OCRSD, com nomes do léxico, uma mão por página e um nível de dificuldade.
+    \item \texttt{ocr06.forms.targets}: monta os gabaritos no HTML do Chandra, com o peso de cada trecho na perda.
+    \item \texttt{ocr06.model.train}: treina o LoRA com a perda ponderada e o currículo.
+    \item \texttt{ocr06.model.merge}: funde o adaptador e gera as versões FP8 e INT4.
+    \item \texttt{ocr06.model.pages\_infer} e \texttt{ocr06.pages\_eval}: transcrevem as páginas de teste com o vLLM e pontuam os campos.
+\end{enumerate}
+
+% --------------------------------------------------------------
+\subsection{Componentes e Tecnologias Selecionados}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{3.4cm}p{5.2cm}p{6.0cm}@{}}
+\toprule
+Componente & Escolha & Motivo \\
+\midrule
+Modelo base & Chandra OCR 2 (BF16) \cite{chandra2026} & Especializado em OCR de página e manuscrito; com cerca de 5 bilhões de parâmetros, cabe em uma GPU sem quantização. \\
+GPU & RTX PRO 6000 (96~GB), no Google Colab & Memória para o treino em BF16 com páginas de até 2.048~px. \\
+Ajuste & LoRA com \texttt{transformers} + \texttt{peft} \cite{peft2022} & Suporte ao Qwen3.5 e controle da perda por \emph{token}. \\
+Inferência & vLLM \cite{vllm2023} & Inferência em lote, com suporte ao Chandra e às versões FP8 e INT4. \\
+Quantização & FP8 dinâmico e W4A16 com \texttt{llm-compressor} \cite{llmcompressor} & Não precisam de dados de calibração; o FP8 usa a mesma receita do FP8 público do Chandra \cite{chandrafp8}. \\
+Linhas sintéticas & Pillow + OpenCV + Augraphy \cite{augraphy2022} & Renderização com fontes manuscritas e degradação de documento escaneado. \\
+Certidões sintéticas & OCRSD \cite{ocrsd} e gerador local & Modelos de documento reais de Registro Civil, com nomes do léxico no gerador local. \\
+Escrita neural & VATr++ \cite{vatrpp2024} e Graves \cite{graves2013} & Variação natural da letra dentro e entre escritores. \\
+Avaliação de páginas & Python puro (\texttt{pages\_eval.py}) & Campo procurado pela posição, intervalos de confiança pareados e McNemar. \\
+Controles de saída & Python puro (\texttt{guard.py}) & Confiança por palavra e sinais de revisão, testáveis em CPU sem o modelo. \\
+\bottomrule
+\end{tabular}
+\caption{Componentes selecionados.}
+\end{table}
+
+% --------------------------------------------------------------
+\subsection{Definição e Preparação dos Dados}
+\label{subsec:dados}
+
+\subsubsection{Fontes de nomes}
+A lista completa de prenomes do Censo 2010 (100.787 nomes) veio do espelho do Brasil.IO \cite{brasilio_nomes}, conferido contra o ranking da API oficial do IBGE \cite{ibge_nomes}, e dela foram descartadas 276 grafias que parecem erro de digitação do censo, como ``MMARIA''. Os sobrenomes foram contados em 823.956 candidatos do TSE \cite{tse_eleitorado} e 3.244.525 sócios pessoa física da Receita \cite{rfb_socios}, sem guardar os nomes completos, e ficaram 60.627 com pelo menos 5 ocorrências. Das mesmas fontes saem a distribuição do número de sobrenomes (61\% das pessoas têm dois), a frequência de prenome composto (37\%), as partículas de cada sobrenome (``da Silva'', ``dos Santos'') e as grafias com e sem acento. Os 5.570 municípios vêm da API do IBGE, com a população do Censo 2022.
+
+\subsubsection{Seleção do vocabulário e partição}
+Os nomes entram no vocabulário por ordem de frequência na população, até a maior lista em que cada nome aparece, em valor esperado, pelo menos duas vezes no número de imagens configurado. Dentro do vocabulário, o sorteio usa uma temperatura,
+\[
+q_i = \frac{p_i^{\alpha}}{\sum_j p_j^{\alpha}}, \qquad \alpha = 0{,}5,
+\]
+para que os nomes mais comuns não dominem o treino. Os nomes que somam os primeiros 80\% da população são classificados como comuns e aparecem em treino, validação e teste; entre os demais (raros), 10\% são reservados ao teste e 5\% à validação. A mesma partição vale para as linhas e para as certidões geradas.
+
+\subsubsection{Linhas}
+\label{subsec:dados-linhas}
+Cada linha sintética segue um de oito modelos de texto típicos de registro (``Nome: ...'', ``filho de ... e de ...'', ``natural de Cidade - UF''). As palavras são renderizadas inteiras, para preservar as ligações das fontes cursivas, com 85 fontes manuscritas do Google Fonts que têm os acentos do português, das quais 17 ficam reservadas ao teste. Por linha, sorteia-se um estilo de escrita (inclinação, largura, espessura e pressão do traço, linha de base que sobe, desce ou faz curva), e campos aleatórios suaves, com cerca de um ponto de controle por letra, mudam a altura, a largura e a posição de cada letra, de modo que a mesma letra não sai igual duas vezes. Depois entram um de três níveis de degradação do Augraphy (manchas, textura de papel, iluminação, ruído de fotocópia e JPEG) e um controle de contraste, que regenera a imagem quando a tinta fica apagada demais. Para reproduzir o borramento das linhas do BRESSAY, que têm cerca de 20~px de altura, 35\% das linhas sintéticas são reduzidas para 16 a 30~px antes da normalização para 64~px (Figura~\ref{fig:exemplos-v2}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figs/exemplos_sinteticos_v2.png}
+\caption{Linhas sintéticas como o modelo as recebe (64~px de altura), com o rótulo, a fonte e a altura gerada acima de cada uma.}
+\label{fig:exemplos-v2}
+\end{figure}
+
+O BRESSAY tem 1.000 redações, cada uma de um autor, com 30.090 linhas transcritas e partição oficial por autor \cite{bressay2023}. Linhas com trecho ilegível ou riscado são descartadas, porque o rótulo não diz o que está escrito, restando 26.135. O conjunto de treino ficou com 40.000 linhas sintéticas e 16.915 do BRESSAY (29,7\% de dados reais), e o de validação com 6.074. O teste sintético tem 4.000 linhas e 13.672 nomes, dos quais 8.508 não aparecem em nenhuma linha do treino; o do BRESSAY tem 5.146 linhas de autores fora do treino. As conversas de treino usam dois \emph{prompts}, metade com o curto (``Transcreva exatamente o texto manuscrito desta imagem [...] Não corrija nomes.'') e metade com o nativo do Chandra, que pede o HTML da página, para que o ajuste também valesse no formato em que o modelo é usado.
+
+\subsubsection{Páginas}
+\label{subsec:dados-paginas}
+As certidões vêm de duas fontes, nos cinco documentos de Registro Civil do OCRSD que puderam ser gerados com todos os campos preenchidos: certidão de casamento (modelo antigo e modelo CNJ), certidão de nascimento (CNJ), certidão de óbito e Declaração de Nascido Vivo (DNV).
+
+Do OCRSD foram extraídas 1.000 páginas (240 de casamento antigo, 230 de casamento CNJ, 200 de nascimento, 200 de óbito e 130 DNV), com os campos escritos por fontes ou por escritores neurais. Como os escritores neurais não desenham acentos, cada campo guarda o valor pedido e o valor desenhado, e os campos que perderam os acentos ficam fora da perda e da avaliação. Os registros do OCRSD usam poucos nomes, todos comuns, então essas páginas ensinam caligrafia e layout, e os nomes raros vêm do gerador local.
+
+O gerador local usa os modelos em branco e os mapas de campos do OCRSD. Para cada página, um registro do OCRSD é sorteado e cada prenome, sobrenome e município dele é trocado, na página inteira, por um sorteado do léxico, respeitando a partição. A página tem uma mão e uma caneta: o VATr++ em cerca de metade das páginas de treino, fontes manuscritas em 29\% (29 fontes no treino e 2 reservadas ao teste) e o Graves em 20\%. Os geradores neurais só escrevem textos sem acento, e nas páginas escritas por eles os campos com acento ficam em branco, de modo que imagem e gabarito continuam iguais. Cada página recebe um de quatro níveis de dificuldade, com letras deformadas e fundidas, falhas e borrões de tinta, papel com sombra, ruído e compressão JPEG, e é gravada com lado maior de 2.048~px (Figura~\ref{fig:gerador}).
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.31\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figs/gerador_pagina.jpg}
+\caption{Página inteira.}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.66\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figs/gerador_zoom_1.jpg}
+\caption{Ampliação, da matrícula aos genitores.}
+\end{subfigure}
+\caption{Certidão de óbito do teste difícil, escrita pelo VATr++ no nível 2. Os nomes e o município são do léxico. Os campos vazios, como cônjuge e idade, também estão vazios no registro do OCRSD, que é de um natimorto.}
+\label{fig:gerador}
+\end{figure}
+
+O gabarito de cada página é o HTML que o Chandra produziria. O texto impresso de cada modelo de documento foi tirado da saída do próprio Chandra sobre o modelo em branco, e os valores manuscritos entram nos blocos sobre os campos. Cada trecho do gabarito tem um peso na perda: 0,3 para o texto impresso, 1 para os valores manuscritos e 0 para os campos que perderam acentos; no lora\_v2, os nomes têm peso 2. Assim o modelo continua sendo treinado a transcrever a página inteira, com mais peso nos campos manuscritos.
+
+A Tabela~\ref{tab:conjuntos-paginas} resume os conjuntos. O teste difícil foi montado para medir nomes inéditos: 70\% das palavras de nome são da parte reservada ao teste, as páginas usam as duas fontes reservadas e estilos de escritor neural que não aparecem no treino, e só 17 dos seus 440 campos de nome têm todas as palavras presentes em alguma página de treino. O teste normal usa nomes sorteados pela frequência real, como num cartório. Os dois testes não têm nenhuma página em comum com o treino, conferido pelo identificador e pela imagem.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrp{7.2cm}@{}}
+\toprule
+Conjunto & Locais & OCRSD & Uso \\
+\midrule
+Treino do lora\_v1 & 941 & 859 & Ajuste a partir do Chandra original \\
+Treino do lora\_v2 & 1.559 & 141 & Continuação do lora\_v1, com nomes de peso 2 \\
+Teste difícil & 100 & -- & 2.648 campos, 440 de nome; nomes, fontes e escritores reservados \\
+Teste normal & 100 & -- & 2.668 campos, 488 de nome; nomes pela frequência real \\
+Teste do OCRSD & -- & 94 & 1.460 campos, 399 de nome; escritores reservados (só lora\_v1) \\
+\bottomrule
+\end{tabular}
+\caption{Conjuntos de páginas. As 141 páginas do OCRSD do treino do lora\_v2 incluem as 94 do teste do OCRSD, que foram usadas para avaliar o lora\_v1 antes de entrarem no treino.}
+\label{tab:conjuntos-paginas}
+\end{table}
+
+% --------------------------------------------------------------
+\subsection{Ajuste Fino}
+\label{subsec:ajuste}
+
+Nas duas etapas, o LoRA tem posto 16, $\alpha_{\text{LoRA}} = 32$ e \emph{dropout} de 0,05 em todas as camadas lineares do modelo de linguagem, incluindo as de atenção linear, com o encoder de visão congelado (32,5 milhões de parâmetros treináveis, 0,71\% do modelo). Os parâmetros foram fixados antes de qualquer teste e não foram ajustados depois.
+
+Em linhas, o lora\_v0 foi treinado por uma época, 3.558 passos com lotes de 16 linhas, com taxa de aprendizado de $10^{-4}$, \emph{warmup} de 3\% e decaimento cosseno, em 3,1~horas. O \emph{checkpoint} foi escolhido pela perda de validação do BRESSAY, separada da do sintético, para que um modelo que decorasse as fontes sintéticas não escondesse uma piora na caligrafia real.
+
+Em páginas, cada exemplo é uma página inteira com lado maior de 2.048~px, cerca de 5,9 mil \emph{tokens} numa página do OCRSD (2,9 mil da imagem, 0,6 mil do \emph{prompt} e 2,3 mil do gabarito). O treino usa lotes efetivos de 16 páginas, taxa de aprendizado constante de $10^{-4}$ depois de 3\% de \emph{warmup} e uma época, com as páginas ordenadas do nível 1 ao 4 (currículo). A perda é a entropia cruzada ponderada pelos pesos do gabarito,
+\[
+\mathcal{L} = \frac{\sum_t w_t\, \ell_t}{\sum_t w_t}, \qquad
+w_t^{\text{nome}} = 2\,\bigl(1 + \beta\,(1 - p_t)\bigr),
+\]
+em que $\ell_t$ é a entropia cruzada do \emph{token} $t$ e, no lora\_v2, os \emph{tokens} de nome recebem um peso que cresce com a probabilidade $1 - p_t$ que o modelo deixou de dar ao \emph{token} certo, com $\beta = 2$ (o fator não recebe gradiente). Um nome lido com confiança pesa 2, e um nome errado pesa até 6. O lora\_v1 partiu do Chandra original e treinou 113 passos em 66~min, e o lora\_v2 continuou o lora\_v1 por 107 passos em 65~min, com pico de 60,7~GB na GPU. A validação usa 40 páginas fixas do próprio treino e serviu só para escolher o \emph{checkpoint}, não como medida de generalização.
+
+Depois do treino, o adaptador é fundido ao modelo em BF16, e o modelo fundido é quantizado em FP8 dinâmico e em W4A16 (INT4). A quantização vale para as camadas lineares de atenção completa e para as MLPs do modelo de linguagem; o encoder de visão, as camadas de atenção linear, os \emph{embeddings} e a camada de saída continuam em BF16. A mesma receita FP8 foi aplicada ao Chandra original, para comparação.
+
+% --------------------------------------------------------------
+\subsection{Estratégia de Avaliação}
+\label{subsec:aval}
+
+A avaliação em linhas usa o teste sintético, com nomes e fontes reservados, e o do BRESSAY, com autores fora do treino. O CER e o WER são calculados pela distância de Levenshtein somada sobre o conjunto, e, para os nomes, a predição é alinhada ao gabarito por palavra, de modo que o erro pode ser separado por tipo de nome, por grupo de frequência e entre nomes vistos e inéditos. No \emph{prompt} nativo, o HTML é removido antes da medição.
+
+Nas certidões, todos os modelos leem as mesmas páginas com o \emph{prompt} nativo, a mesma resolução, decodificação gulosa e no máximo 6.144 \emph{tokens} de saída. Cada campo manuscrito do gabarito tem uma caixa, e a leitura do modelo é o trecho mais parecido com o valor correto dentro dos blocos da saída cuja caixa encosta na do campo; o campo está certo quando esse trecho é idêntico ao valor (acerto exato local). Campos numéricos são comparados só por letras e dígitos, campos de até 3 caracteres são contados à parte e campos que perderam acentos ficam de fora. Por página, mede-se a completude (fração dos campos encontrados com CER de até 20\% em qualquer ponto da saída), o truncamento e o laço (trecho repetido três vezes ou mais, ou saída 50\% maior que a dos outros modelos). As diferenças entre modelos são calculadas nas mesmas páginas, com intervalo de confiança de 95\% por \emph{bootstrap} pareado sobre as páginas (1.000 reamostragens) e teste de McNemar campo a campo. As métricas, os testes e as regras de decisão foram fixados antes da primeira execução dos modelos ajustados.
+
+Para medir o efeito fora das certidões, foram usadas as 199 páginas de teste do BRESSAY, com o CER do texto da página, e os 50 formulários reais de validação do XFUND-PT \cite{xfund2022}, cujos campos preenchidos foram apagados e reescritos com as fontes reservadas ao teste, com o campo procurado em qualquer ponto da saída.
+
+% --------------------------------------------------------------
+\subsection{Critérios de Aceitação da PoC}
+
+\begin{enumerate}
+    \item Partições sem vazamento, sem nome reservado ao teste no treino, sem autor do BRESSAY em mais de um conjunto e sem página de teste no treino. Atendido (Experimento 1 e Seção~\ref{subsec:dados-paginas}).
+    \item Treino completo em uma única GPU. Atendido, com pico de 49,5~GB em linhas e 60,7~GB em páginas.
+    \item Acerto em nomes maior que o do modelo original, sem aumento de truncamento ou laço. Atendido em linhas (nomes inéditos de 70,9\% para 79,7\%) e nas certidões, com intervalo de confiança acima de zero (nomes de 24,3\% para 32,5\% e de 40,4\% para 50,2\%, sem nenhuma página truncada ou em laço).
+    \item Sem piora fora do domínio do treino. Atendido pelo lora\_v0, que reduziu o CER das páginas do BRESSAY de 26,5\% para 17,3\%, e não atendido pelo lora\_v2, que o elevou para 48,6\% (Experimento 6).
+    \item Erro em nomes inéditos próximo do erro em nomes vistos e nenhum nome do treino extraído. A primeira parte foi atendida em linhas e em páginas; os testes de extração não foram executados.
+    \item Versão quantizada com perda de até 1 ponto em nomes exatos e sem aumento de truncamento ou laço. O FP8 atende no teste normal ($-0{,}6$ ponto) e fica 1,8 ponto abaixo no difícil; o INT4 atende no normal ($-0{,}8$) e perde 3,6 pontos no difícil. Nenhuma versão quantizada teve página truncada ou em laço.
+\end{enumerate}
+
+% ==============================================================
+% SEÇÃO 7 — AVALIAÇÃO EXPERIMENTAL (*)
+% ==============================================================
+\section{Avaliação Experimental}
+\label{sec:avaliacao}
+
+Os Experimentos 1 e 2 validam, sem o modelo, o pipeline de dados, a avaliação e os controles de saída. O Experimento 3 compara o Chandra antes e depois do ajuste em linhas, e o Experimento 4, antes e depois do ajuste em páginas. O Experimento 5 mede o custo da quantização, e o Experimento 6 mede o modelo ajustado em documentos fora das certidões.
+
+% --------------------------------------------------------------
+\subsection{Experimento 1: Validação do Pipeline de Dados}
+
+O experimento verificou se o vocabulário e a amostragem seguem o planejado, se as partições vazam nomes do teste para o treino e quanto custa gerar as imagens. Com 40 mil imagens de treino entram cerca de 10 mil prenomes, 19 mil sobrenomes e 3,8 mil municípios, que cobrem de 94\% a 97\% da população. Cobrir 99\% dos prenomes exigiria muito mais que 100 mil imagens, porque com 100 mil o último prenome incluído ainda tem 217 pessoas. Com $\alpha = 1$ (distribuição real), os 10 prenomes mais comuns concentrariam 21,1\% dos sorteios e só 2.651 prenomes passariam do corte; com $\alpha = 0{,}5$, o top-10 cai para 2,3\% e o vocabulário chega a 10 mil. Em todos os casos, a fração de nomes comuns sorteada ficou a menos de 0,2 ponto percentual da planejada.
+
+
+Dos 2.909 nomes reservados ao teste, nenhum apareceu nas 20 mil linhas de treino verificadas. A geração do conjunto completo (40 mil imagens de treino, 2 mil de validação e 4 mil de teste) levou 12,5 minutos em 16 núcleos de CPU, a cerca de 60 imagens por segundo, e 0,3\% das imagens foram regeneradas pelo controle de contraste. No BRESSAY, a heurística de marcação encontrou nomes em 1.341 linhas de treino e 377 de teste, em geral autores citados nas redações, e só 38 dos nomes do teste são inéditos. Por isso o BRESSAY mede sobretudo a leitura de caligrafia real, e a evidência sobre nomes inéditos vem do teste sintético.
+
+% --------------------------------------------------------------
+\subsection{Experimento 2: Testes de Integração sem Modelo}
+\label{subsec:exp2}
+
+O Experimento 2 testou as etapas anteriores e posteriores ao modelo com predições construídas a partir do próprio gabarito, com erros inseridos de forma controlada, de modo que o valor esperado de cada métrica era conhecido. As linhas do BRESSAY têm altura mediana de 20~px, e o Chandra divide a imagem em blocos de 32~px, então 90\% delas ocupavam um único bloco de altura. Depois da normalização para 64~px, quase todas as linhas dos dois testes passaram a ocupar dois blocos.
+
+Para validar o \texttt{evaluate.py}, cada gabarito foi copiado com um tipo de erro conhecido (sem erro, dentro de HTML, um caractere trocado em cada nome ou só nos inéditos, um caractere removido ou inserido e o nome inteiro removido). Nos 14 casos, sete cenários em dois testes, o CER medido por grupo coincidiu com o esperado. O alinhamento dos nomes é feito por palavra, porque, com alinhamento por caractere, um nome omitido era associado a letras das palavras vizinhas e o cenário de nome removido dava CER de 97\% em vez de 100\%. Os 9.146 gabaritos de teste também passaram pelo \texttt{guard.py} como se fossem predições, e nenhum foi enviado à revisão sem motivo; entre 915 saídas defeituosas construídas a partir delas (vazias, em laço, com HTML, com frase de obediência a um comando, com caracteres estranhos e longas demais), só 78 das longas não foram marcadas.
+
+O avaliador de páginas e o modo de página do treino têm 21 testes automatizados, executados em CPU sem os pesos do Chandra. Entre eles, uma predição perfeita dá 100\% de acerto, um valor certo escrito fora da região do campo não conta, saídas truncadas e em laço são marcadas e a perda ponderada com pesos unitários coincide com a entropia cruzada média.
+
+% --------------------------------------------------------------
+\subsection{Experimento 3: Ajuste em Linhas}
+\label{subsec:exp3}
+
+O Experimento 3 comparou o Chandra antes e depois do ajuste em linhas (lora\_v0), nos dois testes, com os dois \emph{prompts}, em BF16 e em FP8. A perda de validação caiu em todas as avaliações, de 0,457 para 0,341 no BRESSAY e de 0,363 para 0,291 no sintético, e o melhor \emph{checkpoint} foi o último.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+Modelo & \emph{Prompt} & CER & WER & Linhas exatas & CER nomes & CER inéditos & Nomes exatos \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{BRESSAY (5.146 linhas, autores fora do treino)}} \\
+Original & nativo & 20,1 & 34,1 & 12,6 & 20,9 & 28,8 & 66,4 \\
+Original & curto & 19,8 & 33,9 & 12,3 & 18,6 & 28,3 & 68,1 \\
+Original FP8 & nativo & 20,2 & 34,4 & 12,6 & 20,4 & 30,1 & 68,1 \\
+Original FP8 & curto & 21,0 & 35,6 & 12,2 & 19,1 & 27,0 & 68,2 \\
+Ajustado & nativo & \textbf{4,9} & 11,6 & 33,5 & 10,9 & 21,7 & 79,0 \\
+Ajustado & curto & \textbf{4,9} & 11,5 & 33,5 & 11,0 & 21,2 & 78,4 \\
+Ajustado FP8 & nativo & 5,0 & 11,7 & 33,2 & 10,7 & 24,3 & 79,1 \\
+Ajustado FP8 & curto & 4,9 & 11,5 & 33,3 & 10,8 & 21,2 & 79,0 \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Sintético (4.000 linhas, 17 fontes e 8.508 nomes fora do treino)}} \\
+Original & nativo & 8,6 & 21,4 & 47,2 & 8,6 & 9,4 & 74,6 \\
+Original & curto & 6,2 & 18,8 & 49,0 & 8,0 & 8,9 & 75,8 \\
+Original FP8 & nativo & 9,5 & 21,9 & 47,2 & 9,0 & 9,4 & 74,6 \\
+Original FP8 & curto & 6,4 & 19,1 & 48,5 & 8,3 & 9,2 & 75,6 \\
+Ajustado & nativo & 3,4 & 10,7 & 65,5 & 4,7 & 5,5 & 83,6 \\
+Ajustado & curto & \textbf{3,3} & 10,6 & 65,7 & 4,7 & 5,5 & 83,7 \\
+Ajustado FP8 & nativo & 3,4 & 10,7 & 65,3 & 4,7 & 5,5 & 83,5 \\
+Ajustado FP8 & curto & 3,4 & 10,7 & 65,5 & 4,7 & 5,6 & 83,5 \\
+\bottomrule
+\end{tabular}
+\caption{Resultados em linhas, em \%. Linhas exatas é a fração de linhas transcritas sem nenhum erro, e CER inéditos é o CER apenas nos nomes ausentes do treino (8.508 no sintético e 38 no BRESSAY).}
+\label{tab:resultados}
+\end{table}
+
+O efeito mais forte apareceu no manuscrito real. No BRESSAY, o CER caiu para cerca de um quarto do original, de 20,1\% para 4,9\%, e as linhas transcritas sem nenhum erro passaram de uma em cada oito para uma em cada três (Tabela~\ref{tab:resultados}). Nas predições, a diferença vem de erros que o modelo original comete com frequência: ele completa palavras cortadas no fim da linha, troca palavras por outras mais prováveis, às vezes muda de idioma (``distúrbios psíquicos'' lido como ``distúrbien pequeños de los niños'') e, com o \emph{prompt} nativo, entrou em laço em 76 linhas, contra nenhuma do ajustado.
+
+Para a pergunta principal do projeto, o teste que conta é o sintético, em que as 17 fontes e os 8.508 nomes inéditos estão fora do treino. Ali o CER caiu de 8,6\% para 3,4\%, e a taxa de nomes inéditos lidos sem erro subiu de 70,9\% para 79,7\%. A diferença de erro entre nomes vistos e inéditos era de 2,3 pontos antes do treino e ficou em 2,1 depois (Tabela~\ref{tab:memorizacao}), quando um modelo que decorasse os nomes do treino a teria aumentado. Entre os erros que sobram ainda há nomes raros trocados pela forma comum, como ``Zamprogna'' lido como ``Zampogna''.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{CER (\%)} & \multicolumn{2}{c}{Nomes exatos (\%)} \\
+Modelo (\emph{prompt} nativo) & Vistos & Inéditos & Vistos & Inéditos \\
+\midrule
+Original & 7,1 & 9,4 & 80,6 & 70,9 \\
+Ajustado & 3,4 & 5,5 & 90,0 & 79,7 \\
+Ajustado FP8 & 3,4 & 5,5 & 89,8 & 79,6 \\
+\bottomrule
+\end{tabular}
+\caption{Nomes vistos no treino (5.164) e inéditos (8.508) no teste sintético de linhas.}
+\label{tab:memorizacao}
+\end{table}
+
+A versão FP8 do modelo ajustado ficou a no máximo 0,1 ponto de CER da BF16 e transcreveu de 16\% a 21\% mais linhas por segundo no vLLM (de 37,0 para 44,5 linhas por segundo no BRESSAY com o \emph{prompt} nativo, e de 178,2 para 208,2 no sintético com o curto). Depois do treino, o \emph{prompt} curto e o nativo também passaram a dar praticamente o mesmo resultado.
+
+\subsubsection{Controles de saída com o modelo}
+\label{subsec:guard-modelo}
+
+O controle de saída separou bem as linhas com erro (Tabela~\ref{tab:guard}). Com o \emph{prompt} curto, as linhas aprovadas do modelo ajustado têm CER de 1,0\% no BRESSAY e 0,7\% no sintético, contra 7,6\% e 8,7\% nas enviadas para revisão, e o operador poderia concentrar a conferência em 57\% das linhas do BRESSAY e em 28\% das sintéticas. Cerca de um quarto das linhas erradas, porém, sai com confiança alta e passa sem marcação, e por isso os campos de nome continuam precisando de conferência humana.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Modelo & & & CER & CER & Linhas erradas \\
+(\emph{prompt} curto) & Teste & Marcadas & marcadas & não marcadas & marcadas \\
+\midrule
+Original & BRESSAY & 97,9\% & 20,0\% & 6,4\% & 98,8\% \\
+Original & Sintético & 46,9\% & 10,5\% & 1,2\% & 74,0\% \\
+Ajustado & BRESSAY & 56,9\% & 7,6\% & 1,0\% & 75,5\% \\
+Ajustado & Sintético & 27,8\% & 8,7\% & 0,7\% & 68,4\% \\
+\bottomrule
+\end{tabular}
+\caption{Linhas encaminhadas para revisão pelo \texttt{guard.py}. Linhas erradas marcadas é a fração das linhas com algum erro que foram para revisão. No modelo original, quase todas as linhas do BRESSAY foram marcadas por conterem HTML em resposta a um \emph{prompt} que pede texto puro.}
+\label{tab:guard}
+\end{table}
+
+% --------------------------------------------------------------
+\subsection{Experimento 4: Ajuste em Páginas Inteiras}
+\label{subsec:exp4}
+
+\subsubsection{O adaptador de linhas em páginas}
+\label{subsec:linhas-paginas}
+O primeiro teste em página aplicou o lora\_v0 a certidões inteiras, metade do teste do OCRSD e metade de uma primeira versão do teste local (Tabela~\ref{tab:linhas-paginas}). O ganho das linhas quase não chegou aos campos de uma certidão: no OCRSD o acerto ficou igual, e nas certidões locais os campos caíram 1,2 ponto enquanto os nomes subiram 2,8. No BRESSAY, que é o domínio do treino em linhas, o mesmo adaptador reduziu o CER de página de 26,5\% para 17,3\% (Tabela~\ref{tab:real}). O Chandra é usado com a página inteira, e o adaptador só tinha visto recortes de uma linha, sem os rótulos impressos, as caixas e a ordem de leitura de um formulário. Por isso a segunda etapa passou a treinar com páginas inteiras.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Campos manuscritos exatos, página inteira (\%) & Chandra & lora\_v0 \\
+\midrule
+Certidões do OCRSD (47 páginas) & 84,7 & 84,4 \\
+Certidões locais (38 páginas) & 56,6 & 55,4 \\
+\quad só nomes & 19,9 & 22,7 \\
+\bottomrule
+\end{tabular}
+\caption{Adaptador treinado em linhas aplicado a certidões inteiras.}
+\label{tab:linhas-paginas}
+\end{table}
+
+\subsubsection{Testes difícil e normal}
+Com o treino em páginas, a fração de campos manuscritos lidos sem erro subiu cerca de 16 pontos nos dois testes, e a de nomes, 8 a 10 pontos (Tabela~\ref{tab:paginas}). Todas as diferenças entre o lora\_v2 e o Chandra têm intervalo de confiança acima de zero. Em campos, o lora\_v2 acertou 500 que o Chandra errava e errou 54 que ele acertava no teste difícil, e 505 contra 73 no normal. A continuação do treino (lora\_v2 sobre lora\_v1) somou 2,4 e 2,9 pontos nos campos, ambos significativos, e 5,7 pontos nos nomes do teste normal; no teste difícil, os nomes subiram 2,0 pontos, com intervalo de $-1{,}9$ a $+6{,}8$.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+& \multicolumn{3}{c}{Teste difícil} & \multicolumn{3}{c}{Teste normal} \\
+& Chandra & lora\_v1 & lora\_v2 & Chandra & lora\_v1 & lora\_v2 \\
+\midrule
+Campos exatos (\%) & 55,4 & 69,8 & \textbf{72,2} & 55,8 & 69,2 & \textbf{72,0} \\
+Nomes exatos (\%) & 24,3 & 30,5 & \textbf{32,5} & 40,4 & 44,5 & \textbf{50,2} \\
+Completude (\%) & 84,6 & 92,6 & \textbf{93,5} & 85,0 & 92,8 & \textbf{93,1} \\
+Páginas truncadas & 1 & 0 & 0 & 6 & 0 & 0 \\
+Páginas em laço & 1 & 0 & 0 & 3 & 0 & 0 \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Diferença lora\_v2 $-$ Chandra, em pontos (IC 95\%)}} \\
+Campos & \multicolumn{3}{c}{+16,8 (+14,6 a +19,3)} & \multicolumn{3}{c}{+16,2 (+13,9 a +18,6)} \\
+Nomes & \multicolumn{3}{c}{+8,2 (+3,8 a +12,6)} & \multicolumn{3}{c}{+9,8 (+5,5 a +14,7)} \\
+\multicolumn{7}{@{}l}{\textit{Diferença lora\_v2 $-$ lora\_v1, em pontos (IC 95\%)}} \\
+Campos & \multicolumn{3}{c}{+2,4 (+0,6 a +4,1)} & \multicolumn{3}{c}{+2,9 (+1,2 a +4,5)} \\
+Nomes & \multicolumn{3}{c}{+2,0 ($-$1,9 a +6,8)} & \multicolumn{3}{c}{+5,7 (+2,1 a +10,0)} \\
+\bottomrule
+\end{tabular}
+\caption{Resultados nos testes de páginas (100 páginas cada; 2.648 e 2.668 campos, 440 e 488 de nome). O lora\_v1 leu o teste difícil numa GPU L4; os demais modelos rodaram na RTX PRO 6000, com a mesma configuração de inferência.}
+\label{tab:paginas}
+\end{table}
+
+O ganho apareceu em todas as classes de campo (Figura~\ref{fig:classes}). As maiores diferenças estão nos números, como matrículas, CPFs e números de documento (de 59,8\% para 86,7\% no teste difícil), e no texto livre, como endereços e filiação escrita por extenso (de 42,8\% para 61,9\%). As datas subiram de 75,2\% para 91,7\%. Os nomes são a classe com menor acerto absoluto, porque cada campo de nome tem várias palavras raras e uma letra errada já invalida o campo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figs/resultados.pdf}
+\caption{Acerto exato por classe de campo nos dois testes. Entre parênteses, o número de campos de cada classe.}
+\label{fig:classes}
+\end{figure}
+
+A Figura~\ref{fig:demo} mostra uma página do teste difícil e a saída do lora\_v2 redesenhada a partir das caixas de cada bloco. Dos 22 campos avaliados nessa página, o lora\_v2 acertou 20 e o Chandra 17. O Chandra leu ``Natimorto'' como ``Nascimento'' e errou a matrícula, o horário, um sobrenome dos genitores e o prenome do declarante; o lora\_v2 errou ``Natimorto'' (``Natimeto'') e o prenome raro do campo do escrevente (``Alcineia'' lido como ``Alineia'').
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.40\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figs/gerador_pagina.jpg}
+\caption{Entrada.}
+\end{subfigure}
+\hspace{1em}
+\begin{subfigure}{0.40\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figs/demo_lora_v2.png}
+\caption{Saída do lora\_v2.}
+\end{subfigure}
+\caption{Certidão do teste difícil e a saída do lora\_v2, com o texto de cada bloco desenhado na posição devolvida pelo modelo. Em verde, campos manuscritos lidos sem erro; em vermelho, campos com erro; em cinza, o texto impresso e os campos curtos, que não entram na contagem.}
+\label{fig:demo}
+\end{figure}
+
+Os erros que sobram nos nomes são, em sua maioria, o caso que motivou o projeto (Tabela~\ref{tab:nomes}). O lora\_v2 corrigiu letras trocadas em nomes que o Chandra quase acertava, como ``Claudemar'' lido como ``Claudemir'', mas ainda troca prenomes raros por prenomes comuns parecidos, como ``Maikon'' por ``Marcia'' e ``Guiomar'' por ``Giovana''.
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}m{4.2cm}m{3.4cm}m{3.6cm}m{2.6cm}@{}}
+\toprule
+Imagem & Gabarito & Chandra & lora\_v2 \\
+\midrule
+\includegraphics[width=4cm]{figs/nome_1.png} & Claudemar Reis Scalabrin & Claudemir Reis Scalabrin & igual ao gabarito \\
+\includegraphics[width=4cm]{figs/nome_2.png} & Reni Oppermann Manetti Guiao & \dots{} Manette Greco & igual ao gabarito \\
+\includegraphics[width=3cm]{figs/nome_3.png} & Maikon Giordano Cirino & Manoel Giordane Critto & Marcia \dots \\
+\includegraphics[width=3.8cm]{figs/nome_4.png} & Guiomar Schiavon Arrabal & Geovana Schiaven \dots & Giovana \dots \\
+\bottomrule
+\end{tabular}
+\caption{Campos de nome do teste difícil, com a leitura de cada modelo na região do campo.}
+\label{tab:nomes}
+\end{table}
+
+Para verificar se o ganho em nomes vem de nomes decorados, os campos de nome foram separados entre os que têm todas as palavras presentes em alguma página de treino e os que têm pelo menos uma palavra nunca vista (Tabela~\ref{tab:memo-paginas}). No teste normal, o ganho foi maior nos campos com palavra inédita (+18,2 pontos) do que nos totalmente vistos (+7,1). No teste difícil, quase todos os campos têm alguma palavra inédita, e o acerto neles subiu de 23,9\% para 31,4\%. Um modelo que tivesse decorado os nomes do treino mostraria o padrão contrário.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Teste & Campos de nome & Quantidade & Chandra & lora\_v2 \\
+\midrule
+Difícil & todas as palavras vistas & 17 & 35,3 & 58,8 \\
+Difícil & alguma palavra inédita & 423 & 23,9 & 31,4 \\
+Normal & todas as palavras vistas & 367 & 44,7 & 51,8 \\
+Normal & alguma palavra inédita & 121 & 27,3 & 45,5 \\
+\bottomrule
+\end{tabular}
+\caption{Acerto exato (\%) dos campos de nome, separados pela presença das suas palavras nas 3.366 páginas de treino locais e do OCRSD.}
+\label{tab:memo-paginas}
+\end{table}
+
+O texto impresso não tem gabarito independente, pois o do treino foi tirado da saída do próprio Chandra. Medido contra a saída do Chandra, com os valores manuscritos apagados, o texto impresso do lora\_v2 difere em 26,5\% dos caracteres no teste difícil. Essa medida é dominada por diferenças de divisão em blocos e de ordem de leitura, já que a versão FP8 do próprio Chandra, sem nenhum treino, difere da BF16 em 23,2\% na mesma métrica. Ela não permite afirmar que o texto impresso foi preservado nem que piorou.
+
+\subsubsection{Teste externo no OCRSD}
+O teste do OCRSD usa páginas de outro gerador, escritas com fontes ou com estilos de escritor neural que ficaram fora do treino, e foi feito com o lora\_v1, antes de essas páginas entrarem no treino do lora\_v2 (Tabela~\ref{tab:ocrsd}). O acerto nos campos subiu de 84,6\% para 95,5\% (+10,9 pontos, IC de +8,1 a +14,0), com 172 campos corrigidos e 13 piorados, e o dos nomes de 84,7\% para 95,5\% (+10,8, IC de +6,6 a +15,8). A completude passou de 96,1\% para 99,5\%, e a única página em laço do Chandra deixou de ocorrer. Como os registros do OCRSD usam nomes comuns, esse teste mede a leitura de caligrafia e de layout de outro gerador, e os nomes raros são medidos nos testes locais.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Classe de campo & Campos & Chandra & lora\_v1 \\
+\midrule
+Todos os campos manuscritos & 1.460 & 84,6 & \textbf{95,5} \\
+Nomes & 399 & 84,7 & \textbf{95,5} \\
+Opções fixas (sexo, estado civil) & 244 & 74,6 & \textbf{98,8} \\
+Texto livre & 286 & 72,7 & \textbf{91,3} \\
+Lugares & 132 & 93,2 & \textbf{98,5} \\
+Datas & 94 & 98,9 & 98,9 \\
+Números & 305 & \textbf{95,4} & 94,4 \\
+\bottomrule
+\end{tabular}
+\caption{Acerto exato (\%) por classe de campo em 94 páginas do OCRSD com escritores fora do treino.}
+\label{tab:ocrsd}
+\end{table}
+
+% --------------------------------------------------------------
+\subsection{Experimento 5: Quantização e Desempenho}
+\label{subsec:exp5}
+
+O FP8 manteve praticamente toda a acurácia do lora\_v2, e o INT4 trocou parte dela por memória e velocidade (Tabela~\ref{tab:quant}). Contra o lora\_v2 em BF16, o FP8 perdeu 0,5 ponto nos campos do teste difícil (IC de $-1{,}3$ a $+0{,}3$) e 0,1 no normal, e o INT4 perdeu 2,3 pontos nos campos do difícil (IC de $-3{,}4$ a $-1{,}3$) e 3,6 nos nomes (IC de $-7{,}0$ a $-0{,}7$). No teste normal, nenhuma das perdas do INT4 foi significativa ($-0{,}5$ ponto nos campos e $-0{,}8$ nos nomes). A mesma receita FP8 aplicada ao Chandra original não mudou o seu acerto (55,1\% contra 55,4\% nos campos, 24,3\% nos nomes).
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcc|c|ccc@{}}
+\toprule
+ & \multicolumn{2}{c|}{Chandra OCR 2} & lora\_v1 & \multicolumn{3}{c}{lora\_v2} \\
+ & BF16 & FP8 & BF16 & BF16 & FP8 & INT4 \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Teste difícil}} \\
+\quad Campos exatos (\%) & 55,4 & 55,1 & 69,8 & \textbf{72,2} & 71,7 & 69,9 \\
+\quad Nomes exatos (\%) & 24,3 & 24,3 & 30,5 & \textbf{32,5} & 30,7 & 28,9 \\
+\multicolumn{7}{@{}l}{\textit{Teste normal}} \\
+\quad Campos exatos (\%) & 55,8 & -- & 69,2 & \textbf{72,0} & 71,9 & 71,6 \\
+\quad Nomes exatos (\%) & 40,4 & -- & 44,5 & \textbf{50,2} & 49,6 & 49,4 \\
+\multicolumn{7}{@{}l}{\textit{Inferência (RTX PRO 6000, vLLM)}} \\
+\quad Pesos na GPU (GiB) & 8,6 & 6,2 & 8,6 & 8,6 & 6,2 & \textbf{5,0} \\
+\quad Uma página por vez (s/página) & 23,0 & -- & -- & 22,6 & 17,7 & \textbf{14,9} \\
+\quad 48 páginas por vez (s/página) & 1,25 & 1,20 & -- & 1,22 & 1,07 & \textbf{1,05} \\
+\bottomrule
+\end{tabular}
+\caption{Acurácia, memória e velocidade das versões em BF16, FP8 e INT4. Uma página por vez é a média de 3 páginas do teste difícil; 48 páginas por vez é o tempo total do teste difícil dividido pelo número de páginas. --: não medido.}
+\label{tab:quant}
+\end{table}
+
+Os pesos caem de 8,6~GiB em BF16 para 6,2~GiB em FP8 e 5,0~GiB em INT4. Lendo uma página por vez, o caso de quem confere uma certidão, o tempo por página cai de 22,6~s para 17,7~s em FP8 e 14,9~s em INT4, cerca de 209 \emph{tokens} por segundo. Com 48 páginas em paralelo, o ganho da quantização diminui (de 1,22~s para 1,05~s por página), porque a GPU passa a ser limitada pelo cálculo e não pela leitura dos pesos. O lora\_v2 em BF16 tem a mesma velocidade do Chandra, já que o adaptador é fundido aos pesos.
+
+% --------------------------------------------------------------
+\subsection{Experimento 6: Documentos Fora das Certidões}
+\label{subsec:exp6}
+
+Fora das certidões, o lora\_v2 ficou abaixo do Chandra original (Tabela~\ref{tab:real}). No BRESSAY, o CER das páginas subiu de 26,5\% para 48,6\%. O total é dominado pelas páginas em que a saída atinge o limite de 6.144 \emph{tokens} repetindo trechos, 12 do lora\_v2 e 13 do Chandra; nas 181 páginas em que nenhum dos dois atingiu o limite, o CER foi de 6,8\% para 7,9\%. No XFUND-PT, a fração de campos encontrados sem erro caiu de 53,0\% para 43,8\% ($-9{,}2$ pontos, IC de $-12{,}1$ a $-6{,}2$). O lora\_v0, treinado com redações do BRESSAY, continua sendo o melhor modelo para esse tipo de texto.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& Chandra & lora\_v0 (linhas) & lora\_v2 (páginas) \\
+\midrule
+BRESSAY, 199 páginas: CER (\%) & 26,5 & \textbf{17,3} & 48,6 \\
+BRESSAY, 199 páginas: WER (\%) & 40,3 & \textbf{21,4} & 63,0 \\
+XFUND-PT, 50 formulários: campos exatos (\%) & \textbf{53,0} & 52,3 & 43,8 \\
+\bottomrule
+\end{tabular}
+\caption{Páginas fora do domínio das certidões. No XFUND-PT, os 1.446 campos preenchidos foram reescritos com fontes reservadas ao teste, e o campo é procurado em qualquer ponto da saída.}
+\label{tab:real}
+\end{table}
+
+% ==============================================================
+% SEÇÃO 8 — DISCUSSÃO (*)
+% ==============================================================
+\section{Discussão}
+\label{sec:discussao}
+
+O principal resultado da PoC é que o Chandra ajustado em páginas sintéticas passou a ler sem erro cerca de 72\% dos campos manuscritos de certidões, contra 55\% do modelo original, com ganho também nos nomes nunca vistos e sem nenhuma página truncada ou em laço. Esse ganho veio sem que nenhum dado pessoal real entrasse no treino, já que os nomes saíram de contagens agregadas e as certidões são sintéticas. A primeira etapa obteve o mesmo efeito em linhas, e a passagem de uma etapa para a outra indicou que, para este modelo, o ajuste precisa ser feito no formato em que ele é usado, a página inteira.
+
+% --------------------------------------------------------------
+\subsection{Alcance dos Objetivos}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{5.2cm}p{9.6cm}@{}}
+\toprule
+Planejado & Desenvolvido \\
+\midrule
+Gerador sintético com nomes da população & Linhas com nomes do IBGE, TSE e Receita por frequência real, 85 fontes e deformação letra a letra; certidões com os mesmos nomes sobre os modelos do OCRSD. \\
+Ajuste com LoRA de um VLM de OCR & Três adaptadores do Chandra OCR 2: lora\_v0 (linhas), lora\_v1 e lora\_v2 (páginas). \\
+Versão quantizada para servir & FP8 a até 0,5 ponto do BF16 nos campos; INT4 com 5,0~GiB e 14,9~s por página. \\
+Métrica 1, CER segmentado & Medido por linha, por tipo de nome, por grupo de frequência e por nome visto ou inédito. \\
+Métrica 2, \emph{hit rate} da memória & Não medida, pois a memória RAG ficou fora do escopo. \\
+Métrica 3, acerto em nomes inéditos & De 70,9\% para 79,7\% em linhas; em páginas, de 23,9\% para 31,4\% (teste difícil) e de 27,3\% para 45,5\% (normal) nos campos com palavra inédita. \\
+Métricas de página & Campos de 55,4\% para 72,2\% e de 55,8\% para 72,0\%; completude de 85\% para 93\%; nenhuma página truncada ou em laço. \\
+Testes de privacidade e de injeção & Comparação entre nomes vistos e inéditos em linhas e em páginas; extração, pertencimento e injeção não executados. \\
+Treino em uma única GPU & Pico de 49,5~GB em linhas e 60,7~GB em páginas, cerca de 65~min por etapa de páginas. \\
+\bottomrule
+\end{tabular}
+\caption{Planejado na proposta e desenvolvido na PoC.}
+\label{tab:planejado}
+\end{table}
+
+% --------------------------------------------------------------
+\subsection{Dificuldades e Limitações}
+
+\subsubsection{Dificuldades encontradas}
+A principal dificuldade foi a passagem de linhas para páginas. O lora\_v0 tinha bons resultados em linhas, mas não mudava a leitura de uma certidão, e treinar em página exigiu três componentes novos: um gerador de certidões com nomes do léxico, gabaritos no formato HTML do próprio Chandra e um avaliador que encontra cada campo na saída. Esse último foi necessário porque a ordem de leitura de um formulário é ambígua e o mesmo valor pode aparecer em mais de um lugar da página (``Lagoa da Prata'' aparece em cinco campos da certidão da Figura~\ref{fig:demo}), e procurar o valor na saída inteira contaria como certo um campo lido em outro lugar.
+
+Os geradores neurais de escrita, treinados em inglês, não desenham acentos, ``ç'' nem ``º''. Como um rótulo com acento sobre uma imagem sem acento ensinaria o modelo a inventar acentos, esses geradores só escrevem textos sem acento, os campos que perderam acentos nas páginas do OCRSD ficam fora da perda e o texto acentuado aparece apenas nas páginas escritas com fontes.
+
+O Chandra usa a arquitetura do Qwen3.5, com camadas de atenção linear, que só é suportada pelas versões recentes do vLLM e do \texttt{transformers}. As incompatibilidades apareceram na primeira execução e foram resolvidas fixando as versões no repositório.
+
+\subsubsection{Limitações técnicas}
+Todos os testes de página são sintéticos e usam os mesmos cinco modelos de documento do treino, e em certidões reais, principalmente em livros antigos, o ganho provavelmente será menor. No teste difícil, só 32,5\% dos campos de nome saem sem erro, e o erro típico é o mesmo que motivou o projeto, um prenome raro trocado por um comum. O modelo também se especializou, e fora das certidões o Chandra original lê melhor (Experimento 6). Foi feito um único treino por etapa, sem ablações, de modo que não se sabe quanto do ganho do lora\_v2 sobre o lora\_v1 vem das páginas novas, do peso maior nos nomes ou do treino mais longo.
+
+\subsubsection{Limitações de segurança}
+A comparação entre nomes vistos e inéditos mede o comportamento médio do modelo, e um adversário que escolhe a entrada é outra situação. Os testes de extração com imagens em branco ou com prefixos de nomes, de inferência de pertencimento e de injeção de instruções escritas na imagem, previstos na proposta, não foram executados, porque o tempo de GPU foi dedicado ao treino em páginas. O controle de saída por confiança foi avaliado só em linhas: no \emph{prompt} nativo, a confiança ainda é calculada sobre o HTML inteiro, incluindo as coordenadas, e precisaria ser restrita ao texto transcrito. Os controles também não detectam perturbações adversariais imperceptíveis \cite{goodfellow2014}.
+
+% --------------------------------------------------------------
+\subsection{Comparação com o Estado da Arte}
+
+O modelo foi comparado com o próprio Chandra OCR 2 \cite{chandra2026}, um VLM de OCR recente que já lê manuscrito, nos mesmos testes e com o mesmo pré-processamento. Em termos relativos, o ajuste em linhas reduziu o CER em 76\% no BRESSAY e em 60\% no sintético. Em páginas, a fração de campos errados caiu de 44,6\% para 27,8\% no teste difícil (38\% a menos) e, no OCRSD, de 15,4\% para 4,5\% (71\% a menos). Os resultados publicados para o BRESSAY \cite{bressay2023} usam modelos treinados do zero e outro protocolo (aqui, linhas com trecho ilegível ou riscado saíram do teste), e uma comparação direta exigiria rodar o modelo no teste oficial completo. Não foi encontrado conjunto público de certidões brasileiras com o qual comparar os resultados em página.
+
+% --------------------------------------------------------------
+\subsection{Trade-offs Segurança vs. Usabilidade}
+
+Com limiar de 0,5, o controle de saída envia 57\% das linhas do BRESSAY para revisão e captura três de cada quatro linhas com erro (Tabela~\ref{tab:guard}). Alterar o limiar troca carga de revisão por erros capturados, e, como um nome errado custa caro, faz sentido usar um limiar mais conservador nos campos de nome do que no resto do texto.
+
+Treinar só com dados sintéticos atende à minimização da LGPD, mas é também a causa da principal limitação do modelo, que aprendeu os cinco modelos de documento e as mãos dos geradores e piorou em outros documentos. Na quantização, o FP8 sai praticamente sem custo, e o INT4 ocupa 41\% menos memória que o BF16 e lê uma página em 34\% menos tempo, ao custo de 3,6 pontos nos nomes do teste difícil. Para conferência de nomes, o FP8 é a escolha mais segura; o INT4 serve quando a GPU disponível é pequena.
+
+% --------------------------------------------------------------
+\subsection{Implicações Práticas}
+
+\subsubsection{Para Usuários e Stakeholders}
+Com o modelo ajustado, o operador tem cerca de 28\% dos campos manuscritos para corrigir, contra 45\% com o original, e a saída traz a posição de cada valor, de modo que a conferência pode ser feita campo a campo sobre a imagem. Para a instituição, adaptar o modelo custa cerca de uma hora de treino por etapa em uma GPU e gera um adaptador de 130~MB. O lora\_v1 em BF16 já rodou numa GPU L4 de 24~GB, e a versão INT4 deixa mais espaço para o cache do vLLM.
+
+\subsubsection{Para Políticas Públicas}
+Os nomes do treino vêm só de contagens públicas agregadas, e as certidões, de geradores, e mesmo assim o acerto em nomes subiu de 8 a 10 pontos em páginas. Para nomes e documentos, portanto, é possível melhorar um OCR sem montar uma base com dados de pessoas. Antes de qualquer uso em Registro Civil, ainda seriam necessários o Relatório de Impacto à Proteção de Dados, os testes de extração e uma validação com documentos reais autorizada pelo controlador.
+
+% ==============================================================
+% SEÇÃO 9 — CONCLUSÕES E PRÓXIMOS PASSOS (*)
+% ==============================================================
+\section{Conclusões e Próximos Passos}
+\label{sec:conclusoes}
+
+A PoC mostrou que um ajuste leve, com nomes vindos apenas de contagens públicas agregadas e certidões sintéticas, melhora a leitura dos campos manuscritos do Chandra OCR 2 em certidões de Registro Civil, inclusive em nomes que ele nunca viu, sem sinal de memorização e com uma versão quantizada que cabe em 5~GiB. O ganho só apareceu quando o treino passou de linhas para páginas inteiras, e ficou restrito ao tipo de documento treinado.
+
+% --------------------------------------------------------------
+\subsection{Síntese das Evidências}
+
+\begin{itemize}
+    \item Em linhas, CER do BRESSAY de 20,1\% para 4,9\% e acerto em 8.508 nomes inéditos de 70,9\% para 79,7\%, com a diferença entre nomes vistos e inéditos inalterada (2,3 e 2,1 pontos de CER).
+    \item O ajuste em linhas não melhorou a leitura de certidões inteiras (84,7\% e 84,4\% dos campos no OCRSD).
+    \item Em 200 páginas de certidões, campos manuscritos de 55,4\% para 72,2\% e de 55,8\% para 72,0\%, e nomes de 24,3\% para 32,5\% e de 40,4\% para 50,2\%, todos com IC acima de zero, sem páginas truncadas ou em laço.
+    \item Em 94 páginas do OCRSD com escritores fora do treino, campos de 84,6\% para 95,5\% (lora\_v1).
+    \item Nos campos de nome com palavra inédita, ganho de 7,5 pontos no teste difícil e de 18,2 no normal, em que os campos com todas as palavras vistas ganharam 7,1.
+    \item FP8 a até 0,5 ponto do BF16 nos campos; INT4 com 5,0~GiB e 14,9~s por página.
+    \item Fora das certidões, piora em relação ao Chandra original (BRESSAY e XFUND-PT).
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Contribuições}
+
+\begin{enumerate}
+    \item Um léxico de nomes brasileiros com frequências reais, montado a partir de dados abertos sem guardar nomes completos, e um gerador de linhas manuscritas com partição de nomes e fontes entre treino e teste.
+    \item Um gerador de certidões de Registro Civil sobre os modelos do OCRSD, com nomes do léxico, escrita neural e por fontes e quatro níveis de dificuldade, com gabaritos no formato de saída do Chandra.
+    \item Um avaliador de páginas que localiza cada campo pela posição, separa o resultado por classe de campo e compara modelos com intervalos de confiança pareados.
+    \item Os adaptadores LoRA do Chandra OCR 2 para linhas e para certidões, com as versões FP8 e INT4 avaliadas em acurácia, memória e velocidade.
+\end{enumerate}
+
+O código, as configurações e os resultados estão em \url{https://github.com/gabriel-salmoria/ai-sec}, na pasta \texttt{ocr06/}.
+
+% --------------------------------------------------------------
+\subsection{Trabalhos Futuros}
+
+\subsubsection{Curto Prazo (3 a 6 meses)}
+\begin{itemize}
+    \item Testes de extração, de inferência de pertencimento e de injeção pela imagem com os modelos ajustados em página.
+    \item Confiança por palavra calculada só sobre o texto transcrito no HTML, para levar a revisão por confiança às páginas.
+    \item Misturar no treino páginas de outros tipos (redações, formulários) e controlar a repetição na inferência, para reduzir a perda fora das certidões.
+    \item Mais nomes raros por página de treino e ablações separando o efeito das páginas, do peso dos nomes e do currículo.
+\end{itemize}
+
+\subsubsection{Médio Prazo (6 a 12 meses)}
+\begin{itemize}
+    \item Validação com certidões e livros reais de Registro Civil, com autorização do controlador e o Relatório de Impacto à Proteção de Dados.
+    \item Modelos de documento mais antigos, como livros e certidões das décadas de 1970 e 1980.
+    \item Memória de correções (RAG) consultada na inferência, com controle de acesso e prazo de retenção.
+\end{itemize}
+
+\subsubsection{Longo Prazo (1 a 2 anos)}
+\begin{itemize}
+    \item Ajuste contínuo com as correções dos operadores, comparando cada versão nova com a anterior nas mesmas páginas antes de trocar.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Recomendações}
+Recomenda-se usar o lora\_v2 em FP8 apenas em certidões dos modelos treinados, encaminhar os campos de nome para conferência humana sobre a imagem, manter o Chandra original para outros documentos e não aplicar o adaptador a documentos reais antes dos testes de extração.
+
+% ==============================================================
+% SEÇÃO 10 — CHECKLIST DE CONFORMIDADE (*)
+% ==============================================================
+\section{Checklist de Conformidade (LGPD / Ética / Segurança)}
+\label{sec:checklist}
+
+% --------------------------------------------------------------
+\subsection{Lei Geral de Proteção de Dados (LGPD)}
+
+\begin{itemize}
+    \item \textbf{Minimização de dados (Art. 6º, III)} \\
+    Atendimento: das listas do TSE e da Receita são mantidas apenas contagens por palavra; nomes completos não são gravados, os arquivos baixados são removidos e sobrenomes com menos de 5 ocorrências são descartados. Do BRESSAY é usado apenas o recorte de linha ou a página, sem metadados de autor, e nenhuma certidão real foi usada. \\
+    Lacuna: as imagens do BRESSAY contêm caligrafia real e permanecem em disco durante o projeto, sem rotina de exclusão definida para o fim da PoC.
+
+    \item \textbf{Finalidade específica (Art. 6º, I)} \\
+    Atendimento: os dados públicos são usados apenas para estimar a frequência de nomes e sortear nomes sintéticos, o BRESSAY é usado conforme a licença CC-BY 4.0 e o XFUND-PT, de licença não comercial, só como teste. \\
+    Lacuna: o uso com dados de cartório exigiria a definição da base legal e da finalidade com o controlador desses dados.
+
+    \item \textbf{Transparência (Art. 6º, VI)} \\
+    Atendimento: as fontes, os filtros, os descartes e a origem de cada página (gerador, mão, nível, partição) ficam registrados nos arquivos de metadados gerados pelo pipeline. \\
+    Lacuna: não há documento voltado ao titular sobre o uso dos dados; em produção, seriam necessários um aviso e um Relatório de Impacto à Proteção de Dados (Art. 38).
+
+    \item \textbf{Segurança (Art. 46)} \\
+    Atendimento: os dados ficam fora do repositório de código, as credenciais do OCRSD ficam fora do repositório, e o treino de páginas é inteiramente sintético. A diferença de acerto entre nomes vistos e inéditos não indica memorização, em linhas nem em páginas. \\
+    Lacuna: a extração com entradas escolhidas e a inferência de pertencimento não foram testadas. O treino foi executado em máquinas do Google Colab, que armazenaram temporariamente os dados e os adaptadores; as máquinas são removidas ao fim da sessão, mas os dados transitaram por infraestrutura de terceiros.
+
+    \item \textbf{Não discriminação (Art. 6º, IX)} \\
+    Atendimento: o erro é medido por grupo de frequência (nomes comuns e raros), por tipo de nome e por classe de campo, e os nomes inéditos são medidos à parte. \\
+    Lacuna: os nomes de origem indígena, africana ou estrangeira não são separados como grupo, e as fontes de sobrenomes (candidatos e sócios) não representam a população de forma uniforme.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Segurança da Informação}
+
+\begin{itemize}
+    \item \textbf{Acesso e Controle} \\
+    Atendimento: não há serviço exposto, e o modelo é executado apenas em lote, por script, na máquina de GPU. \\
+    Lacuna: uma API de inferência teria de ter autenticação, perfis de acesso e registro de quem consultou ou corrigiu cada documento.
+
+    \item \textbf{Integridade e Reprodutibilidade} \\
+    Atendimento: MD5 do BRESSAY conferido, geração determinística por \emph{seed}, configurações versionadas no Git, versões das bibliotecas de treino fixadas e predições de todos os modelos guardadas no repositório. O cálculo das métricas de linha foi validado com predições de erro conhecido, e o avaliador de páginas tem 21 testes automatizados. \\
+    Lacuna: os pesos dos modelos baixados do Hugging Face não têm o \emph{hash} conferido contra uma referência.
+
+    \item \textbf{Proteções Técnicas} \\
+    Atendimento: partição por autor no BRESSAY, nomes, fontes e estilos de escritor reservados para o teste, bloqueio dos nomes do teste do BRESSAY nas páginas geradas e limite de \emph{tokens} na saída. Em linhas, verificações de saída e revisão por confiança por palavra, com CER de 1,0\% nas linhas não marcadas do BRESSAY. \\
+    Lacuna: a regra de injeção reconhece apenas frases conhecidas, a revisão por confiança ainda não foi adaptada à saída de página e não há teste de perturbação adversarial.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Ética e IA Responsável}
+
+\begin{itemize}
+    \item \textbf{Transparência Experimental} \\
+    Atendimento: o código, as configurações, as predições e os relatórios de avaliação de todos os experimentos estão no repositório, e as métricas e regras de decisão das páginas foram fixadas antes da primeira execução dos modelos ajustados. O relatório inclui os resultados desfavoráveis (Experimento 6) e os critérios não atendidos. \\
+    Lacuna: a marcação de nomes no BRESSAY é heurística, de modo que as contagens de nomes no teste real são aproximadas.
+
+    \item \textbf{Responsabilidade} \\
+    Atendimento: a proposta mantém o operador na decisão final, com o modelo sugerindo e o humano confirmando cada campo sobre a imagem. \\
+    Lacuna: o registro de quem aprovou cada transcrição e o procedimento de reversão de um erro já registrado ainda não estão definidos.
+
+    \item \textbf{Impacto Social} \\
+    Atendimento: o projeto se dirige às pessoas cujos nomes são mais trocados pelos OCRs genéricos, as que têm nomes raros. \\
+    Lacuna: mesmo com o ajuste, dois em cada três campos com nomes raros nunca vistos ainda saem com algum erro, e nomes fora do vocabulário de treino podem manter erro maior.
+\end{itemize}
+
+% --------------------------------------------------------------
+\subsection{Ações Necessárias para Maturidade em Produção}
+
+\begin{itemize}
+    \item Executar os testes de extração e de inferência de pertencimento antes de qualquer uso com dados reais de cartório.
+    \item Validar o modelo com certidões reais, com autorização do controlador, e elaborar o Relatório de Impacto à Proteção de Dados.
+    \item Implementar controle de acesso por perfil e registro de auditoria na API, com prazo de retenção e rotina de exclusão.
+    \item Tornar obrigatória a conferência humana dos campos de nome, que hoje são apenas sinalizados.
+\end{itemize}
+
+% ==============================================================
+% DECLARAÇÃO DE USO DE IA
+% ==============================================================
+\section*{Declaração de Uso de Ferramentas de IA}
+\addcontentsline{toc}{section}{Declaração de Uso de Ferramentas de IA}
+O Claude Code (Anthropic) foi utilizado como assistente na implementação do código, na análise dos resultados e na revisão do texto.
+
+% ==============================================================
+% BIBLIOGRAFIA (*)
+% ==============================================================
+\printbibliography
+
+% ==============================================================
+% APÊNDICES (opcionais)
+% ==============================================================
+\appendix
+
+% --------------------------------------------------------------
+\section{Detalhes de Implementação}
+\label{app:implementacao}
+
+O código fica na pasta \texttt{ocr06/} do repositório. A parte de dados é um pacote Python (\texttt{ocr06}) com uma etapa por módulo, a geração de certidões fica em \texttt{ocr06/forms/} e a parte de modelo fica em \texttt{ocr06/model/}, executada na máquina com GPU.
+
+\subsection{Estrutura de Diretórios}
+
+{\small
+\begin{verbatim}
+ocr06/
+  configs/default.yaml          linhas: dados, treino e avaliação
+  configs/paginas.yaml          páginas: treino do lora_v1
+  configs/paginas_v2.yaml       páginas: treino do lora_v2
+  scripts/setup.sh              cria os ambientes Python
+  scripts/run.sh                etapas de linhas (dados e modelo)
+  scripts/ocrsd/                cliente, fila e extração do OCRSD
+  src/ocr06/
+    sources.py lexicon.py       coleta e agregação de nomes
+    vocab.py sampler.py         vocabulário por frequência e sorteio
+    fonts.py render.py          fontes e renderização das linhas
+    degrade.py generate.py      Augraphy e geração paralela
+    bressay.py mix.py           BRESSAY e conjuntos de linhas
+    preprocess.py guard.py      normalização e controles de saída
+    evaluate.py                 CER/WER por grupo de nome
+    forms/                      gerador de certidões e gabaritos
+    pages_eval.py               avaliação de campos em página
+    pages_real.py pages.py      BRESSAY e XFUND-PT em página
+    model/train.py              treino LoRA (linhas e páginas)
+    model/merge.py              fusão, FP8 e INT4
+    model/infer.py              inferência de linhas (vLLM)
+    model/pages_infer.py        inferência de páginas (vLLM)
+  tests/                        testes do avaliador e do treino
+  experiments/paginas/          predições e relatórios de páginas
+  experiments/modelos/          predições e relatórios de linhas
+\end{verbatim}
+}
+
+\subsection{Comandos para Reprodução}
+
+\subsubsection*{1) Instalação de Dependências}
+{\footnotesize
+\begin{verbatim}
+git clone git@github.com:gabriel-salmoria/ai-sec.git
+cd ai-sec/ocr06
+scripts/setup.sh          # detecta a GPU (sem GPU: --sem-gpu)
+\end{verbatim}
+}
+
+\subsubsection*{2) Etapa de linhas}
+{\footnotesize
+\begin{verbatim}
+scripts/run.sh dados      # léxico, fontes, BRESSAY, geração, mistura
+scripts/run.sh modelo     # baseline, treino, FP8 e avaliação
+\end{verbatim}
+}
+
+\subsubsection*{3) Etapa de páginas}
+{\footnotesize
+\begin{verbatim}
+python -m ocr06.forms.build --name <conjunto> --count <páginas>
+python -m ocr06.forms.targets build3 --out data/final/pages_v2
+python -m ocr06.model.train --config configs/paginas_v2.yaml
+python -m ocr06.model.merge --config configs/paginas_v2.yaml --int4
+python -m ocr06.model.pages_infer --config configs/paginas_v2.yaml \
+       --models base ft --sets teste_local forms_v2_normal
+python -m ocr06.pages_eval --config configs/paginas_v2.yaml \
+       --set teste_local
+\end{verbatim}
+}
+
+O léxico agregado (IBGE, TSE e Receita) está versionado em \texttt{data/lexicon/}, porque as APIs dessas fontes recusam conexões de fora do Brasil. As páginas do OCRSD exigem uma credencial de acesso, guardada fora do repositório, e as já extraídas ficam em \texttt{data/pages/ocrsd/}.
+
+% --------------------------------------------------------------
+\section{Exemplos Adicionais de Resultados}
+\label{app:exemplos}
+
+Cada linha de predição gravada pelo \texttt{infer.py} tem o formato abaixo. Os dois exemplos são predições do lora\_v0 com o \emph{prompt} curto no teste sintético (o campo \texttt{entities} foi omitido). No primeiro, o modelo inseriu um acento inexistente no nome, e a palavra errada foi a única marcada para revisão; no segundo, a linha está correta e não foi marcada.
+
+{\footnotesize
+\begin{verbatim}
+{"id": "test_0000032", "source": "sintetico",
+ "text": "Celi Nalva Ogura Ovando", "pred": "Celi Nálva Ogura Ovando",
+ "guard": {"revisao": true, "motivos": ["confianca"],
+           "palavras_baixa_confianca": ["Nálva"],
+           "confianca_min": 0.4088}}
+{"id": "test_0000011", "source": "sintetico",
+ "text": "NOME: LIVIA ROZINEIDE MIADA ACUÑA",
+ "pred": "NOME: LIVIA ROZINEIDE MIADA ACUÑA",
+ "guard": {"revisao": false, "motivos": [],
+           "palavras_baixa_confianca": [],
+           "confianca_min": 0.9793}}
+\end{verbatim}
+}
+
+Em página, a saída do Chandra é uma sequência de blocos HTML. O trecho abaixo é a saída do lora\_v2 para o campo do declarante da certidão da Figura~\ref{fig:gerador}, com o valor manuscrito em itálico:
+
+{\scriptsize
+\begin{verbatim}
+<div data-bbox="79 536 174 547" data-label="Text"><p>Nome do Declarante</p></div>
+<div data-bbox="98 552 377 577" data-label="Text"><p><i>Claudemar Reis Scalabrin</i></p></div>
+<div data-bbox="357 536 443 547" data-label="Text"><p>Existência de bens</p></div>
+<div data-bbox="511 536 601 547" data-label="Text"><p>Existência de filhos</p></div>
+\end{verbatim}
+}
+
+% --------------------------------------------------------------
+\section{Código-fonte}
+\label{app:codigo}
+
+\url{https://github.com/gabriel-salmoria/ai-sec}
+
+\end{document}

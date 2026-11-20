@@ -1,0 +1,26 @@
+[
+ {
+  "arquivo": "nome_1.png",
+  "gabarito": "Claudemar Reis Scalabrin",
+  "base": "Claudemir Reis Scalabrin",
+  "lora_v2": "Claudemar Reis Scalabrin"
+ },
+ {
+  "arquivo": "nome_2.png",
+  "gabarito": "Reni Oppermann Manetti Guiao",
+  "base": "Reni Oppermann Manette Greco",
+  "lora_v2": "Reni Oppermann Manetti Guiao"
+ },
+ {
+  "arquivo": "nome_3.png",
+  "gabarito": "Maikon Giordano Cirino",
+  "base": "Manoel Giordane Critto",
+  "lora_v2": "Marcia Giordane Critto"
+ },
+ {
+  "arquivo": "nome_4.png",
+  "gabarito": "Guiomar Schiavon Arrabal",
+  "base": "Geovana Schiaven Ararabal",
+  "lora_v2": "Giovana Schiaven Araral"
+ }
+]
