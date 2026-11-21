@@ -1,0 +1,262 @@
+% =================================================================
+% ine5448poc.sty
+% Pacote de estilo dos relatórios de PoC da disciplina INE5448
+% (IA e Segurança da Informação, UFSC) e dos anais do workshop.
+%
+% NÃO EDITE ESTE ARQUIVO. Todo o preâmbulo dos relatórios está aqui,
+% para que os relatórios de todos os alunos possam ser reunidos nos
+% anais sem conflitos. Se precisar de um pacote que não esteja
+% carregado abaixo, solicite ao professor.
+%
+% Opções:
+%   (nenhuma)  relatório parcial: mostra a seção de situação atual e
+%              os quadros \situacao{}{}
+%   final      relatório final: oculta a seção de situação atual e os
+%              quadros \situacao{}{}
+%   anais      uso interno na compilação dos anais (classe book)
+% =================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ine5448poc}[2026/11/03 v3.0 Relatorios de PoC INE5448 e anais]
+
+\newif\ifpoc@anais   \poc@anaisfalse
+\newif\ifpoc@parcial \poc@parcialtrue
+\DeclareOption{anais}{\poc@anaistrue\poc@parcialfalse}
+\DeclareOption{final}{\poc@parcialfalse}
+\ProcessOptions\relax
+
+% ---- Codificação, idioma e fontes ----
+\RequirePackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{2190}{\ensuremath{\leftarrow}}
+\DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+\DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[english,brazil]{babel}
+\RequirePackage[a4paper,margin=2.5cm]{geometry}
+\RequirePackage{amsmath}
+\RequirePackage{newtxtext,newtxmath}
+
+% ---- Figuras, tabelas, listas e código ----
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage[table]{xcolor}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{longtable}
+\RequirePackage{multirow}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{enumitem}
+\setlist[itemize]{leftmargin=1.5em}
+\setlist[enumerate]{leftmargin=1.8em}
+\RequirePackage{siunitx}
+\RequirePackage{algorithm}
+\RequirePackage{algpseudocode}
+\RequirePackage{tikz}
+\RequirePackage{listings}
+\RequirePackage{tcolorbox}
+\RequirePackage{comment}
+\RequirePackage{import}
+\RequirePackage{fancyhdr}
+\RequirePackage{url}
+\RequirePackage{csquotes}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    tabsize=2,
+    columns=fullflexible,
+    commentstyle=\color{gray},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    literate=
+        {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {à}{{\`a}}1 {À}{{\`A}}1
+        {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1 {Â}{{\^A}}1 {Ê}{{\^E}}1 {Ô}{{\^O}}1
+        {ã}{{\~a}}1 {õ}{{\~o}}1 {Ã}{{\~A}}1 {Õ}{{\~O}}1
+        {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+        {ü}{{\"u}}1 {Ü}{{\"U}}1 {º}{{\textordmasculine}}1 {ª}{{\textordfeminine}}1
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null},
+  sensitive=false,
+  comment=[l]{\#},
+  morestring=[b]',
+  morestring=[b]",
+}
+
+% ---- Bibliografia: biblatex, ABNT, numérico ----
+\RequirePackage[backend=biber,style=abnt-numeric]{biblatex}
+
+% ---- Hyperlinks (por último) ----
+\RequirePackage{hyperref}
+\definecolor{pocazul}{RGB}{0,51,102}
+\hypersetup{colorlinks=true,linkcolor=pocazul,citecolor=pocazul,urlcolor=pocazul}
+
+% =================================================================
+% Metadados do relatório
+% =================================================================
+\newcommand\poc@vazio{}
+\newcommand\poc@exige[2]{%
+  \ifx#1\poc@vazio
+    \PackageError{ine5448poc}{Campo obrigatorio ausente: #2}{Preencha #2 no relatorio.tex.}%
+  \fi}
+
+\newcommand\poctitulo[1]{\def\poc@titulo{#1}}
+\newcommand\poctitulocurto[1]{\def\poc@titulocurto{#1}}
+\newcommand\pocaluno[2]{\def\poc@aluno{#1}\def\poc@alunoemail{#2}}
+\newcommand\poctutor[2]{\def\poc@tutor{#1}\def\poc@tutoremail{#2}}
+\newcommand\poccurso[1]{\def\poc@curso{#1}}
+\newcommand\pocrepositorio[1]{\def\poc@repositorio{#1}}
+\newcommand\pocresumo[1]{\def\poc@resumo{#1}}
+\newcommand\pocpalavraschave[1]{\def\poc@palavraschave{#1}}
+\newcommand\pocabstract[1]{\def\poc@abstract{#1}}
+\newcommand\pockeywords[1]{\def\poc@keywords{#1}}
+
+\newcommand\poc@limpar{%
+  \let\poc@titulo\poc@vazio \let\poc@titulocurto\poc@vazio
+  \let\poc@aluno\poc@vazio \let\poc@alunoemail\poc@vazio
+  \let\poc@tutor\poc@vazio \let\poc@tutoremail\poc@vazio
+  \let\poc@curso\poc@vazio \let\poc@repositorio\poc@vazio
+  \let\poc@resumo\poc@vazio \let\poc@palavraschave\poc@vazio
+  \let\poc@abstract\poc@vazio \let\poc@keywords\poc@vazio}
+\poc@limpar
+
+% Nome do aluno do capítulo corrente (usado no cabeçalho dos anais)
+\newcommand\pocalunoatual{}
+\newcommand\poctituloatual{}
+
+% Marcação de texto ainda não preenchido
+\newcommand\preencher[1]{\textcolor{red}{[#1]}}
+
+% Linha de autoria no sumário dos anais
+\newcommand\pocautorestoc[2]{%
+  \addvspace{-0.3em}%
+  {\leftskip=3.8em\rightskip=2.55em plus 1fil\noindent\small\itshape #1\quad(tutor: #2)\par}%
+  \addvspace{0.4em}}
+
+% Bloco de resumo e palavras-chave (comum aos dois modos)
+\newcommand\poc@blocoresumo{%
+  \begin{center}\bfseries Resumo\end{center}
+  {\small\noindent\poc@resumo\par
+  \medskip\noindent\textbf{Palavras-chave:} \poc@palavraschave\par}%
+  \ifx\poc@abstract\poc@vazio\else
+    \begin{otherlanguage}{english}%
+    \begin{center}\bfseries Abstract\end{center}
+    {\small\noindent\poc@abstract\par
+    \ifx\poc@keywords\poc@vazio\else
+      \medskip\noindent\textbf{Keywords:} \poc@keywords\par\fi}%
+    \end{otherlanguage}%
+  \fi
+  \medskip}
+
+\newcommand\poc@linhacontato[2]{%
+  #1\ifx#2\poc@vazio\else\\{\small\texttt{#2}}\fi}
+
+% =================================================================
+% \pocinicio: abre o relatório (título, autoria, resumo)
+% =================================================================
+\newcommand\pocinicio{%
+  \poc@exige\poc@titulo{\string\poctitulo}%
+  \poc@exige\poc@aluno{\string\pocaluno}%
+  \poc@exige\poc@tutor{\string\poctutor}%
+  \poc@exige\poc@resumo{\string\pocresumo}%
+  \poc@exige\poc@palavraschave{\string\pocpalavraschave}%
+  \ifx\poc@titulocurto\poc@vazio\let\poc@titulocurto\poc@titulo\fi
+  \xdef\pocalunoatual{\poc@aluno}%
+  \xdef\poctituloatual{\poc@titulocurto}%
+  \ifpoc@anais
+    \chapter[\poc@titulocurto]{\poc@titulo}%
+    \addtocontents{toc}{\protect\pocautorestoc{\poc@aluno}{\poc@tutor}}%
+    \begin{center}
+      {\large \poc@linhacontato{\poc@aluno}{\poc@alunoemail}}\\[0.6em]
+      Tutor: \poc@linhacontato{\poc@tutor}{\poc@tutoremail}%
+      \ifx\poc@curso\poc@vazio\else\\[0.4em]{\small\poc@curso}\fi
+    \end{center}
+    \poc@blocoresumo
+  \else
+    \thispagestyle{plain}%
+    \begin{center}
+      {\small UNIVERSIDADE FEDERAL DE SANTA CATARINA\\
+      DEPARTAMENTO DE INFORMÁTICA E ESTATÍSTICA\\
+      INE5448 Inteligência Artificial e Segurança da Informação}\\[1.5em]
+      {\LARGE\bfseries \poc@titulo\par}\vspace{1.2em}
+      {\large \poc@linhacontato{\poc@aluno}{\poc@alunoemail}}\\[0.6em]
+      Tutor: \poc@linhacontato{\poc@tutor}{\poc@tutoremail}%
+      \ifx\poc@curso\poc@vazio\else\\[0.4em]{\small\poc@curso}\fi\\[0.8em]
+      {\small \ifpoc@parcial Relatório parcial\else Relatório final\fi\ \textbullet\ \today}
+    \end{center}
+    \poc@blocoresumo
+    \tableofcontents
+    \clearpage
+  \fi}
+
+% =================================================================
+% Seção de situação atual (só no relatório parcial)
+% =================================================================
+\ifpoc@parcial
+  \includecomment{situacaoparcial}
+\else
+  \excludecomment{situacaoparcial}
+\fi
+
+% Quadro de situação de uma seção: \situacao{Em andamento}{texto}
+\newcommand\situacao[2]{%
+  \ifpoc@parcial
+    \begin{tcolorbox}[colback=orange!6,colframe=orange!70!black,boxrule=0.6pt,arc=1pt,
+      fonttitle=\small\bfseries,title={Situação desta seção: #1}]
+      \small #2
+    \end{tcolorbox}%
+  \fi}
+
+% =================================================================
+% Apêndices e referências
+% =================================================================
+\newcommand\pocapendices{%
+  \ifpoc@anais
+    \setcounter{section}{0}%
+    \renewcommand\thesection{\thechapter.\Alph{section}}%
+    \renewcommand\theHsection{\thechapter.apendice.\Alph{section}}%
+  \else
+    \appendix
+  \fi}
+
+\newcommand\pocreferencias{%
+  \ifpoc@anais
+    \printbibliography[heading=subbibintoc,title={Referências}]%
+  \else
+    \printbibliography[heading=bibintoc,title={Referências}]%
+  \fi}
+
+% =================================================================
+% Modo anais: inclusão de um relatório como capítulo
+%   \pocincluir{capitulos/sobrenome-nome}
+% =================================================================
+\ifpoc@anais
+  \newcommand\pocincluir[1]{%
+    \begingroup
+    \poc@limpar
+    \begin{refsection}[#1/ref.bib]%
+      \import{#1/}{relatorio.tex}%
+    \end{refsection}%
+    \endgroup
+    \cleardoublepage}
+\else
+  \setlength{\headheight}{14.5pt}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[L]{\small INE5448 \textbullet\ Relatório de PoC}
+  \fancyhead[R]{\small\pocalunoatual}
+  \fancyfoot[C]{\small\thepage}
+\fi
+
+\endinput

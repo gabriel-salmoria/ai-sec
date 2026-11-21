@@ -1,0 +1,19 @@
+% =================================================================
+% main.tex | Arquivo de compilação do relatório de PoC (INE5448)
+%
+% NÃO EDITE ESTE ARQUIVO, exceto para trocar a opção do pacote
+% quando for gerar a versão final:
+%   \usepackage{ine5448poc}          relatório parcial
+%   \usepackage[final]{ine5448poc}   relatório final
+%
+% Todo o conteúdo do relatório fica em relatorio.tex.
+% Compile com:  latexmk -pdf main.tex   (ou pdflatex, biber, pdflatex x2)
+% No Overleaf: compilador pdfLaTeX; o biber é usado automaticamente.
+% =================================================================
+\documentclass[12pt,a4paper]{article}
+\usepackage[final]{ine5448poc}
+\addbibresource{ref.bib}
+
+\begin{document}
+\input{relatorio}
+\end{document}

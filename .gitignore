@@ -28,3 +28,6 @@ ocr06/third_party/
 # OCR-06: saídas brutas grandes
 ocr06/experiments/hw_bakeoff/out/
 ocr06/experiments/hw_bakeoff/jobs/
+
+# cópias de compilação duplicadas
+POC/salmoria-gabriel/main.pdf

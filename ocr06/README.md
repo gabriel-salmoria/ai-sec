@@ -13,7 +13,7 @@ O trabalho teve duas etapas:
 2. **Páginas** (`lora_v1`, `lora_v2`): certidões inteiras do OCRSD e de um gerador próprio, no
    formato HTML que o Chandra já devolve. `lora_v2` também foi quantizado em FP8 e INT4.
 
-O relatório final está em [`../POC/v5/INE5448_RelFinal_Salmoria_Gabriel.pdf`](../POC/v5/INE5448_RelFinal_Salmoria_Gabriel.pdf).
+O relatório final está em [`../POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf`](../POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf).
 
 ## Resultados principais
 
@@ -133,7 +133,7 @@ Decisões de dados:
 
 ### Dados
 
-**OCRSD.** O gerador de certidões sintéticas do ON-RCPN (<https://ocrsd.onrcpn.org.br>) exige
+**OCRSD.** O gerador de certidões sintéticas de Tiago Siqueira, PoC da mesma disciplina hospedada em <https://ocrsd.onrcpn.org.br>, exige
 uma credencial de acesso, lida de `~/.config/ocrsd/workspace` (ou do arquivo em
 `OCRSD_WORKSPACE_FILE`) e nunca gravada no repositório. As páginas geradas não estão no git.
 
@@ -246,7 +246,7 @@ sessão.
 | Linhas e páginas manuscritas reais | BRESSAY (Zenodo 11637681, CC BY 4.0) | treino de linhas e teste |
 | Formulários reais | XFUND-PT (CC BY-NC-SA 4.0) | só teste |
 | Cadernos manuscritos | PorTEXTO (CC BY-NC 4.0) | só teste |
-| Certidões sintéticas | OCRSD (ON-RCPN), com credencial | treino e teste; não redistribuídas |
+| Certidões sintéticas | OCRSD (Tiago Siqueira), com credencial | treino e teste; não redistribuídas |
 | Fontes manuscritas | Google Fonts (OFL/Apache) | linhas e certidões |
 | Escritores neurais | VATr++ (MIT), handwriting-synthesis (sjvasquez) | certidões |
 
