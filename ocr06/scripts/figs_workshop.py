@@ -1,4 +1,4 @@
-"""Figuras da apresentação do workshop (apresentacao_workshop/figs): recortes ampliados, a mesma
+"""Figuras da apresentação do workshop (apresentacoes/2026-11-23_workshop/figs): recortes ampliados, a mesma
 certidão com os campos certos e errados de cada modelo e os gráficos de resultados.
 
     .venv/bin/python scripts/figs_workshop.py
@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from ocr06.pages_eval import MARGIN, compact, fields_of, infix_span, overlaps, page_size, parse_blocks  # noqa: E402
 
-OUT = ROOT.parent / "apresentacao_workshop" / "figs"
+OUT = ROOT.parent / "apresentacoes" / "2026-11-23_workshop" / "figs"
 P = ROOT / "experiments" / "paginas"
 DATA = ROOT / "data"
 CHANDRA, V1, V2 = "#5b84c4", "#d0893b", "#12907d"  # validate_palette.js

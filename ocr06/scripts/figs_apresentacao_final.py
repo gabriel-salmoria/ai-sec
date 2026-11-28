@@ -1,4 +1,4 @@
-"""Figures for the final presentation (apresentacao_final/figs): results bar chart, name crops
+"""Figures for the final presentation (apresentacoes/2026-11-17_resultados/figs): results bar chart, name crops
 with each model's reading, and one test page with the name box drawn.
 
     .venv/bin/python scripts/figs_apresentacao_final.py
@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from ocr06.evaluate import normalize  # noqa: E402
 from ocr06.pages_eval import MARGIN, fields_of, infix_span, overlaps, page_size, parse_blocks  # noqa: E402
 
-OUT = ROOT.parent / "apresentacao_final" / "figs"
+OUT = ROOT.parent / "apresentacoes" / "2026-11-17_resultados" / "figs"
 OUT.mkdir(parents=True, exist_ok=True)
 P = ROOT / "experiments" / "paginas"
 DATA = ROOT / "data"

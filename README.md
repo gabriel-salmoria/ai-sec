@@ -10,14 +10,12 @@ reais. Tutor: Lucas Mayr.
 | [`ocr06/`](ocr06/) | código da PoC: dados, geradores, treino, quantização e avaliação (ver o [README](ocr06/README.md)) |
 | [`POC/`](POC/) | relatório da PoC: versões entregues em `POC/v0` a `POC/v6`; a final é [`POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf`](POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf), com as fontes no template da disciplina em [`POC/salmoria-gabriel/`](POC/salmoria-gabriel/) |
 | [`proposta/`](proposta/) | proposta inicial da PoC |
-| [`apresentacao/`](apresentacao/) | apresentação intermediária (13/10/2026) |
-| [`apresentacao_final/`](apresentacao_final/) | apresentação curta de resultados (17/11/2026) |
-| [`apresentacao_workshop/`](apresentacao_workshop/) | apresentação no IV Workshop Acadêmico do Registro Civil (23/11/2026) |
+| [`apresentacoes/`](apresentacoes/) | apresentação intermediária (13/10/2026), de resultados (17/11/2026) e no IV Workshop Acadêmico do Registro Civil (23/11/2026) |
 | [`t1/`](t1/) | Trabalho 1: formulário público com envio por e-mail no n8n |
 | [`t2/`](t2/) | Trabalho 2: análise crítica de artigo |
 
 Os documentos em LaTeX compilam com `latexmk -pdf main.tex` dentro de cada pasta (o relatório final
-em `POC/salmoria-gabriel/`; as versões até a v5 usavam `latexmk -lualatex` em `POC/`).
+em `POC/salmoria-gabriel/`).
 
 ## Resultado principal da PoC
 
