@@ -1,6 +1,6 @@
 # Nomes vistos e inéditos nas páginas de teste
 
-Palavras vistas: as que aparecem em algum campo de 3366 páginas de treino (29781 palavras). Acerto exato local dos campos de nome, em %.
+Palavras vistas: as que aparecem em algum campo de 3500 páginas de treino (30013 palavras). Acerto exato local dos campos de nome, em %.
 
 ## teste_local
 

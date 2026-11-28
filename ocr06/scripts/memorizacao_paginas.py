@@ -4,8 +4,8 @@ os nomes do treino, ele apareceria nos vistos e não nos inéditos.
 
     .venv/bin/python scripts/memorizacao_paginas.py
 
-Lê experiments/paginas/erros_<set>.jsonl (gerado por scripts/erros_paginas.py) e as páginas de
-treino (forms_v1 e forms_v2 com split=train, OCRSD com split=train). Grava
+Lê experiments/paginas/erros_<set>.jsonl (gerado por scripts/erros_paginas.py) e as páginas que
+entraram no treino do lora_v1 e do lora_v2 (data/final/pages_v1 e pages_v2, train.jsonl). Grava
 experiments/paginas/memorizacao_nomes.md."""
 import json
 import sys
@@ -16,11 +16,13 @@ sys.path.insert(0, str(ROOT / "src"))
 from ocr06.evaluate import normalize  # noqa: E402
 
 DATA, OUT = ROOT / "data" / "pages", ROOT / "experiments" / "paginas"
+treino = {json.loads(l)["id"] for v in ("pages_v1", "pages_v2")
+          for l in open(ROOT / "data" / "final" / v / "train.jsonl", encoding="utf-8")}
 seen, n_pages = set(), 0
 for name in ("forms_v1", "forms_v2", "ocrsd"):
     for line in open(DATA / name / "pages.jsonl", encoding="utf-8"):
         row = json.loads(line)
-        if row.get("split") != "train":
+        if row["id"] not in treino:
             continue
         n_pages += 1
         for f in row["fields"]:
