@@ -13,7 +13,7 @@ O trabalho teve duas etapas:
 2. **Páginas** (`lora_v1`, `lora_v2`): certidões inteiras do OCRSD e de um gerador próprio, no
    formato HTML que o Chandra já devolve. `lora_v2` também foi quantizado em FP8 e INT4.
 
-O relatório final está em [`../POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf`](../POC/v6/INE5448_RelFinal_Salmoria_Gabriel.pdf).
+O relatório final e as suas versões estão em [`../POC/`](../POC/), e a apresentação do workshop, que resume o trabalho, em [`../apresentacoes/2026-11-23_workshop/`](../apresentacoes/2026-11-23_workshop/).
 
 ## Resultados principais
 
@@ -34,7 +34,8 @@ Páginas (acerto exato dos campos manuscritos; IC 95% por bootstrap pareado):
 | Difícil: nomes | 24,3% | 30,5% | 32,5% | 30,7% | 28,9% |
 | Normal (100 págs., nomes pela frequência real): campos | 55,8% | 69,2% | 72,0% | 71,9% | 71,6% |
 | Normal: nomes | 40,4% | 44,5% | 50,2% | 49,6% | 49,4% |
-| OCRSD (94 págs., escritores fora do treino): campos | 84,6% | 95,5% | – | – | – |
+| OCRSD (94 págs., mesmo gerador de parte do treino): campos | 84,6% | 95,5% | – | – | – |
+| OCRSD, só estilos neurais fora do treino (252 campos) | 77,8% | 94,0% | – | – | – |
 
 Na RTX PRO 6000, os pesos ocupam 8,6 GiB em BF16, 6,2 GiB em FP8 e 5,0 GiB em INT4, e uma
 página sozinha leva 22,6 s, 17,7 s e 14,9 s. Fora das certidões (redações do BRESSAY,
@@ -59,7 +60,11 @@ ocr06/
     colab/                  scripts usados para rodar as sessões de GPU no Google Colab
     erros_paginas.py        leitura de cada modelo, campo a campo
     memorizacao_paginas.py  acerto em nomes vistos e inéditos
-    figs_apresentacao_final.py  figuras do relatório e das apresentações
+    figs_apresentacao_final.py  figuras da apresentação de resultados (17/11)
+    figs_workshop.py        figuras da apresentação do workshop e do relatório final
+    mesmas_38_paginas.py    adaptadores das duas etapas nas mesmas 38 certidões
+    consistencia_campos.py  erros de nome que a consistência com outros campos marcaria
+    erros_restantes.py      tipos de erro que o lora_v2 ainda comete nos nomes
   src/ocr06/
     sources.py lexicon.py   coleta e agregação dos nomes (IBGE, TSE, Receita)
     vocab.py sampler.py     vocabulário por frequência, partição e sorteio
@@ -217,24 +222,11 @@ mede completude, truncamento e laço, e compara cada modelo com a referência na
 páginas (IC 95% por bootstrap pareado sobre páginas e McNemar).
 
 `scripts/colab/` tem os scripts que rodaram as sessões no Google Colab (empacotar, enviar,
-rodar sem supervisão, copiar os resultados de volta). `NOTES.md` tem as notas da primeira
-sessão.
+rodar sem supervisão, copiar os resultados de volta).
 
 ## Resultados
 
-| Arquivo em `experiments/` | Conteúdo |
-|---|---|
-| `exp1/`, `exp2_integracao/` | Experimentos 1 e 2 (dados e integração, sem modelo) |
-| `modelos/comparacao.md` | Experimento 3: linhas, Chandra × lora_v0, BF16 × FP8 |
-| `paginas/avaliacao_teste_local.md` | teste difícil, todos os modelos contra o Chandra |
-| `paginas/avaliacao_forms_v2_normal.md` | teste normal |
-| `paginas/avaliacao_*_v2_vs_v1.md` | lora_v2 contra lora_v1 |
-| `paginas/avaliacao_*_quant_vs_v2.md` | FP8 e INT4 contra o lora_v2 em BF16 |
-| `paginas/avaliacao_teste_ocrsd_94.md` | teste do OCRSD (lora_v1) |
-| `paginas/avaliacao_metade_*.md` | adaptador de linhas (lora_v0) aplicado a certidões |
-| `paginas/comparacao_real.md`, `paginas/avaliacao_xfund_hw.md` | BRESSAY e XFUND-PT em página |
-| `paginas/erros_*.md`, `paginas/memorizacao_nomes.md` | leituras por campo e nomes vistos × inéditos |
-| `paginas/<modelo>/<conjunto>.jsonl` | predições brutas; `*.tempo.json`, tempos de inferência |
+A tabela que liga cada experimento do relatório final aos arquivos de resultado e aos scripts que os geram está em [`experiments/README.md`](experiments/README.md).
 
 ## Dados, licenças e privacidade
 
@@ -245,7 +237,6 @@ sessão.
 | Municípios e população | IBGE (Censo 2022) | léxico |
 | Linhas e páginas manuscritas reais | BRESSAY (Zenodo 11637681, CC BY 4.0) | treino de linhas e teste |
 | Formulários reais | XFUND-PT (CC BY-NC-SA 4.0) | só teste |
-| Cadernos manuscritos | PorTEXTO (CC BY-NC 4.0) | só teste |
 | Certidões sintéticas | OCRSD (Tiago Siqueira), com credencial | treino e teste; não redistribuídas |
 | Fontes manuscritas | Google Fonts (OFL/Apache) | linhas e certidões |
 | Escritores neurais | VATr++ (MIT), handwriting-synthesis (sjvasquez) | certidões |
