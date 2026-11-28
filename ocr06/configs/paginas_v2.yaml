@@ -1,5 +1,5 @@
-# Treino de páginas (sessão 2): lora_v1 a partir do Chandra base, com os arquivos de
-# data/final/pages_v1. Cópia de default.yaml com o bloco model.train ajustado.
+# Treino de páginas: lora_v2, continuando o lora_v1 (init_adapter) com os arquivos de
+# data/final/pages_v2 e peso extra nos nomes errados (name_boost). Cópia de default.yaml com o bloco model.train ajustado.
 seed: 42
 paths:
   raw: data/raw

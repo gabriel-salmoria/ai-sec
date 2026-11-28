@@ -1,5 +1,4 @@
-# Treino de páginas (sessão 2): lora_v1 a partir do Chandra base, com os arquivos de
-# data/final/pages_v1. Cópia de default.yaml com o bloco model.train ajustado.
+# Igual ao paginas_v2.yaml, com lotes de 1 página e acumulação de 16 (mesmo lote efetivo), para GPUs menores.
 seed: 42
 paths:
   raw: data/raw
