@@ -57,7 +57,6 @@ ocr06/
     setup.sh run.sh         ambientes e etapas de linhas
     ocrsd/                  cliente da API do OCRSD, fila de lotes e extração das páginas
     hw/                     renderizadores dos escritores neurais (VATr++ e Graves)
-    colab/                  scripts usados para rodar as sessões de GPU no Google Colab
     erros_paginas.py        leitura de cada modelo, campo a campo
     memorizacao_paginas.py  acerto em nomes vistos e inéditos
     figs_apresentacao_final.py  figuras da apresentação de resultados (17/11)
@@ -221,8 +220,7 @@ campo (acerto exato *local*), separa por classe (nome, data, número, opção fi
 mede completude, truncamento e laço, e compara cada modelo com a referência nas mesmas
 páginas (IC 95% por bootstrap pareado sobre páginas e McNemar).
 
-`scripts/colab/` tem os scripts que rodaram as sessões no Google Colab (empacotar, enviar,
-rodar sem supervisão, copiar os resultados de volta).
+Os treinos e as inferências em GPU rodaram no Google Colab, com os comandos acima.
 
 ## Resultados
 
