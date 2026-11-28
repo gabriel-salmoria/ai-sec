@@ -23,4 +23,4 @@ Nomes dos modelos nas pastas: `base` e `base_g4` são o Chandra OCR 2 original (
 | Experimento 7 (BRESSAY e XFUND-PT) | `paginas/comparacao_real.md`, `paginas/avaliacao_xfund_hw.md` | `python -m ocr06.pages_real score` (BRESSAY), `python -m ocr06.pages score` (XFUND-PT) |
 | Seção 8, consistência entre campos | `paginas/consistencia_campos.md` | `scripts/consistencia_campos.py` |
 
-`hw_bakeoff/` é a comparação dos geradores neurais de escrita (Graves, VATr++ e Emuru) feita antes de escolher os dois que entraram no gerador de certidões. Os arquivos `paginas/*_s4.*` e `paginas/antes_s4/` são avaliações intermediárias com menos modelos (só o Chandra, ou Chandra, lora_v1 e lora_v2), substituídas pelas que não têm sufixo, e não entram no relatório.
+`hw_bakeoff/` é a comparação dos geradores neurais de escrita (Graves, VATr++ e Emuru) feita antes de escolher os dois que entraram no gerador de certidões.
